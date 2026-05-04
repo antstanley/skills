@@ -189,6 +189,34 @@ Version is omitted initially; the plugin system falls back to `unknown`. A `vers
 
 ---
 
+## Continuation context
+
+This spec is approved and ready for implementation. The brainstorming and design phases are complete; the next step is to invoke the `superpowers:writing-plans` skill to create a detailed implementation plan, then execute it.
+
+**What is done:**
+- Design agreed with user — Approach A (mirror `antstanley/jj-workspace-skill` structure exactly)
+- This spec written and committed
+
+**What still needs to happen:**
+1. Create `plugins/` directory
+2. Move `reasoning-semiformally/` → `plugins/reasoning-semiformally/skills/reasoning-semiformally/` (all files: SKILL.md, haiku.md, sonnet.md)
+3. Move `spec-creator/` → `plugins/spec-creator/skills/spec-creator/` (all files: SKILL.md, evals/, references/)
+4. Delete the empty `skills/` directory at repo root
+5. Create `.claude-plugin/marketplace.json` at repo root (content in this spec)
+6. Create `plugins/reasoning-semiformally/.claude-plugin/plugin.json` (content in this spec)
+7. Create `plugins/spec-creator/.claude-plugin/plugin.json` (content in this spec)
+8. Create `plugins/reasoning-semiformally/README.md` and `plugins/spec-creator/README.md`
+9. Update root `README.md` with marketplace install instructions
+10. Commit everything with jj (`jj describe -m "..."` then `jj new`)
+
+**Key constraints for the implementing agent:**
+- This repo uses **jj exclusively** — never use `git add`, `git commit`. Use `jj describe` and `jj new` for commits.
+- Do not modify the content of any existing `SKILL.md`, `haiku.md`, `sonnet.md`, `evals/`, or `references/` files — only move them.
+- The exact JSON content for `marketplace.json` and both `plugin.json` files is in this spec — use it verbatim.
+- Reference implementation: `/Users/ant/.claude/plugins/marketplaces/jj-workspace-skill/` — this is the local cache of `antstanley/jj-workspace-skill` and is the authoritative structural template.
+
+---
+
 ## Assumptions and open questions
 
 **Assumptions**
