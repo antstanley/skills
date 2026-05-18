@@ -1,0 +1,23 @@
+{
+  "name": "skills",
+  "metadata": {
+    "description": "A collection of Claude Code plugins by Ant Stanley."
+  },
+  "owner": { "name": "antstanley" },
+  "plugins": [
+    {
+      "name": "reasoning-semiformally",
+      "source": "./plugins/reasoning-semiformally",
+      "description": "Apply semi-formal certificate reasoning to code analysis — patch verification, fault localization, patch equivalence.",
+      "category": "development",
+      "homepage": "https://github.com/antstanley/skills"
+    },
+    {
+      "name": "spec-creator",
+      "source": "./plugins/spec-creator",
+      "description": "Create or expand formal design specifications for an app, package, or codebase — numbered, layered, cross-linked markdown.",
+      "category": "development",
+      "homepage": "https://github.com/antstanley/skills"
+    }
+  ]
+}
