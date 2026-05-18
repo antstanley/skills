@@ -1,0 +1,7 @@
+{
+  "name": "spec-creator",
+  "description": "Create or expand formal design specifications for an app, package, or codebase — numbered, layered, cross-linked markdown that defines what exists in the current branch.",
+  "author": { "name": "antstanley" },
+  "repository": "https://github.com/antstanley/skills",
+  "keywords": ["spec", "design", "documentation", "architecture"]
+}
