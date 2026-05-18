@@ -1,0 +1,10 @@
+{
+  "name": "jj-workspaces",
+  "version": "0.1.0",
+  "description": "jj (jujutsu) workspaces skill for Claude Code — creates isolated workspaces for parallel work and sub-agent driven development, and intercepts git-worktree requests in jj-managed repos.",
+  "author": {
+    "name": "antstanley"
+  },
+  "repository": "https://github.com/antstanley/skills",
+  "keywords": ["jj", "jujutsu", "worktree", "workspace", "vcs", "sub-agents"]
+}
