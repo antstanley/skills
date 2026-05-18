@@ -1,0 +1,7 @@
+{
+  "name": "reasoning-semiformally",
+  "description": "Apply semi-formal certificate reasoning to code analysis — patch verification, fault localization, patch equivalence. Use when reviewing patches, hunting bugs across scopes, comparing fixes, or when code reasoning requires tracing execution across files/modules.",
+  "author": { "name": "antstanley" },
+  "repository": "https://github.com/antstanley/skills",
+  "keywords": ["reasoning", "code-review", "debugging", "patch-verification"]
+}
