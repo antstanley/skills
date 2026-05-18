@@ -18,6 +18,13 @@
       "description": "Create or expand formal design specifications for an app, package, or codebase — numbered, layered, cross-linked markdown.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
+    },
+    {
+      "name": "jj-workspaces",
+      "source": "./plugins/jj-workspaces",
+      "description": "jj (jujutsu) workspaces skill for Claude Code — creates isolated workspaces for parallel work and sub-agent driven development, and intercepts git-worktree requests in jj-managed repos.",
+      "category": "development",
+      "homepage": "https://github.com/antstanley/skills"
     }
   ]
 }
