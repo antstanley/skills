@@ -1,39 +1,10 @@
 # skills
 
-A collection of Claude Code skills by Ant Stanley.
+A Claude Code plugin marketplace by Ant Stanley.
 
-> **Status:** This repo is in the process of being restructured into a Claude Code plugin marketplace (see [`docs/specs/spec.md`](docs/specs/spec.md)). Until that migration lands, the skills below live at the repo root and are installed manually rather than via `/plugin install`.
+## Install
 
-## Index
-
-| Skill | Description |
-|---|---|
-| [reasoning-semiformally](reasoning-semiformally/) | Apply semi-formal certificate reasoning to code analysis — patch verification, fault localization, and patch equivalence. Useful when reviewing patches, hunting bugs across scopes, or comparing fixes. |
-| [spec-creator](spec-creator/) | Create or expand formal design specifications for an app, package, or codebase. Produces numbered, layered, cross-linked markdown that defines what exists in the current branch. |
-
-## Installing a skill in Claude Code
-
-Skills are loaded by Claude Code from `~/.claude/skills/<name>/` (user-level) or `.claude/skills/<name>/` (project-level). Until this repo is published as a marketplace, install a skill by linking it into one of those locations.
-
-```sh
-# Clone this repo somewhere stable
-git clone https://github.com/antstanley/skills.git ~/code/skills
-
-# User-level install (available in every Claude Code session)
-mkdir -p ~/.claude/skills
-ln -s ~/code/skills/reasoning-semiformally ~/.claude/skills/reasoning-semiformally
-ln -s ~/code/skills/spec-creator           ~/.claude/skills/spec-creator
-
-# Or project-level install (scoped to one repo)
-mkdir -p .claude/skills
-ln -s ~/code/skills/reasoning-semiformally .claude/skills/reasoning-semiformally
-```
-
-Restart Claude Code (or start a new session) and the skill will appear in the available-skills list. Invoke it by name with the `Skill` tool, or let Claude trigger it automatically based on the `description` field in each `SKILL.md`.
-
-## Planned: marketplace install
-
-Once the marketplace migration in [`docs/specs/spec.md`](docs/specs/spec.md) is complete, installation will be:
+Register the marketplace, then install plugins individually:
 
 ```
 /plugin marketplace add antstanley/skills
@@ -41,8 +12,32 @@ Once the marketplace migration in [`docs/specs/spec.md`](docs/specs/spec.md) is 
 /plugin install spec-creator@skills
 ```
 
-## Adding a new skill
+## Plugins
 
-1. Create a new top-level directory named after the skill.
-2. Add a `SKILL.md` with YAML frontmatter (`name`, `description`, optional `version`).
-3. Add this entry to the [Index](#index) table above.
+| Plugin | Description |
+|---|---|
+| [reasoning-semiformally](plugins/reasoning-semiformally/) | Apply semi-formal certificate reasoning to code analysis — patch verification, fault localization, and patch equivalence. |
+| [spec-creator](plugins/spec-creator/) | Create or expand formal design specifications — numbered, layered, cross-linked markdown that defines what exists in the current branch. |
+
+## Repo layout
+
+```
+.
+├── .claude-plugin/marketplace.json     # marketplace manifest
+├── plugins/
+│   ├── reasoning-semiformally/
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── skills/reasoning-semiformally/
+│   │   └── README.md
+│   └── spec-creator/
+│       ├── .claude-plugin/plugin.json
+│       ├── skills/spec-creator/
+│       └── README.md
+└── docs/specs/spec.md                  # marketplace design spec
+```
+
+## Adding a new plugin
+
+1. Create `plugins/<name>/skills/<name>/SKILL.md` (with YAML frontmatter).
+2. Add `plugins/<name>/.claude-plugin/plugin.json` and `plugins/<name>/README.md`.
+3. Append an entry for the plugin to `.claude-plugin/marketplace.json`.
