@@ -1,6 +1,8 @@
-# TypeScript — Tiger Style section
+# TypeScript — language base (style-neutral)
 
-Slots into a development-guidelines page when TypeScript is a selected language. Three pieces: toolchain rows, an `### Assertions in TypeScript` subsection (under Defensive coding), and a `## TypeScript conventions` section. Adapt to the repo's actual tools and versions.
+Slots into a development-guidelines page when TypeScript is a selected language. Holds the **style-neutral substrate**: toolchain rows, formatting and linting, code-style mechanics, naming *case* conventions, testing, documentation, and the definition-of-done tool line. Adapt to the repo's actual tools and versions.
+
+The **style-coupled parts** — the assertion/error-handling subsection plus this language's code-style and naming *emphases* — live in the style overlay alongside this file: [`typescript-tiger.md`](typescript-tiger.md) or [`typescript-clean.md`](typescript-clean.md). Pull the overlay that matches the page's selected style.
 
 ---
 
@@ -18,20 +20,9 @@ Add to the page's `## Toolchain` table:
 
 ---
 
-## `### Assertions in TypeScript`
-
-> Slots under `## Defensive coding and assertions`, in the per-language run of subsections.
-
-- Use a small `invariant(condition, message)` helper that throws on a false condition; treat it the way Rust treats `assert!`. A separate `assertNever(x: never)` enforces exhaustive `switch`.
-- Aim for the same density as the rest of the codebase — roughly two assertions per non-trivial function: preconditions on entry, postconditions on exit, invariants in the middle.
-- Validate all inbound data with a schema validator (Valibot, Zod, or equivalent) against the types generated from `canonical-types.schema.json`, at the boundary. Never cast network data with `as Foo`.
-- Strict compiler settings are load-bearing: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`. No `any`.
-
----
-
 ## `## TypeScript conventions`
 
-> Top-level section on the page.
+> Top-level section on the page. The bullets below are style-neutral; the selected style's overlay adds its code-style and naming emphases to the matching subsections.
 
 ### Formatting and linting
 
@@ -42,11 +33,10 @@ Add to the page's `## Toolchain` table:
 ### Code style
 
 - **No `any`.** Use `unknown` plus narrowing, or a typed parser. Casts are bugs unless justified in a comment.
+- **Strict compiler settings are load-bearing:** `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`.
 - **Domain types are imported from one shared package**, never hand-redefined in app code.
-- **Validate at boundaries.** Inbound JSON — responses, frames, query params — is parsed through a schema validator into the typed shape. No `JSON.parse(...) as Foo`.
+- **Validate at boundaries.** Inbound JSON — responses, frames, query params — is parsed through a schema validator (Valibot, Zod, or equivalent) into the typed shape. No `JSON.parse(...) as Foo`.
 - **No silent fallthrough.** A `switch` over a discriminated union ends with `assertNever(x)` so the compiler enforces exhaustiveness.
-- **Errors are values.** Prefer a typed result over throwing across module boundaries; throw only for programmer error (the `invariant` path).
-- **Hard limits** on function size and line length — a common pair is 70 lines per function, 100 columns per line. The formatter enforces columns; function size is a review gate.
 - **Brace every block** unless it fits on one line. Split compound conditions when they check different things.
 - **Comments explain *why*.** No comment paraphrases the code; comments are full sentences flagging a non-obvious constraint or invariant.
 
@@ -54,8 +44,6 @@ Add to the page's `## Toolchain` table:
 
 - `camelCase` for functions and variables, `PascalCase` for types and classes, `SCREAMING_SNAKE_CASE` for module-level constants.
 - **No abbreviations** in identifiers, beyond ecosystem-standard short names (`ctx`, `id`, loop counters).
-- **Units last in identifiers**, descending significance: `latencyMsMax`, not `maxLatencyMs`. Related variables then sort and align.
-- **Same-length names for related variables** where reasonable: `source` / `target`, not `src` / `dst`.
 
 ### Testing
 

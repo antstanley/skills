@@ -1,8 +1,10 @@
-# JavaScript — Tiger Style section
+# JavaScript — language base (style-neutral)
 
-Slots into a development-guidelines page when JavaScript (without a TypeScript layer) is a selected language. Three pieces: toolchain rows, an `### Assertions in JavaScript` subsection, and a `## JavaScript conventions` section. Adapt to the repo's actual tools.
+Slots into a development-guidelines page when JavaScript (without a TypeScript layer) is a selected language. Holds the **style-neutral substrate**: toolchain rows, formatting and linting, code-style mechanics, naming *case* conventions, testing, documentation, and the definition-of-done tool line. Adapt to the repo's actual tools.
 
-The core challenge: JavaScript has no static type system, so Tiger Style's "make invalid states unrepresentable" moves almost entirely to **runtime validation**. Where TypeScript catches a wrong shape at compile time, JavaScript catches it at the boundary with a schema check, or not at all. The discipline compensates by validating more, and earlier.
+The **style-coupled parts** — the assertion/error-handling subsection plus this language's code-style and naming *emphases* — live in the style overlay alongside this file: [`javascript-tiger.md`](javascript-tiger.md) or [`javascript-clean.md`](javascript-clean.md).
+
+JavaScript has no static type system, so "invalid states" are caught at runtime, at the boundary, with a schema check — or not at all. Both supported styles compensate by validating more, and earlier; the base substrate below makes boundary validation a default.
 
 ---
 
@@ -20,20 +22,9 @@ Add to the page's `## Toolchain` table:
 
 ---
 
-## `### Assertions in JavaScript`
-
-> Slots under `## Defensive coding and assertions`, in the per-language run of subsections.
-
-- Use a small `invariant(condition, message)` helper that throws on a false condition; treat it the way Rust treats `assert!`. Aim for roughly two assertions per non-trivial function.
-- **Validation is the type system.** Every value crossing a boundary — function arguments at module edges, inbound JSON, query params, environment config — is validated against a schema before use. There is no compiler to lean on.
-- Use JSDoc type annotations (`@param`, `@returns`) on public functions and run the type-checker (`tsc --checkJs`) in CI; it is the cheapest static check available without adopting TypeScript.
-- Freeze constants and config objects (`Object.freeze`) so accidental mutation throws instead of corrupting state silently.
-
----
-
 ## `## JavaScript conventions`
 
-> Top-level section on the page.
+> Top-level section on the page. The bullets below are style-neutral; the selected style's overlay adds its code-style and naming emphases.
 
 ### Formatting and linting
 
@@ -47,9 +38,8 @@ Add to the page's `## Toolchain` table:
 - **`const` by default, `let` only when reassigned, never `var`.**
 - **Strict equality (`===`) only.** No implicit coercion; convert explicitly.
 - **Validate at boundaries.** Inbound JSON is parsed and validated through a schema validator into a known shape. No trusting `JSON.parse` output.
-- **Errors are values where it reads clearly;** otherwise throw typed `Error` subclasses and handle them at a defined layer. Never swallow an error.
+- **Cheap static checking.** Use JSDoc type annotations (`@param`, `@returns`) on public functions and run `tsc --checkJs` in CI — the cheapest static check available without adopting TypeScript.
 - **No silent fallthrough.** A `switch` over a tagged value has a `default` that throws on the unexpected case.
-- **Hard limits** on function size and line length — a common pair is 70 lines, 100 columns. The formatter enforces columns; function size is a review gate.
 - **Brace every block** unless it fits on one line. Split compound conditions that check different things.
 - **Comments explain *why*,** in full sentences flagging a non-obvious constraint or invariant.
 
@@ -57,8 +47,6 @@ Add to the page's `## Toolchain` table:
 
 - `camelCase` for functions and variables, `PascalCase` for classes and constructors, `SCREAMING_SNAKE_CASE` for module-level constants.
 - **No abbreviations** beyond ecosystem-standard short names (`ctx`, `id`, loop counters).
-- **Units last in identifiers**, descending significance: `latencyMsMax`, not `maxLatencyMs`.
-- **Same-length names for related variables** where reasonable: `source` / `target`, not `src` / `dst`.
 
 ### Testing
 

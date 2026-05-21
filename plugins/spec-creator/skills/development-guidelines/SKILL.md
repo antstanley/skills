@@ -34,11 +34,16 @@ The page carries one conventions section per language the repo uses. **Detect, t
 2. **Confirm.** Propose the detected set to the user and let them adjust — add, drop, or reorder. Order in the page follows the order the user confirms (primary language first).
 3. **Fall back to asking** when nothing is detectable (a greenfield spec written before code exists). Offer the supported set: TypeScript, JavaScript, Rust, Python.
 
-Supported language templates live in [`references/`](references/): [`typescript.md`](references/typescript.md), [`javascript.md`](references/javascript.md), [`rust.md`](references/rust.md), [`python.md`](references/python.md). If the user names a language with no template, write its section from the Tiger Style core principles by analogy and note in Open questions that the section was hand-written without a template.
+Supported language templates live in [`references/`](references/) as a **style-neutral base file** plus one **overlay per style**: e.g. [`typescript.md`](references/typescript.md) (base) with [`typescript-tiger.md`](references/typescript-tiger.md) and [`typescript-clean.md`](references/typescript-clean.md) (overlays); likewise for [`javascript.md`](references/javascript.md), [`rust.md`](references/rust.md), [`python.md`](references/python.md). The base carries the toolchain, formatting, naming case, testing, and documentation; the overlay carries the assertion/error-handling subsection and the style's code-style and naming emphases. If the user names a language with no template, write its section from the selected style's core principles by analogy and note in Open questions that the section was hand-written without a template.
 
 ### Coding style
 
-The pervasive coding style the guidelines enforce. **Tiger Style is the only supported option for now** — a defensive, limits-everywhere, assert-heavily discipline with the priority order *safety, performance, developer experience*. Its language-agnostic core lives in [`references/tiger-style.md`](references/tiger-style.md). Do not ask the user to choose a style while it is the only option; state that the page uses Tiger Style and proceed. (The parameter exists so additional styles can be added later without reshaping the skill.)
+The pervasive coding style the guidelines enforce. **Two styles are supported**, each with a language-agnostic core in [`references/`](references/):
+
+- **Tiger Style** ([`tiger-style.md`](references/tiger-style.md)) — a defensive, limits-everywhere, assert-heavily discipline with the priority order *safety, performance, developer experience*. The core habit: assume anything you did not produce is wrong, and anything you did not assert can be violated.
+- **Clean Code** ([`clean-code.md`](references/clean-code.md)) — a readability-first discipline with the priority *maintainability* (code is read more than written). Small single-purpose functions, intention-revealing names, exceptions over return codes, tests as the safety net.
+
+They disagree on load-bearing points — errors-as-data vs. exceptions, explicit linear flow vs. deep abstraction, assertions vs. tests as the primary correctness net — so a repo adopts one. **Ask the user to choose**, stating that difference, unless the repo already declares a style. Default to Tiger Style if the repo gives no signal and the user expresses no preference. The chosen style determines which agnostic core and which per-language overlay (`<language>-tiger.md` or `<language>-clean.md`) the page is assembled from.
 
 ### Version control
 
@@ -75,29 +80,32 @@ Build `development-guidelines.md` from the references, in this order:
 
 (opening paragraph: rules of the road; list the pillars)
 
-## Toolchain                              ← rows from each language file + version control + style
-## <Style> — the pervasive style          ← references/tiger-style.md core
-## Defensive coding and assertions
-   ### Where to validate                  ← tiger-style.md
-   ### Assertions in <language>           ← one per language, from each language file
-   ### Errors are data, not exceptions    ← tiger-style.md
-   ### Make invalid states unrepresentable← tiger-style.md
-## Limits and bounds                       ← tiger-style.md (meta-rule only; values live per-app)
-## Version control                         ← tiger-style.md (shared core + jj or git variant; per the VCS parameter)
-## <Language> conventions                  ← one section per language, from each language file
-   ### Formatting and linting
-   ### Code style
-   ### Naming
-   ### Testing
-   ### Documentation
-## Repository hygiene                      ← tiger-style.md, adapted to the repo's layout
-## Guidelines for AI agents                ← tiger-style.md, plus any language-specific slips
-## Definition of done                      ← tiger-style.md, plus per-language additions
-## Assumptions and open questions          ← mandatory closing block
+## Toolchain                               ← rows from each language base file + version control + style
+## <Style> — the pervasive style           ← references/<style>.md core (tiger-style.md | clean-code.md)
+## <Defensive coding | Error handling>      ← <style>.md supplies the heading + meta-subsections
+   ### Where to validate / validation lives ← <style>.md
+   ### <Assertions | Error handling> in <language>
+                                            ← one per language, from each <language>-<style>.md overlay
+   ### <Errors are data | Use exceptions>   ← <style>.md
+   ### Make <invalid states unrepresentable | intent explicit>
+                                            ← <style>.md
+## Limits and bounds                        ← <style>.md (meta-rule only; values live per-app)
+## Version control                          ← tiger-style.md shared core + jj/git variant (style-agnostic; per the VCS parameter)
+## <Language> conventions                   ← base from <language>.md; emphases merged from <language>-<style>.md
+   ### Formatting and linting               ← <language>.md
+   ### Code style                           ← <language>.md mechanics + <language>-<style>.md emphases
+   ### Naming                               ← <language>.md case conventions + <language>-<style>.md idioms
+   ### Testing                              ← <language>.md
+   ### Documentation                        ← <language>.md
+## Repository hygiene                       ← <style>.md, adapted to the repo's layout
+## Guidelines for AI agents                 ← <style>.md, plus any language-specific slips
+## Definition of done                       ← <style>.md, plus per-language additions from <language>.md
+## Assumptions and open questions           ← mandatory closing block
 ```
 
 Adapt every template to the repo. The references are starting points, not boilerplate to paste:
 
+- For each language, merge its **base file** with the **overlay** for the selected style: the base supplies the toolchain/formatting/naming-case/testing/documentation; the overlay's `### Assertions in <lang>` (Tiger) or `### Error handling in <lang>` (Clean) slots under the defensive-coding/error-handling section, and the overlay's code-style and naming emphases merge into the matching `### Code style` and `### Naming` subsections.
 - Drop rows and rules for tooling the repo does not use.
 - Replace placeholder limit values with the repo's named constants where they exist; the meta-rule (every limit is a named constant) stays, concrete values move to per-app specs.
 - Use the version-control variant matching the detected VCS (per the Version control parameter): jujutsu, git, or both when the user asked for the optional git guidelines alongside jj.
@@ -125,8 +133,19 @@ When spec-creator reaches the development-guidelines page in its Phase 3 (Write)
 
 ## Reference files
 
-- [`references/tiger-style.md`](references/tiger-style.md) — The language-agnostic Tiger Style core: the pervasive-style section, defensive-coding philosophy (where to validate, errors as data, make invalid states unrepresentable), limits and bounds, version control, repository hygiene, AI-agent emphases, and the definition-of-done skeleton. Read first; it supplies every section that is not language-specific.
-- [`references/typescript.md`](references/typescript.md) — TypeScript: toolchain rows, assertions, conventions (formatting, code style, naming, testing, documentation), definition-of-done additions.
-- [`references/javascript.md`](references/javascript.md) — JavaScript (no type system): the same sections adapted to runtime-checked discipline.
-- [`references/rust.md`](references/rust.md) — Rust: the same sections.
-- [`references/python.md`](references/python.md) — Python: the same sections.
+**Style cores (language-agnostic).** One per supported style; read the selected one first — it supplies every section that is not language-specific.
+
+- [`references/tiger-style.md`](references/tiger-style.md) — Tiger Style core: pervasive-style section, defensive-coding philosophy (where to validate, errors as data, make invalid states unrepresentable), limits and bounds, version control, repository hygiene, AI-agent emphases, definition-of-done skeleton.
+- [`references/clean-code.md`](references/clean-code.md) — Clean Code core: pervasive-style section, error-handling-and-boundaries philosophy (where validation lives, use exceptions, make intent explicit), limits and bounds, version control (shared with Tiger Style), repository hygiene, AI-agent emphases, definition-of-done skeleton.
+
+**Language base files (style-neutral).** Toolchain rows, formatting/linting, naming case conventions, testing, documentation, definition-of-done tool line.
+
+- [`references/typescript.md`](references/typescript.md) — TypeScript base.
+- [`references/javascript.md`](references/javascript.md) — JavaScript base (no static type system; boundary validation is the default).
+- [`references/rust.md`](references/rust.md) — Rust base (`Result`-based error mechanics shared by both styles).
+- [`references/python.md`](references/python.md) — Python base.
+
+**Language × style overlays.** The assertion/error-handling subsection plus the style's code-style and naming emphases for that language. Pull the one matching the page's language and selected style.
+
+- Tiger Style: [`typescript-tiger.md`](references/typescript-tiger.md), [`javascript-tiger.md`](references/javascript-tiger.md), [`rust-tiger.md`](references/rust-tiger.md), [`python-tiger.md`](references/python-tiger.md).
+- Clean Code: [`typescript-clean.md`](references/typescript-clean.md), [`javascript-clean.md`](references/javascript-clean.md), [`rust-clean.md`](references/rust-clean.md), [`python-clean.md`](references/python-clean.md).

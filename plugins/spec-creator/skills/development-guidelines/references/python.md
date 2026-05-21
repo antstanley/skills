@@ -1,8 +1,10 @@
-# Python — Tiger Style section
+# Python — language base (style-neutral)
 
-Slots into a development-guidelines page when Python is a selected language. Three pieces: toolchain rows, an `### Assertions in Python` subsection, and a `## Python conventions` section. Adapt to the repo's actual tools.
+Slots into a development-guidelines page when Python is a selected language. Holds the **style-neutral substrate**: toolchain rows, formatting and linting, code-style mechanics, naming *case* conventions, testing, documentation, and the definition-of-done tool line. Adapt to the repo's actual tools.
 
-A note on `assert`: CPython strips `assert` statements when run with `-O`. Tiger Style wants assertions enabled in production, so the discipline does **not** rely on the bare `assert` statement for invariants that must hold in production — it uses a helper that raises unconditionally (see below). The bare `assert` is fine in tests, which never run under `-O`.
+The **style-coupled parts** — the assertion/error-handling subsection plus this language's code-style and naming *emphases* — live in the style overlay alongside this file: [`python-tiger.md`](python-tiger.md) or [`python-clean.md`](python-clean.md).
+
+Python raises exceptions for both styles, so error handling is shared mechanism; the fork is emphasis (assertion density and production-safe `assert` under Tiger Style, vs. small functions and intention-revealing names under Clean Code).
 
 ---
 
@@ -20,21 +22,9 @@ Add to the page's `## Toolchain` table:
 
 ---
 
-## `### Assertions in Python`
-
-> Slots under `## Defensive coding and assertions`, in the per-language run of subsections.
-
-- Use an `invariant(condition, message)` helper that **raises unconditionally** (a plain `if not condition: raise ...`), not the bare `assert` statement — `assert` is stripped under `-O` and cannot be trusted for production invariants. Reserve bare `assert` for test bodies.
-- Aim for roughly two invariant checks per non-trivial function: preconditions on entry, postconditions on exit, invariants in the middle.
-- **Validate all inbound data** with a schema/validation library (Pydantic, attrs + validators, or msgspec) at the boundary; never trust a parsed dict's shape.
-- Run a static type checker (mypy or pyright) in **strict** mode in CI; type annotations are mandatory on public functions. Strict typing is the closest Python gets to "make invalid states unrepresentable".
-- Use `typing.assert_never()` in the final branch of an exhaustive match over an enum / tagged union so the type checker flags an unhandled case.
-
----
-
 ## `## Python conventions`
 
-> Top-level section on the page.
+> Top-level section on the page. The bullets below are style-neutral; the selected style's overlay adds its code-style and naming emphases.
 
 ### Formatting and linting
 
@@ -47,19 +37,16 @@ Add to the page's `## Toolchain` table:
 
 - **Type-annotate everything public.** No untyped public function; no implicit `Any`. Configure the checker to forbid `Any` where avoidable.
 - **`@dataclass(frozen=True)`** (or attrs / Pydantic models) for value objects, so invalid mutation raises rather than corrupting state.
-- **Enums for state, not strings;** match exhaustively with `assert_never` in the default branch.
-- **Validate at boundaries.** Inbound JSON is parsed through a validation model into a typed object. No trusting a raw `dict`.
+- **Enums for state, not strings;** match exhaustively with `typing.assert_never` in the default branch.
+- **Validate at boundaries.** Inbound JSON is parsed through a validation model (Pydantic, attrs + validators, or msgspec) into a typed object. No trusting a raw `dict`.
 - **Errors are explicit.** Raise typed exceptions; never swallow with a bare `except:`. Catch the narrowest exception type and handle or re-raise.
 - **No mutable default arguments.** Use `None` and construct inside the function.
-- **Hard limits** on function size and line length — a common pair is 70 lines, 100 columns. The formatter enforces columns; function size is a review gate.
 - **Comments explain *why*,** in full sentences flagging a non-obvious constraint or invariant.
 
 ### Naming
 
 - `snake_case` for functions, variables, modules; `PascalCase` for classes; `SCREAMING_SNAKE_CASE` for module-level constants.
 - **No abbreviations** beyond ecosystem-standard short names (`ctx`, `id`, loop counters).
-- **Units last in identifiers**, descending significance: `latency_ms_max`, not `max_latency_ms`.
-- **Same-length names for related variables** where reasonable: `source` / `target`, not `src` / `dst`.
 - A single leading underscore marks module-private names; respect it.
 
 ### Testing
@@ -68,7 +55,7 @@ Add to the page's `## Toolchain` table:
 - **Test pyramid.** Unit tests for pure logic; integration tests exercising a module plus in-memory fakes; end-to-end tests against the assembled system, run explicitly (a marker, not the default selection).
 - **Positive and negative space.** Every "happy path" test is paired with a test that the adjacent bad input raises the right error.
 - **Test the validity boundary** — one below a limit, at the limit, one above.
-- **Property tests** (Hypothesis) for state-machine logic and parsers; they express the same invariants the runtime checks do.
+- **Property tests** (Hypothesis) for state-machine logic and parsers.
 - **Determinism.** Inject clock and id generators (or use a freezegun-style fake); no wall-clock or randomness in test bodies.
 - **No flaky tests.** A flaky test is a bug to fix now.
 

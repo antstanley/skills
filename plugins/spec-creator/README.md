@@ -6,7 +6,7 @@ Triggers on phrases like "create a spec", "spec out this app", "write design doc
 
 It also writes **change specs** — single documents under `docs/specs/changes/` that propose a delta to the canonical spec, carry inline schema changes and implementation pointers, and are merged back into the canonical spec once the change ships. Triggers on "propose a change to the spec", "draft a change spec", "RFC for X", or "merge the change spec".
 
-The plugin ships a companion **`development-guidelines`** skill that writes the spec set's development-guidelines page — the "rules of the road" (toolchain, code style, defensive coding, limits, version control, testing, AI-agent rules, definition of done). It detects the repo's languages (TypeScript, JavaScript, Rust, Python), applies a coding style (Tiger Style), and assembles the page from per-language templates following the spec conventions above. Triggers on "add development guidelines", "generate coding guidelines", or "add coding standards to the spec"; spec-creator delegates to it when a spec set includes a development-guidelines page.
+The plugin ships a companion **`development-guidelines`** skill that writes the spec set's development-guidelines page — the "rules of the road" (toolchain, code style, defensive coding, limits, version control, testing, AI-agent rules, definition of done). It detects the repo's languages (TypeScript, JavaScript, Rust, Python), applies a coding style (Tiger Style or Clean Code), and assembles the page from per-language templates following the spec conventions above. Triggers on "add development guidelines", "generate coding guidelines", or "add coding standards to the spec"; spec-creator delegates to it when a spec set includes a development-guidelines page.
 
 ## Install
 
