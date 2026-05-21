@@ -74,14 +74,38 @@ Reaching a limit is an **observable event**: log it structured, increment a coun
 
 ## Version control
 
-> Heading on the page: `## Version control`. Match this block to the repo's actual VCS — detect `.jj/` (jujutsu) vs `.git/` (git) and keep only the relevant rules.
+> Heading on the page: `## Version control` (or `## Version control: jujutsu` / `## Version control: git` when naming the VCS). Per the skill's Version control parameter: detect `.jj/` (jujutsu) vs `.git/` (git); when both are present, prefer jujutsu. Emit the shared core, then the variant for the detected VCS. Include the git variant alongside jj only when the user asks for the optional git guidelines.
+
+### Shared core (any VCS)
 
 - **Commits are small and well-described.** One coherent change per commit. Squash noise before pushing.
 - **Empty commit descriptions are not accepted.** Describe the *why* before pushing.
 - **Conventional Commits** for the subject line: `type(scope): subject`, types from the standard set (`feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`, `perf`, `style`). Enforced in the pre-push hook and re-run in CI.
 - **Branch model.** The integration branch (`main`) stays releasable. Feature work happens on named branches; pull requests target the integration branch.
-- **Do not rewrite published history** unless the pull request is yours and unmerged. If a force-push is required, call it out.
+- **Do not rewrite published history** unless the change is yours and unmerged. If a force-push is required, call it out.
 - **Destructive operations need explicit confirmation** — history rewrites, branch deletion, hard resets, force-fetches — even when they look like the cleanest path.
+
+### Variant — jujutsu
+
+> Use when the repo is jj-managed (`.jj/` present). A jj repo on a Git backend also has `.git/`; jj is still the front end, so use this variant, not the git one.
+
+- **`jj` is the sole version-control front end.** Do not run `git commit` / `git add` / `git status` against a jj working copy — the index/working-copy mismatch is exactly what jj removes.
+- **Describe before pushing.** `jj describe` sets the *why*; an empty description blocks the push.
+- **Feature work happens on named bookmarks** (`jj bookmark create feat/x`); pull requests are pushed with `jj git push`.
+- **Resolve conflicts in jj** (`jj resolve`), not by editing plain-text markers.
+- **Destructive `jj` operations need explicit confirmation** — `jj abandon`, `jj op restore`, force-fetches, bookmark deletion — even when they look like the cleanest path.
+- The `.jj/` directory is local; it is not committed.
+
+### Variant — git
+
+> Use when the repo is git-only (`.git/` present, no `.jj/`), or alongside the jujutsu variant when the user wants git guidelines documented for contributors using the Git backend directly.
+
+- **Stage deliberately.** Commit coherent units; avoid `git add -A` sweeps that bundle unrelated changes.
+- **Describe before pushing.** A commit message states the *why*; the subject follows Conventional Commits.
+- **Feature work happens on named branches** (`git switch -c feat/x`); pull requests target `main`.
+- **Resolve conflicts at the merge/rebase point** and re-run the test suite before continuing.
+- **Destructive git operations need explicit confirmation** — `git reset --hard`, `git clean -fd`, force-push, branch deletion — even when they look like the cleanest path.
+- **Do not skip hooks** (`--no-verify`). If a hook fails, fix the underlying issue.
 
 ---
 

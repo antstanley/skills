@@ -21,7 +21,7 @@ When in doubt, separate the *rule* (a guideline the repo commits to — body) fr
 
 ## Parameters
 
-Two inputs shape the page. Resolve both before writing.
+Three inputs shape the page. Resolve all three before writing.
 
 ### Languages
 
@@ -40,6 +40,19 @@ Supported language templates live in [`references/`](references/): [`typescript.
 
 The pervasive coding style the guidelines enforce. **Tiger Style is the only supported option for now** — a defensive, limits-everywhere, assert-heavily discipline with the priority order *safety, performance, developer experience*. Its language-agnostic core lives in [`references/tiger-style.md`](references/tiger-style.md). Do not ask the user to choose a style while it is the only option; state that the page uses Tiger Style and proceed. (The parameter exists so additional styles can be added later without reshaping the skill.)
 
+### Version control
+
+The page carries a `## Version control` section describing the repo's VCS conventions. **Detect, then confirm**, the same way as languages.
+
+1. **Detect.** Look for the VCS directory at the repo root:
+   - `.jj/` → jujutsu (`jj`).
+   - `.git/` → git.
+   - **Both present → prefer jj.** A jj repo on a Git backend has both directories; jj is the working front end, so the guidelines describe the jj workflow. (Treating it as git would tell contributors to run `git commit` against a jj working copy — the mismatch the rules exist to prevent.)
+   - Neither → ask the user, or omit the section if the spec is for a context with no version control yet (rare; note it in Open questions).
+2. **Confirm.** State the detected VCS to the user. Offer **optional git guidelines** even in a jj repo: a team may want the git conventions documented for contributors who reach for the Git backend directly, or for a planned migration. Include them only if the user asks.
+
+The version-control blocks live in [`references/tiger-style.md`](references/tiger-style.md): a shared core plus a **jujutsu** variant and a **git** variant. Use the variant matching the detected VCS; include both only when the user wants the git guidelines alongside jj.
+
 ## Workflow
 
 ### 1 — Locate the spec set and decide placement
@@ -50,7 +63,7 @@ A **per-app** development-guidelines page (`docs/<app>/specs/NN-development.md`)
 
 ### 2 — Resolve parameters
 
-Detect and confirm the languages (above). State that the page uses Tiger Style. Note the spec owner and today's date for the header.
+Detect and confirm the languages and the VCS (above). State that the page uses Tiger Style. Note the spec owner and today's date for the header.
 
 ### 3 — Assemble the page
 
@@ -70,7 +83,7 @@ Build `development-guidelines.md` from the references, in this order:
    ### Errors are data, not exceptions    ← tiger-style.md
    ### Make invalid states unrepresentable← tiger-style.md
 ## Limits and bounds                       ← tiger-style.md (meta-rule only; values live per-app)
-## Version control                         ← tiger-style.md (jj/git block; match the repo's VCS)
+## Version control                         ← tiger-style.md (shared core + jj or git variant; per the VCS parameter)
 ## <Language> conventions                  ← one section per language, from each language file
    ### Formatting and linting
    ### Code style
@@ -87,7 +100,7 @@ Adapt every template to the repo. The references are starting points, not boiler
 
 - Drop rows and rules for tooling the repo does not use.
 - Replace placeholder limit values with the repo's named constants where they exist; the meta-rule (every limit is a named constant) stays, concrete values move to per-app specs.
-- Match the version-control block to the repo's actual VCS (jj or git). Detect from `.jj/` vs `.git/`.
+- Use the version-control variant matching the detected VCS (per the Version control parameter): jujutsu, git, or both when the user asked for the optional git guidelines alongside jj.
 - Keep the page in spec voice: present tense for what exists, past tense in Decisions, question form in Open questions. No marketing words, no emoji, no exclamation points.
 
 ### 4 — Write the closing block
