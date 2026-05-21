@@ -1,6 +1,6 @@
 ---
 name: using-jj-workspaces
-description: Use when starting feature work that needs isolation, before executing implementation plans, or before dispatching sub-agents in a jj (jujutsu) repository. ALSO INTERCEPTS any request for git worktrees (including references to the `using-git-worktrees` skill, brainstorming Phase 4, subagent-driven-development, executing-plans, or any "create a worktree" phrasing) whenever the current repo is jj-managed — creates isolated jj workspaces as sibling directories with verified clean baselines so parallel work (including multiple AI agents) proceeds without stepping on each other.
+description: Use when starting isolated feature work, executing implementation plans, or dispatching sub-agents in a jj (jujutsu) repo. ALSO INTERCEPTS any git-worktree request (the `using-git-worktrees` skill, brainstorming Phase 4, subagent-driven-development, executing-plans, or "create a worktree" phrasing) when the repo is jj-managed — creating isolated jj workspaces as sibling directories with verified-clean baselines so parallel work (including multiple agents) doesn't collide.
 ---
 
 # Using jj Workspaces
@@ -277,22 +277,6 @@ Tests passing (47 tests, 0 failures)
 Ready to implement auth feature
 ```
 
-## Red Flags
-
-**Never:**
-- Nest a workspace inside the main repo's working tree.
-- Skip the baseline test run.
-- Proceed silently with failing tests.
-- Delete a workspace directory without running `jj workspace forget`.
-- Force-reset in response to a stale-working-copy message.
-
-**Always:**
-- Run `jj new` before `jj workspace add` (unless `-r <rev>` is specified deliberately).
-- Keep workspaces as siblings of the main repo, or fully external paths.
-- Auto-detect and run project setup in the new workspace.
-- Verify a clean test baseline before handing off.
-- Use `jj workspace update-stale` when jj reports staleness.
-
 ## Integration
 
 **Called by (natively):**
@@ -301,10 +285,6 @@ Ready to implement auth feature
 - **executing-plans** — before executing tasks that need isolation.
 - Any skill needing an isolated workspace in a jj-managed project.
 
-**Intercepts (in jj repos):**
-- **using-git-worktrees** — when any other skill or instruction calls for it, run the detection step in the "Interception" section and, if `jj workspace root` succeeds, use this skill instead. Translate worktree vocabulary to workspace vocabulary via the mapping table.
-- Any raw instruction to "create a git worktree", "add a worktree at…", or similar phrasing — same detect-and-redirect behavior.
-
 **Pairs with:**
 - **finishing-a-development-branch** — adapt its worktree-removal steps to `jj workspace forget <name>` + `rm -rf <path>`.
-- **using-git-worktrees** — the fallback for pure-git repos; defer to it only when `jj workspace root` fails and you're not going to colocate with `jj git init --colocate`.
+- **using-git-worktrees** — intercepted in jj repos (see [Interception](#interception-redirecting-git-worktree-requests)); it's the fallback only when `jj workspace root` fails and you won't colocate with `jj git init --colocate`.

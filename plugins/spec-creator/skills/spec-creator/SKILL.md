@@ -1,6 +1,6 @@
 ---
 name: spec-creator
-description: Use this skill when the user wants to create or expand formal design specifications for an app, package, or codebase. Triggers on phrases like "create a spec", "spec out this app", "write design docs", "formalize the architecture", "document the design", "spec for <component>", "promote this to a global spec", "make repo-wide spec", or when the user references using another project's specs as a template ("use ../foo/specs as a template"). Also triggers when the user asks to add a per-app spec under an existing global spec layer, or to extract repeated content into a global cross-cutting spec. Also triggers when the user wants to propose changes to an existing spec — "change spec", "propose a change to the spec", "spec out this change", "RFC for X", "draft a change spec" — or to merge a shipped change spec back into the canonical spec. The output is a numbered directory of markdown files plus a JSON Schema sidecar, layered as repo-wide globals + per-app specs; a change spec is a single document under docs/specs/changes/.
+description: Create, expand, or change formal design specifications for an app, package, or codebase. Triggers on "create/write a spec", "spec out this app", "document the design", "formalize the architecture", "promote to a global spec", "layer a per-app spec on a global one", using another project's specs as a template ("use ../foo/specs as a template"), or proposing/merging a change spec ("change spec", "RFC for X", "draft a change spec", "merge the change spec"). Output is a numbered, layered directory of markdown plus a JSON Schema sidecar (repo-wide globals + per-app specs); a change spec is a single document under docs/specs/changes/.
 ---
 
 # Spec Creator
@@ -151,173 +151,15 @@ The `architecture-principles` and `development-guidelines` pages are the common 
 
 ## Section conventions
 
-Different spec types have different section sets. The skeletons below are starting points — adapt to what the code actually warrants.
-
-### `00-overview.md`
-
-The entry point. A reader should be able to read only this file and know what the spec covers, what the system does, and where to go next.
-
-```
-# <Project> — <Surface> Design Overview
-header
-
-The <surface> is <what it is>. <One sentence on the system shape.>
-
-This document is the entry point. Detail pages are linked from each section.
-
----
-
-## Problem
-
-<Two short paragraphs on what the system solves and why existing options don't.>
-
----
-
-## Goals
-
-<Numbered list of what the code achieves, today.>
-
-## Non-goals
-
-<Bullet list of what the code deliberately does NOT do.>
-
----
-
-## System shape
-
-<ASCII diagram of the moving parts, drawn so a reader can follow the data flow.>
-
-<One paragraph naming each box.>
-
----
-
-## Detail pages
-
-| Page | Topic |
-|---|---|
-| [01-domain-model.md](01-domain-model.md) | … |
-| … | … |
-
----
-
-## Scope summary
-
-| Area | Implementation | Notes |
-|---|---|---|
-| <Area> | <What's in the code> | <Constraints> |
-
-(Replace the old "MVP cut" matrix. The scope summary describes implemented surface, not future plans.)
-
----
-
-closing block
-```
-
-**No "MVP" anywhere.** Goals describe what the code achieves now, Non-goals describe what's intentionally absent.
-
-### `01-domain-model.md`
-
-Defines entities, IDs, relationships, lifecycles.
-
-```
-# 01 — Domain Model
-
-intro paragraph
-
-## ID scheme
-
-<rule for IDs; table of prefixes>
-
-## Entities
-
-### <Entity> (`<prefix>_`)
-<one-paragraph description>
-<bullet list of fields>
-
-(repeat per entity)
-
-## Relationships
-
-<ASCII diagram of cardinalities>
-
-## Lifecycle / state machines
-
-<ASCII diagram per stateful entity>
-
-## Required query patterns
-
-<table: query name → access pattern>
-
-closing block
-```
-
-### Per-component pages (`02-…`, `03-…`)
-
-Pattern: **Responsibilities · Contract · Flow · Layout · closing block.**
-
-```
-# NN — <Component>
-
-intro paragraph
-
-## Responsibilities
-
-<numbered list>
-
-## Contract / API / Routes
-
-<table: method/path → purpose>
-
-## Flow / Lifecycle
-
-<ASCII diagram>
-
-## Implementation layout
-
-<file tree or pointer to where it lives>
-
-closing block
-```
-
-### `architecture-principles.md` (global)
-
-Defines how the code is organised. Hexagonal layering, monorepo layout, dependency graph, language conventions, frontend stack baseline. Long file (200–400 lines is normal). Closes with the standard block.
-
-### `development-guidelines.md` (global)
-
-Toolchain, code style, defensive coding, version control conventions, testing pyramid, repo hygiene, definition of done, AI-agent rules. Long file. Closes with the standard block.
-
-### Per-app spec that shadows a global spec
-
-When a per-app `06-architecture-principles.md` builds on a global `docs/specs/architecture-principles.md`, open with a **Read first** pointer:
-
-```markdown
-# 06 — Architecture (editor-specific)
-
-> **Read first:** [`docs/specs/architecture-principles.md`](../../specs/architecture-principles.md). That document defines the cross-cutting rules. This page only covers the <app>-specific shape under those rules.
-
-This page records how the <app> applies the global principles: …
-```
-
-Then describe only the per-app deltas. Don't restate the global rules.
-
-### `canonical-types.schema.json` (sidecar)
-
-JSON Schema Draft 2020-12. `$defs` for each entity. Per-app schemas `$ref` the global schema for shared types.
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.dev/schemas/<scope>-canonical-types.schema.json",
-  "title": "<scope> canonical types",
-  "description": "Authoritative shapes for <scope>'s domain entities.",
-  "$defs": {
-    "<Entity>": { … }
-  }
-}
-```
-
-The global schema (`docs/specs/canonical-types.schema.json`) holds only **truly shared** types: `Id`, `Timestamp`, `Url`, `Email`, `Bytes`, `Milliseconds`, `ErrorEnvelope`, `NonEmptyString`. A type belongs in the global schema only when at least two apps reference it.
+Each page type has a characteristic section set. **Full skeletons live in [`references/section-templates.md`](references/section-templates.md)** — read it when you need a starting point for a specific page; don't reproduce them from memory. The essentials and the rules that aren't in the templates:
+
+- **`00-overview.md`** — the entry point; a reader should grasp the whole system from this page alone. Sections: Problem · Goals · Non-goals · System shape (ASCII) · Detail-pages table · Scope summary · closing block. **No "MVP" framing anywhere** — Goals describe what the code achieves now, Non-goals what it deliberately omits. The Scope-summary table replaces any older "MVP cut" matrix.
+- **`01-domain-model.md`** — entities, IDs, relationships, lifecycles. Sections: ID scheme · Entities (one block each) · Relationships (ASCII) · Lifecycle/state machines (ASCII) · Required query patterns · closing block.
+- **Per-component pages (`02-…`, `03-…`)** — pattern: **Responsibilities · Contract/API/Routes · Flow/Lifecycle · Implementation layout · closing block.**
+- **`architecture-principles.md`** (global) — how the code is organised: layering, monorepo layout, dependency graph, language conventions, stack baseline. Long file (200–400 lines is normal).
+- **`development-guidelines.md`** (global) — toolchain, code style, defensive coding, version control, testing pyramid, repo hygiene, definition of done, AI-agent rules. Long file.
+- **Per-app spec that shadows a global one** — open with a **Read first** pointer to the global page, then describe only the per-app deltas. Don't restate the global rules.
+- **`canonical-types.schema.json`** (sidecar) — JSON Schema Draft 2020-12, one `$def` per entity; per-app schemas `$ref` the global schema for shared types. The global schema holds only **truly shared** types (`Id`, `Timestamp`, `Url`, `Email`, `Bytes`, `Milliseconds`, `ErrorEnvelope`, `NonEmptyString`); a type goes global only when at least two apps reference it.
 
 ## Layered structure
 
