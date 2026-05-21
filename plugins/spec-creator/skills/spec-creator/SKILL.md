@@ -81,6 +81,8 @@ For each file, follow the conventions in [§File conventions](#file-conventions)
 
 Write one file at a time. Cross-link as you go. Keep an internal map of "claims that need a Decision entry at the bottom" — every non-obvious choice ends up in the closing block.
 
+When the file set includes a `development-guidelines.md` page, delegate it to the companion **`development-guidelines` skill** instead of writing it by hand. It resolves the repo's languages and coding style and assembles the page from per-language templates, then hands back here for Phase 4.
+
 If the spec layers on a global spec (e.g., per-app architecture builds on `docs/specs/architecture-principles.md`), open with a one-paragraph **Read first** pointer rather than restating the global rules. See [§Layered structure](#layered-structure).
 
 ### Phase 4 — Cross-link
@@ -157,7 +159,7 @@ Each page type has a characteristic section set. **Full skeletons live in [`refe
 - **`01-domain-model.md`** — entities, IDs, relationships, lifecycles. Sections: ID scheme · Entities (one block each) · Relationships (ASCII) · Lifecycle/state machines (ASCII) · Required query patterns · closing block.
 - **Per-component pages (`02-…`, `03-…`)** — pattern: **Responsibilities · Contract/API/Routes · Flow/Lifecycle · Implementation layout · closing block.**
 - **`architecture-principles.md`** (global) — how the code is organised: layering, monorepo layout, dependency graph, language conventions, stack baseline. Long file (200–400 lines is normal).
-- **`development-guidelines.md`** (global) — toolchain, code style, defensive coding, version control, testing pyramid, repo hygiene, definition of done, AI-agent rules. Long file.
+- **`development-guidelines.md`** (global) — toolchain, code style, defensive coding, version control, testing pyramid, repo hygiene, definition of done, AI-agent rules. Long file. **Produced by the companion `development-guidelines` skill** — it detects the repo's languages, applies a coding style (Tiger Style), and assembles this page from per-language templates. Invoke it rather than writing this page from scratch; it returns to this skill's Phase 4 for the final cross-link pass.
 - **Per-app spec that shadows a global one** — open with a **Read first** pointer to the global page, then describe only the per-app deltas. Don't restate the global rules.
 - **`canonical-types.schema.json`** (sidecar) — JSON Schema Draft 2020-12, one `$def` per entity; per-app schemas `$ref` the global schema for shared types. The global schema holds only **truly shared** types (`Id`, `Timestamp`, `Url`, `Email`, `Bytes`, `Milliseconds`, `ErrorEnvelope`, `NonEmptyString`); a type goes global only when at least two apps reference it.
 
