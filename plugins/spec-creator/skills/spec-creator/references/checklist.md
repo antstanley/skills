@@ -64,6 +64,7 @@ Run through this list before declaring a spec done. The checklist enforces the *
 - [ ] If this work **promoted** content from per-app to a new global spec, both:
   - The new `docs/specs/<name>.md` is listed in `docs/README.md`'s global section, AND
   - The per-app file's "Read first" pointer goes to the new global spec.
+- [ ] Deferred items (Open questions, planned-but-absent Decisions) were collected, and the user was **asked** whether to draft change specs for them. Change specs were created only if the user said yes.
 
 ---
 
@@ -84,6 +85,22 @@ Run through this list before declaring a spec done. The checklist enforces the *
 - [ ] No paragraph longer than ~4 sentences (split or convert to a list).
 - [ ] Tables for any list with parallel structure (routes, fields, tokens).
 - [ ] ASCII diagrams for shapes (system, state machines, dependency graphs).
+
+---
+
+## Change specs
+
+Apply this section instead of "Branch reality" when the document is a **change spec** (a single file under `docs/specs/changes/`). See [`change-specs.md`](change-specs.md).
+
+- [ ] File is a single markdown document at `docs/specs/changes/YYYY-MM-DD-short_snake_case_title.md` (ISO date prefix, snake_case title).
+- [ ] Header is `**Status:** … · **Date:** … · **Owner:** … · **Target:** …`; Status is one of `Proposed`, `Accepted`, `Implemented`, `Merged`.
+- [ ] An `Affected spec pages` table lists every canonical page the change touches, each linked with a path that resolves from `docs/specs/changes/`.
+- [ ] Each `Proposed changes` block names the exact canonical section it changes, is marked Add / Modify / Remove, and is written in canonical voice (the prose it will become on merge).
+- [ ] New or changed entities appear as an inline JSON Schema `$defs` fragment under `Type changes`, using Draft 2020-12 and `$ref`-ing the global shared types.
+- [ ] A `Merge plan` spells out the mechanical steps to fold the change into the canonical spec.
+- [ ] The closing `Assumptions / Decisions / Open questions` block is present; undecided design lives in Open questions, not as hedged body prose.
+- [ ] `docs/README.md` lists the change spec under a Change specs section.
+- [ ] On **merge**: every `Proposed changes` block has landed on its canonical page, the schema fragment is folded in, the file has moved to `docs/specs/changes/merged/`, `Status` is `Merged` with a `**Merged:**` date, and `docs/README.md` no longer lists it as pending.
 
 ---
 

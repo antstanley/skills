@@ -1,6 +1,6 @@
 ---
 name: spec-creator
-description: Use this skill when the user wants to create or expand formal design specifications for an app, package, or codebase. Triggers on phrases like "create a spec", "spec out this app", "write design docs", "formalize the architecture", "document the design", "spec for <component>", "promote this to a global spec", "make repo-wide spec", or when the user references using another project's specs as a template ("use ../foo/specs as a template"). Also triggers when the user asks to add a per-app spec under an existing global spec layer, or to extract repeated content into a global cross-cutting spec. The output is a numbered directory of markdown files plus a JSON Schema sidecar, layered as repo-wide globals + per-app specs.
+description: Use this skill when the user wants to create or expand formal design specifications for an app, package, or codebase. Triggers on phrases like "create a spec", "spec out this app", "write design docs", "formalize the architecture", "document the design", "spec for <component>", "promote this to a global spec", "make repo-wide spec", or when the user references using another project's specs as a template ("use ../foo/specs as a template"). Also triggers when the user asks to add a per-app spec under an existing global spec layer, or to extract repeated content into a global cross-cutting spec. Also triggers when the user wants to propose changes to an existing spec — "change spec", "propose a change to the spec", "spec out this change", "RFC for X", "draft a change spec" — or to merge a shipped change spec back into the canonical spec. The output is a numbered directory of markdown files plus a JSON Schema sidecar, layered as repo-wide globals + per-app specs; a change spec is a single document under docs/specs/changes/.
 ---
 
 # Spec Creator
@@ -95,8 +95,9 @@ This phase is mandatory and easy to skip — every iteration of this skill has m
 3. **Verify every internal link** (`(other-spec.md)`, `[…](../specs/foo.md)`) resolves to a real file.
 4. **Verify every `canonical-types.schema.json` entity** referenced in prose actually exists in the schema (and vice versa — every schema entity is described somewhere in prose).
 5. **Re-read the closing block** on every page. If you find yourself in step 5 and any page is missing an `Assumptions and open questions` section, add it before declaring done. The closing block is mandatory; even `(None at this stage.)` under a heading counts.
+6. **Offer change specs for deferred items.** Collect the deferred work the spec surfaced — Open questions and any Decision that names a planned-but-absent change. If there are any, ask the user whether they want a change spec drafted for them (one per coherent change), so the deferred work has a home outside the canonical body. If yes, draft each per [§Change specs](#change-specs) and [`references/change-specs.md`](references/change-specs.md). If no, leave them in the Open questions blocks. Do not create change specs without asking.
 
-Do not declare the spec complete until all five steps are done. The checklist at [`references/checklist.md`](references/checklist.md) has the full pre-handoff verification.
+Do not declare the spec complete until all six steps are done. The checklist at [`references/checklist.md`](references/checklist.md) has the full pre-handoff verification.
 
 ## File conventions
 
@@ -332,6 +333,21 @@ Rules:
 3. **Per-app specs that shadow a global topic open with a "Read first" pointer.** They state only the per-app deltas.
 4. **App-specific limits live in per-app specs**, even though the *meta-rule* for declaring limits lives in the global development guidelines. Concrete values are app concerns; rules about declaring values are repo concerns.
 
+## Change specs
+
+A **canonical spec** describes what exists in the current branch. A **change spec** proposes a delta to it. The two are different document types with inverted rules, and this skill writes both.
+
+- **Canonical spec** — numbered, layered directory of pages. Body describes what is. Lives in `docs/specs/` and `docs/<app>/specs/`.
+- **Change spec** — a single document proposing changes that do **not** yet exist. Body describes what will change, in future/imperative voice. Lives in `docs/specs/changes/`, named `YYYY-MM-DD-short_snake_case_title.md`.
+
+A change spec references the canonical pages it touches by path and heading, restates each affected section as the prose it should become once merged, carries an inline JSON Schema fragment for any new or changed entities, and lists the implementation pointers an agent needs. The goal is that an agent can take the change spec plus its references and implement the change.
+
+When the change ships in code, the change spec is **merged** into the canonical spec: each proposed block is applied to its canonical page, the schema fragment folds into the canonical schema, and the change spec moves to `docs/specs/changes/merged/` with its `Status` flipped to `Merged`. It is preserved as dated history, not deleted.
+
+This is the one place the "describes-what-exists" rule is suspended — and only inside a change spec's body, never in a canonical page. Do not edit canonical pages to describe a change until that change has shipped; that is what the change spec is for.
+
+The change-spec lifecycle is `Proposed` → `Accepted` → `Implemented` → `Merged`. Full template, document structure, and merge procedure are in [`references/change-specs.md`](references/change-specs.md). Read it before writing or merging a change spec.
+
 ## Voice and tone
 
 - Present tense for what exists (`the editor exposes /api/opengraph`).
@@ -360,7 +376,7 @@ A spec without a Decisions list is a spec that hasn't done enough thinking. If y
 ## What NOT to do
 
 - **Don't use MVP framing.** No "Goals (MVP)", "Non-goals (MVP)", "MVP cut summary", "at MVP", "deferred". The spec describes what the code does now.
-- **Don't speculate about future work** in the body. Future work belongs in Open questions, or in a separate plan document handled by another skill.
+- **Don't speculate about future work** in a canonical spec's body. Future work belongs in Open questions, or in a **change spec** (see [§Change specs](#change-specs)) — a separate single document under `docs/specs/changes/` whose whole job is to propose a delta.
 - **Don't restate global content in per-app specs.** Use a "Read first" pointer.
 - **Don't add fields to schemas that aren't in the code.** A schema field with `description: "Reserved for next iteration"` is a lie. If the field doesn't exist, leave it out and put the gap in Open questions.
 - **Don't write tutorials inside specs.** Specs define structure; tutorials and runbooks are separate doc types.
@@ -397,3 +413,4 @@ User: "Add a spec for the website app at `apps/website` modelled on the editor s
 - [`references/section-templates.md`](references/section-templates.md) — Detailed section skeletons for overview, domain-model, architecture, dev-guidelines, canonical-types schema. Read when you need a starting point for a specific page type.
 - [`references/voice-and-decisions.md`](references/voice-and-decisions.md) — Worked examples of the Decisions pattern and the voice rules. Read when phrasing feels awkward.
 - [`references/checklist.md`](references/checklist.md) — Pre-handoff checklist (no MVP language, all cross-refs resolve, closing block on every page, schema sidecar matches body claims). Read after writing, before declaring done.
+- [`references/change-specs.md`](references/change-specs.md) — Change-spec document type: how a proposed-change document differs from a canonical spec, its single-document structure, the `Proposed → Accepted → Implemented → Merged` lifecycle, and the merge procedure. Read when the user wants to propose a change to an existing spec or merge a shipped change back in.

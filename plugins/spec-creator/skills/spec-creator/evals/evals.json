@@ -21,6 +21,20 @@
       "prompt": "Create a spec for a hypothetical new app at apps/journal — a daily-journal app that uses @interrupt/editor for writing, a date-keyed IndexedDB store for entries, and a calendar view to navigate between days. There's no code yet for this app, but we want to spec out the design first so we can implement against it. Write the spec to docs/journal/specs/ following the conventions in docs/specs/ and matching the shape of docs/editor/specs/. Be honest in the spec: since the code doesn't exist yet, the body should describe the *intended* design, but anything ambiguous goes in Open questions. (Acknowledge the divergence — the code doesn't yet exist. The spec is the target the code will be built to match.)",
       "expected_output": "A new directory docs/journal/specs/ with numbered markdown files describing the intended journal app — overview, domain model (with at least Entry and CalendarView entities), routes/shell, persistence, and references to global architecture/dev guidelines via 'Read first' pointers. Plus a canonical-types.schema.json. The spec acknowledges in its overview or open-questions section that the code doesn't yet exist and the spec is acting as a target rather than a description of branch reality. No 'MVP' framing.",
       "files": []
+    },
+    {
+      "id": 4,
+      "name": "draft-change-spec",
+      "prompt": "Draft a change spec proposing that the editor app gains user-defined tags on entries. Tags are labels with a unique name per workspace; an entry references many tags by id and a tag applies to many entries. The canonical spec for the editor is at docs/editor/specs/. Write the change spec to docs/specs/changes/ following the conventions in references/change-specs.md.",
+      "expected_output": "A single markdown file at docs/specs/changes/YYYY-MM-DD-add_tagging_to_entries.md (ISO date prefix, snake_case title). Header with Status: Proposed, Date, Owner, and Target: apps/editor. A Motivation section, an Affected spec pages table linking the editor domain-model/persistence pages and canonical-types.schema.json with paths that resolve from docs/specs/changes/, Proposed changes blocks written in canonical voice and marked Add/Modify/Remove, a Type changes section with an inline JSON Schema $defs fragment for the Tag entity (and the tagIds addition to Entry) that $refs the global shared types, an Implementation notes section with code pointers, a Merge plan, and the closing Assumptions/Decisions/Open questions block. docs/README.md gains a Change specs section listing the file. The body uses future/imperative voice (not present-tense 'describes-what-exists').",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "merge-change-spec",
+      "prompt": "We shipped the tagging change. Merge the change spec at docs/specs/changes/2026-05-21-add_tagging_to_entries.md into the canonical editor spec.",
+      "expected_output": "Each Proposed changes block applied to its canonical page under docs/editor/specs/ (Tag entity added to the domain model, relationships updated, persistence store documented), with those pages' Date bumped to the merge date. The Tag $def folded into docs/editor/specs/canonical-types.schema.json with tagIds added to Entry. The change spec moved to docs/specs/changes/merged/ with Status flipped to Merged and a Merged: date added to its header. docs/README.md updated so the file is no longer listed as pending. All internal links still resolve.",
+      "files": []
     }
   ]
 }
