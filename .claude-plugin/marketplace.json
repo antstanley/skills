@@ -20,6 +20,13 @@
       "homepage": "https://github.com/antstanley/skills"
     },
     {
+      "name": "spec-planner",
+      "source": "./plugins/spec-planner",
+      "description": "Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done.",
+      "category": "development",
+      "homepage": "https://github.com/antstanley/skills"
+    },
+    {
       "name": "jj-workspaces",
       "source": "./plugins/jj-workspaces",
       "description": "jj (jujutsu) workspaces skill for Claude Code — creates isolated workspaces for parallel work and sub-agent driven development, and intercepts git-worktree requests in jj-managed repos.",

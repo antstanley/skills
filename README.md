@@ -10,6 +10,7 @@ Register the marketplace, then install plugins individually:
 /plugin marketplace add antstanley/skills
 /plugin install reasoning-semiformally@skills
 /plugin install spec-creator@skills
+/plugin install spec-planner@skills
 /plugin install jj-workspaces@skills
 ```
 
@@ -19,6 +20,7 @@ Register the marketplace, then install plugins individually:
 |---|---|
 | [reasoning-semiformally](plugins/reasoning-semiformally/) | Apply semi-formal certificate reasoning to code analysis — patch verification, fault localization, and patch equivalence. |
 | [spec-creator](plugins/spec-creator/) | Create or expand formal design specifications — numbered, layered, cross-linked markdown that defines what exists in the current branch. |
+| [spec-planner](plugins/spec-planner/) | Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. |
 | [jj-workspaces](plugins/jj-workspaces/) | jj (jujutsu) workspaces skill for Claude Code — creates isolated workspaces for parallel work and sub-agent-driven development, and intercepts git-worktree requests in jj-managed repos. |
 
 ## Repo layout
@@ -34,6 +36,10 @@ Register the marketplace, then install plugins individually:
 │   ├── spec-creator/
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── skills/spec-creator/
+│   │   └── README.md
+│   ├── spec-planner/
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── skills/spec-planner/
 │   │   └── README.md
 │   └── jj-workspaces/
 │       ├── .claude-plugin/plugin.json
