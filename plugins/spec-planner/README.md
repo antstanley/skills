@@ -15,10 +15,20 @@ It consumes any specification: a canonical spec set or change spec from **spec-c
 /plugin install spec-planner@skills
 ```
 
-## Skill content
+This plugin ships two skills: **spec-planner** (build the plan) and **done-certificates** (prove each task done).
+
+## spec-planner
 
 The skill lives at [`skills/spec-planner/SKILL.md`](skills/spec-planner/SKILL.md). Worked examples are under [`skills/spec-planner/evals/`](skills/spec-planner/evals/); the method and templates are under [`skills/spec-planner/references/`](skills/spec-planner/references/):
 
 - [`references/task-decomposition.md`](skills/spec-planner/references/task-decomposition.md) — how to slice a spec into reviewable packages, the four dependency edge types (build / data / contract / review), and the reviewability-ordering method, with a worked example.
 - [`references/plan-template.md`](skills/spec-planner/references/plan-template.md) — the plan-folder layout and two skeletons: `plan.md` (header, source/DoD baseline, Mermaid + table task graph, milestones, closing block) and the per-task `NN-…md` file (header, hybrid structure + step checklist + definition of done).
 - [`references/checklist.md`](skills/spec-planner/references/checklist.md) — pre-handoff checklist: graph coherence, coverage, definition of done on every package, voice, cross-links.
+
+## done-certificates
+
+A task's definition of done is a claim; a **done certificate** is the verification protocol that proves it. This companion skill turns each task's `Definition of done` checklist into a task-specific [semi-formal reasoning](../reasoning-semiformally) certificate — premises, one obligation per DoD item, the exact evidence a validator must collect (file:line to read, tests to run, traces to produce) and checks to run, and a verdict rubric — with the status and verdict left blank. A *separate validating agent* later runs the protocol against the code to decide whether the task is done. The skill authors the certificate ("create a certificate of done for these tasks", "add done certificates to the plan"); it does not run the validation itself. spec-planner delegates to it to author one certificate per task package.
+
+The skill lives at [`skills/done-certificates/SKILL.md`](skills/done-certificates/SKILL.md):
+
+- [`references/certificate-template.md`](skills/done-certificates/references/certificate-template.md) — the certificate skeleton (definition, premises, obligations with evidence/checks/status, regression check, residue, conclusion), the verdict rubric, the blank-field conventions for hand-off to a validator, and a worked example of an authored (unverified) certificate.

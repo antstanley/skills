@@ -65,6 +65,16 @@ Run through this before declaring a plan done. It enforces the core principle (r
 
 ---
 
+## Done certificates
+
+Authoring done certificates is the **default** — included unless the user declined (prompted in an interactive session, auto-included otherwise; see the skill's Phase 4.5). This section applies **when certificates were authored**; if they were skipped, confirm `plan.md` records that they were not authored and move on.
+
+- [ ] **Every task file has a matching certificate** at `certificates/NN-snake_case_task.md`, the `NN` identical to the task it certifies, and every certificate maps back to a real task file.
+- [ ] Each certificate's **obligations are one-to-one with the task's `Definition of done`**, in the same order, the last obligation being the task's `Reviewable:` item.
+- [ ] **The certificate ↔ task links resolve both ways** — the certificate links up to `../NN-…md` and `../plan.md`; the task file header carries a `**Certificate:** [certificates/NN-…md](certificates/NN-…md)` line.
+- [ ] Each certificate is **authored, not discharged** — statuses are `☐ unverified` and `VERDICT`/`CONFIDENCE`/`SUMMARY` are blank. spec-planner does not run the validation; a separate agent does.
+- [ ] Each obligation names **specific evidence to collect** (file:line, a named test, a trace) rather than "verify it works", and the conclusion carries the verdict rubric.
+
 ## Voice
 
 - [ ] No emoji, no exclamation points.

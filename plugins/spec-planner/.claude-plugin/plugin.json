@@ -1,8 +1,8 @@
 {
   "name": "spec-planner",
   "version": "0.1.0",
-  "description": "Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done drawn from the repo's development guidelines.",
+  "description": "Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done drawn from the repo's development guidelines — and author a task-specific semi-formal done certificate that a validating agent runs to verify completion.",
   "author": { "name": "antstanley" },
   "repository": "https://github.com/antstanley/skills",
-  "keywords": ["spec", "planning", "implementation", "task-graph", "architecture"]
+  "keywords": ["spec", "planning", "implementation", "task-graph", "architecture", "done-certificate", "verification", "definition-of-done"]
 }

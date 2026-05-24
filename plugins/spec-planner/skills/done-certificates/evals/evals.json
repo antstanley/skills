@@ -1,0 +1,26 @@
+{
+  "skill_name": "done-certificates",
+  "evals": [
+    {
+      "id": 1,
+      "name": "author-certificates-for-a-plan",
+      "prompt": "We have a spec-planner plan at docs/plans/2026-05-22-implement_journal_app/ with task files 01-passphrase_lock.md … 06-export.md, each carrying a Definition of done checklist ending in a Reviewable: line. Add done certificates to the plan.",
+      "expected_output": "One authored, unverified certificate per task in docs/plans/2026-05-22-implement_journal_app/certificates/, named to mirror the task files (01-passphrase_lock.md … 06-export.md, NN matching each task). Each certificate has: a header linking up to ../NN-…md and ../plan.md with State: Authored YYYY-MM-DD — unverified, and a hand-off note saying a validating agent discharges it; a Definition block stating DONE(Task NN) as 'every obligation holds, backed by the evidence it names'; Premises P1 (goal from the task's Produces line), P2 (one obligation Oi per DoD item in order, the last being the Reviewable item), P3 (invariants/regression surface); an Obligations section with one block per DoD item, each carrying a Claim, an 'Evidence to collect' instruction (which file:line to read, which named test to run + expected result, which trace to produce — specific, not 'verify it works'), an optional task-specific Checks note (resolution/regression), and Status: ☐ unverified; a Regression check naming the downstream callers to trace, outcome blank; a Residue with out-of-DoD notes; and a Conclusion carrying the verdict rubric but with VERDICT/CONFIDENCE/SUMMARY left blank. Each task file gains a two-way **Certificate:** link in its header. The obligation list is one-to-one with the task's DoD checklist, in the same order. No status, evidence result, or verdict is pre-filled. Numbers mirror the task numbers (append-only). No emoji, no marketing words.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "standalone-certificate-from-acceptance-criteria",
+      "prompt": "Here is a ticket with acceptance criteria: 'Done when (1) POST /login returns 401 for a bad password, (2) successful login sets an httpOnly session cookie, (3) the rate limiter blocks a 6th attempt within a minute, (4) reviewable: a reviewer can log in via the UI and see the dashboard.' The implementation will live in src/routes/login.ts. Create a done certificate for this task.",
+      "expected_output": "A standalone authored certificate written to docs/certificates/<snake_case>.md (no plan folder), unverified. Obligations O1…O4 map one-to-one from the four acceptance criteria, O4 being the Reviewable item. Each obligation states a Claim and an 'Evidence to collect' instruction precise enough that any validator gathers the same evidence — e.g. O1: 'send POST /login with a wrong password, expect HTTP 401'; O2: 'on success, inspect the Set-Cookie header for HttpOnly'; O3: 'fire 6 attempts within 60s, expect the 6th blocked'; O4: 'log in via the UI and confirm the dashboard renders'. Task-specific Checks call out the auth/session calls to resolve. Status fields are ☐ unverified; the Conclusion carries the verdict rubric with VERDICT/CONFIDENCE/SUMMARY blank. The certificate does NOT itself run the checks or decide whether the rate limiter exists — it specifies how a validator would. It links to the ticket/source defining the DoD.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "refuses-to-validate-and-stays-in-authoring-scope",
+      "prompt": "Author a done certificate for task 04 (the editor) in docs/plans/2026-05-22-implement_journal_app/, and while you're at it just tell me whether it's done — mark the obligations satisfied if they look right.",
+      "expected_output": "The skill authors certificates/04-editor.md as an unverified protocol (obligations one-to-one with the task's DoD, each naming evidence to collect and checks to run, statuses ☐ unverified, verdict blank) but declines to pre-mark obligations as satisfied or to decide the verdict from the authoring step. It explains that authoring the certificate and running it are separate jobs: this skill writes the protocol; a validating agent (or an explicit, separate validation step) collects the evidence and derives the verdict per the rubric — a status is never set without its evidence, and DONE is never recorded with any non-SATISFIED obligation. If the user still wants validation now, the skill offers to do it as a distinct, clearly-marked follow-up step that actually reads the code and runs the tests, rather than guessing.",
+      "files": []
+    }
+  ]
+}

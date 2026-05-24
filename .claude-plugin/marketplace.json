@@ -22,7 +22,7 @@
     {
       "name": "spec-planner",
       "source": "./plugins/spec-planner",
-      "description": "Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done.",
+      "description": "Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done — and author a semi-formal done certificate per task for a validating agent to run.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
     },

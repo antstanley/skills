@@ -29,6 +29,7 @@ The boundaries between the companions:
 - **spec-creator** writes the spec (what exists / what will change). **spec-planner** plans how to build it.
 - **development-guidelines** writes the rules of the road, including the `Definition of done` section. spec-planner *reads* that section to derive each task's DoD; it does not write guidelines.
 - **spec-reviewer** checks specs against code. spec-planner may invoke it in Phase 1 (R2 / R3) to learn what is already built, so the plan does not re-plan finished work.
+- **done-certificates** turns a task's `Definition of done` into a task-specific semi-formal reasoning certificate — a verification protocol that a *separate* validating agent later runs to decide whether the task is done. spec-planner writes the DoD; done-certificates writes the protocol that proves it; a validator runs it. spec-planner may delegate to done-certificates after Phase 4 to author one certificate per task (see *Adding done certificates* below); it does not author certificates itself, and neither skill runs the validation.
 
 ## When to apply this skill
 
@@ -89,6 +90,10 @@ Follow the two skeletons in [`references/plan-template.md`](references/plan-temp
 
 Voice: future/imperative for the work ("add the session store", "the login route will validate…"). Past tense in Decisions, question form in Open questions. No marketing words, no emoji, no exclamation points — the same voice rules as spec-creator.
 
+### Phase 4.5 — Author done certificates (default; prompt when interactive)
+
+Done certificates are **on by default**: once the task files exist, delegate to **done-certificates** to author one certificate per task (see *Adding done certificates* below for the mechanics). In an **interactive session, prompt first** — confirm inclusion before authoring, defaulting to yes. In a **non-interactive run** (a batch invocation, a delegated call with no user to ask), include them without prompting unless the request said to skip them. Skip silently only when the user has already declined, or for a plan small enough that the certificates would be ceremony.
+
 ### Phase 5 — Cross-link and verify
 
 Mandatory, and easy to skip:
@@ -97,7 +102,8 @@ Mandatory, and easy to skip:
 2. **Verify every link resolves.** Spec-page links resolve from the plan folder (so `../../specs/foo.md` for a global page, `../../<app>/specs/NN-name.md` for a per-app page — note the extra `../` now that the plan sits one directory deeper). Each dependency-table row links to a real task file in the folder, and each task file's `Plan:` link points back at `plan.md`.
 3. **Verify the graph is coherent** — the Mermaid edges and the dependency table agree, every task number in the table has a matching `NN-…md` file and vice versa, and the DAG has no cycle.
 4. **Verify coverage** — every in-scope spec section maps to at least one task file, and every task file names the spec section it implements. Gaps go in `plan.md`'s Open questions, flagged to the user.
-5. **Run the checklist** at [`references/checklist.md`](references/checklist.md) before declaring the plan done.
+5. **Verify the done certificates** (when included) — every task file has a matching `certificates/NN-…md`, the obligations are one-to-one with the task's `Definition of done`, and the certificate ↔ task links resolve both ways. See the checklist's *Done certificates* section.
+6. **Run the checklist** at [`references/checklist.md`](references/checklist.md) before declaring the plan done.
 
 ## What NOT to do
 
@@ -109,6 +115,16 @@ Mandatory, and easy to skip:
 - **Don't put calendar dates or effort estimates in the body** unless asked. A plan sequences by dependency and reviewability; estimates are a separate concern and belong, if anywhere, in the closing block.
 - **Don't put task bodies in `plan.md`.** It holds the graph, the order, and the closing block; the hybrid package bodies live in the per-task `NN-…md` files. `plan.md` links to them.
 - **Don't renumber task files on edit.** Numbers are assigned in implementation order at authoring and are append-only afterward — a renumber breaks every cross-reference in the graph and table.
+
+## Adding done certificates
+
+A task's `Definition of done` is a *claim*; a **done certificate** is the *protocol that proves it* — a task-specific semi-formal reasoning certificate (premises, one obligation per DoD item, the evidence to collect and checks to run per obligation, and a verdict rubric) that the companion **done-certificates** skill authors. A *validating agent* later runs that protocol against the code to decide whether the task is done. The pieces fit together: spec-planner writes the DoD checklist; done-certificates writes the protocol; a validator discharges it.
+
+Authoring them is the **default** (Phase 4.5), not something to wait to be asked for. **In an interactive session, prompt for inclusion before authoring** — a single yes/no, defaulting to yes ("Author a done certificate per task? (default: yes)"); honour an explicit "no" by skipping. **In a non-interactive run**, include them without prompting unless the request said to skip. The user asking outright ("add done certificates", "certify the tasks") is just an explicit yes.
+
+When included, delegate to done-certificates after Phase 4. It authors **one certificate per task** into a `certificates/` subfolder of the plan folder (`docs/plans/YYYY-MM-DD-title/certificates/NN-…md`, numbered to mirror the tasks), with obligations drawn from each task's `Definition of done` and the evidence/checks named per obligation but the status and verdict left blank for a validator, and adds a two-way `**Certificate:**` link to each task file's header. As each task is built, a separate validating agent (not spec-planner and not done-certificates) opens its certificate and discharges it. spec-planner still owns the plan and its Phase 5 cross-link pass; done-certificates owns the `certificates/` subfolder.
+
+If certificates are skipped, the Phase 5 *Done certificates* checklist section does not apply — note in `plan.md` that certificates were not authored so a later pass can add them.
 
 ## When invoked by spec-creator
 
