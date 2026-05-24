@@ -16,21 +16,21 @@ A certificate is therefore a checkable, task-specific contract: a validator foll
 
 ## Core principle
 
-**A definition of done is a claim; a done certificate is the protocol that proves or refutes it.** A spec-planner task ends in a `Definition of done` checklist — a list of obligations stated as boxes to tick. Ticking them by hand is an assertion. This skill turns that checklist into a semi-formal certificate where each obligation names *the evidence required* (a file location to read, a test to run, an execution trace to produce) and *the checks that apply* (function resolution to defeat name shadowing, a regression trace against named callers). The discipline is the one from the [`reasoning-semiformally`](../../../reasoning-semiformally/skills/reasoning-semiformally/SKILL.md) skill — structured templates that act as certificates: the agent running them cannot skip cases or make unsupported claims.
+**A definition of done is a claim; a done certificate is the protocol that proves or refutes it.** A spec-planner task ends in a `Definition of done` checklist — a list of obligations stated as boxes to tick. Ticking them by hand is an assertion. This skill turns that checklist into a semi-formal certificate where each obligation names *the evidence required* (a file location to read, a test to run, an execution trace to produce) and *the checks that apply* (function resolution to defeat name shadowing, a regression trace against named callers). The discipline is **semi-formal reasoning** — structured templates that act as certificates: the agent running them cannot skip cases or make unsupported claims. The method is vendored into this skill at [`references/semiformal-method.md`](references/semiformal-method.md).
 
 Two rules follow:
 
 1. **Every definition-of-done item becomes one obligation that names its own evidence.** The certificate does not say "verify the lock works"; it says "verify O1 by running `lock.test.ts › rejects wrong passphrase` and tracing `unlock()` at `src/auth/lock.ts`, confirming it returns before `vault.unlock()`." The obligation is specific enough that any validator collects the *same* evidence.
 2. **The certificate is authored blank and discharged by someone else.** Status fields are `☐ unverified` and the verdict is empty when this skill hands the certificate over. Filling them is the validator's job, governed by the rubric the certificate carries. This skill never fabricates evidence or pre-decides the verdict.
 
-This skill applies semi-formal reasoning (see the referenced paper and the procedural templates in [`reasoning-semiformally`'s `haiku.md`](../../../reasoning-semiformally/skills/reasoning-semiformally/haiku.md)) to the question *"how would an agent prove this specific task is done?"* — and writes that proof obligation down so the agent can.
+This skill applies semi-formal reasoning (the certificate shape and the function-resolution and regression checkpoints, all in [`references/semiformal-method.md`](references/semiformal-method.md)) to the question *"how would an agent prove this specific task is done?"* — and writes that proof obligation down so the agent can.
 
-## Relationship to spec-planner and reasoning-semiformally
+## Relationship to spec-planner
 
 This skill is a companion to **spec-planner**. spec-planner produces task packages, each carrying a `Definition of done` checklist that ends in a `Reviewable:` line. done-certificates consumes that checklist and writes the certificate that a validator uses to discharge it.
 
 - **spec-planner** writes *what done means* for each task (the DoD checklist). **done-certificates** writes *the protocol to prove it* (the certificate). A *validating agent* (a subagent, a reviewer, a later session) *runs* the protocol.
-- **reasoning-semiformally** supplies the *reasoning method* — the premise/claim/evidence/verdict structure and the function-resolution and regression checkpoints. A done certificate is that method instantiated for one task's definition of done. Read its `SKILL.md` and, for the full procedural templates and worked examples, its `haiku.md` — the certificate you author tells the validator to run those exact procedures.
+- The **semi-formal reasoning method** — the premise/claim/evidence/verdict structure and the function-resolution and regression checkpoints — is vendored into this skill at [`references/semiformal-method.md`](references/semiformal-method.md), so the skill is self-contained when installed. A done certificate is that method instantiated for one task's definition of done; the certificate you author tells the validator to run those exact procedures.
 
 It is not limited to spec-planner output. Any task with a definition of done — an issue with acceptance criteria, a PRD feature with a "done when" list, a checklist in a ticket — can have a certificate authored for it. The source of the obligations shapes how you read them; the certificate structure is the same.
 
@@ -122,4 +122,5 @@ The certificates then ship with the plan as the per-task validation contracts: w
 
 ## Reference files
 
+- [`references/semiformal-method.md`](references/semiformal-method.md) — The vendored semi-formal reasoning method: the certificate shape (definition / premises / claims / evidence / conclusion), the function-resolution checkpoint (the 5-step name-resolution sequence), the execution-trace and regression checks, and the verdict rubric. The self-contained basis for everything this skill writes. Read first.
 - [`references/certificate-template.md`](references/certificate-template.md) — The done-certificate skeleton (definition, premises, obligations with evidence/checks/status, regression check, residue, conclusion with the verdict rubric), the blank-field conventions for hand-off to a validator, and a worked example of an authored (unverified) certificate. Read before Phase 2.

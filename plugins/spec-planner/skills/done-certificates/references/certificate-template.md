@@ -1,6 +1,6 @@
 # Done certificate template
 
-A done certificate is a **semi-formal reasoning certificate** that serves as a task-specific *verification protocol*. This skill **authors** it; a separate **validating agent** runs it. It restates each definition-of-done item as a proof obligation, names the evidence a validator must collect and the checks it must run, and leaves the status and verdict blank — the same premise → claim → evidence → conclusion shape used in [`reasoning-semiformally`'s `haiku.md`](../../../../reasoning-semiformally/skills/reasoning-semiformally/haiku.md) Template 1 (patch verification), pointed at a task's definition of done instead of a diff.
+A done certificate is a **semi-formal reasoning certificate** that serves as a task-specific *verification protocol*. This skill **authors** it; a separate **validating agent** runs it. It restates each definition-of-done item as a proof obligation, names the evidence a validator must collect and the checks it must run, and leaves the status and verdict blank — the premise → claim → evidence → conclusion shape and the function-resolution and regression checkpoints defined in [`semiformal-method.md`](semiformal-method.md), pointed at a task's definition of done instead of a diff.
 
 Read this before Phase 2 and adapt it to the task — do not paste it verbatim.
 
