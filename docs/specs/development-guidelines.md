@@ -18,9 +18,10 @@ The tools actually in use. Each is wired into the repo today; planned-but-unwire
 | uv | latest | package manager and runner; dependencies locked in `uv.lock`, run via `uv run …` |
 | Ruff | latest (`>=0.6`) | linter and formatter both; lint rule set `E, F, I, UP, B` (`[tool.ruff.lint]`) |
 | pytest | latest (`>=8.0`) | test runner; `testpaths = ["benchmark/tests"]` |
+| pyright | latest (`>=1.1.409`) | type checker, standard mode (`[tool.pyright]`); checks library code, excludes the test suite and the bundled fixture repo |
 | jujutsu (`jj`) | latest | version-control front end (see [Version control](#version-control)) |
 
-Pervasive coding style: **Clean Code** (below).
+Pervasive coding style: **Clean Code** (below). The format / lint / type-check / test gate is run by a pre-push hook and by CI (see [Repository hygiene](#repository-hygiene)).
 
 ---
 
@@ -113,7 +114,7 @@ This repo is jj-managed (`.jj/` present; a `.git/` backend also exists, but `jj`
 
 - The formatter (`uv run ruff format`) runs clean before commit; it owns line length and layout.
 - The linter (`uv run ruff check`) runs clean before commit with warnings treated as errors; the rule set (`E, F, I, UP, B`) is declared in `pyproject.toml`.
-- Public functions are type-annotated (below); a strict type checker is a planned gate (Open questions), not yet wired.
+- The type checker (`uv run pyright`, standard mode) runs clean before push and in CI; it checks the library code, with the test suite and the bundled fixture repo excluded.
 
 ### Code style
 
@@ -157,7 +158,8 @@ This repo is jj-managed (`.jj/` present; a `.git/` backend also exists, but `jj`
 - **`docs/`** is the canonical home for specs, change specs, and plans.
 - **Per-task isolated workspaces** (jj workspaces / git worktrees) live as siblings *outside* the main tree, never nested inside it.
 - **Local, untracked operator data** lives in a gitignored directory; never commit environment-specific config or secrets.
-- **Before a change is pushed**, the formatter, the linter, and the test suite pass locally. Clean Code leans on the test suite as its safety net — keep it fast and green. (Mechanical enforcement via a pre-push hook and CI is a planned gate; see Open questions.)
+- **A pre-push hook** (`.githooks/pre-push`, enabled per clone with `git config core.hooksPath .githooks`) runs `scripts/check.sh` — `uv sync --frozen`, format-check, lint, type-check, and the test suite — before a push. **CI** (`.github/workflows/ci.yml`) re-runs the same `scripts/check.sh` on every push and pull request and is the authoritative gate. `jj git push` pushes through jj and bypasses git hooks, so when pushing with jj run `scripts/check.sh` locally first; CI catches it regardless. Clean Code leans on the test suite as its safety net — keep it fast and green.
+- **One check script, two callers.** `scripts/check.sh` is the single source of truth for the gate; the hook and CI both invoke it, so local and CI runs are identical.
 - **The canonical schema is hand-authored authority**, not generated: `canonical-types.schema.json` is the source of truth that the domain types validate against, and a test asserts the in-memory schema equals the on-disk file.
 
 ---
@@ -186,7 +188,7 @@ A change is done when:
 - No duplicated logic was introduced.
 - Magic numbers are named constants.
 - Errors are raised with context; no `None` is returned or passed for a domain value.
-- The Python formatter (`uv run ruff format --check`), linter (`uv run ruff check`), and test runner (`uv run pytest`) all pass locally.
+- The Python formatter (`uv run ruff format --check`), linter (`uv run ruff check`), type checker (`uv run pyright`), and test runner (`uv run pytest`) all pass locally — equivalently, `scripts/check.sh` passes — and CI is green.
 - If domain types changed, `canonical-types.schema.json` is updated and every record still validates against it.
 - The commit description states the *why*, with a Conventional Commits subject.
 
@@ -205,9 +207,11 @@ A change is done when:
 - *Ruff as both linter and formatter.* **One tool, rule set `E, F, I, UP, B`.** A single fast tool covering format and lint keeps the pre-commit loop short; the rule set is declared in `pyproject.toml` rather than left to defaults.
 - *Named constants for every limit.* **No magic numbers.** The harness already routes pool size, timeouts, temp-dir bases, and ID prefixes through named constants, so the rule reflects current practice.
 - *jj is the version-control front end.* **`.jj/` over the `.git/` backend.** Both directories exist; describing the git workflow would tell contributors to run `git commit` against a jj working copy, the mismatch these rules exist to prevent.
+- *pyright in standard mode, not strict.* **Standard mode over the library code.** The JSON-Schema validation dependency (`jsonschema`) ships no complete type stubs, so strict mode flags its untyped surface; standard mode checks the repo's own code cleanly without scattering suppressions around a third-party boundary. The test suite and the bundled fixture repo are excluded (tests use duck-typed fakes and protected access by design; the fixture repo is sample data checked out at runtime).
+- *One check script behind the hook and CI.* **`scripts/check.sh` is the single gate, run by both.** Keeping local and CI checks identical avoids drift; CI is authoritative because `jj git push` bypasses git hooks.
 
 **Open questions**
 
-- *Strict type checker not yet wired.* The code annotates public surfaces, but no `mypy` or `pyright` runs in the repo. Should a strict checker be added to `pyproject.toml` and the pre-push gate, and which one? Until then "type-check passes" is a guideline followed by hand, not an enforced gate.
-- *No enforcement hooks or CI.* The format / lint / test discipline and Conventional Commits are followed by convention; there is no pre-push hook or CI pipeline running them. Should a pre-push hook and a CI workflow be added so the gates are mechanical rather than manual?
+- *Tightening to strict typing.* Should the JSON-Schema boundary be wrapped in a typed adapter so the library can move from `pyright` standard to strict, and should the test suite then be type-checked too (currently excluded)?
+- *Commit-message enforcement.* Conventional Commits is followed by convention; there is no `commit-msg` hook or CI check validating the subject line. Should one be added?
 - *Per-app deltas.* If the benchmark harness later needs a stricter limit or an extra tool than the repo-wide rules, does it warrant a per-app `docs/benchmark/specs/NN-development.md` that opens with a Read-first pointer and documents only the deltas?

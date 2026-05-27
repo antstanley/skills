@@ -17,6 +17,7 @@ packages = ["benchmark"]
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.409",
     "pytest>=8.0",
     "ruff>=0.6",
 ]
@@ -31,3 +32,9 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+include = ["benchmark"]
+exclude = ["benchmark/tests", "benchmark/suites/local-fixture/repo", "**/__pycache__"]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"

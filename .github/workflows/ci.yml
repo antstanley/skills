@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run checks (format, lint, type-check, tests)
+        # check.sh runs `uv sync --frozen`, which provisions Python 3.13 per
+        # .python-version, then ruff format --check, ruff check, pyright, pytest.
+        run: ./scripts/check.sh

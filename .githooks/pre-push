@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Git pre-push hook: run the repo checks before a push is allowed.
+#
+# Enable once per clone with:
+#     git config core.hooksPath .githooks
+#
+# Note: `jj git push` pushes through jj's own machinery and does NOT run git
+# hooks, so this hook guards direct `git push` only. The authoritative gate is
+# CI (.github/workflows/ci.yml), which runs the same scripts/check.sh. When
+# pushing with jj, run `scripts/check.sh` first (or rely on CI).
+set -euo pipefail
+exec "$(git rev-parse --show-toplevel)/scripts/check.sh"
