@@ -43,6 +43,11 @@ branches):
 
 - the ``agent`` solver-mode slug (``DEFAULT_SOLVER``) or the A0 ``Arm`` record →
   the PLAIN A0 agent path (no plugins, single ``claude -p``);
+- the A4 ``Arm`` record (``A4_SLUG``) → the NAIVE N-WAY PARALLEL path
+  (``_run_a4``): N plain agents (no plugins) run concurrently on the same problem
+  with a coordination-free framing, their per-agent diffs combined by a NAIVE
+  merge that RECORDS (not resolves) conflicts. A4 is matched dispatch-FIRST over
+  the A0 path because A4, like A0, is a no-plugin/gates-off/no-spec ``Arm``.
 - a WORKFLOW arm — A1, A2, or A3 (``_WORKFLOW_ARM_SLUGS``) → ONE parameterized
   ``spec-*`` workflow path (``_run_workflow_arm``) that reads the arm's
   ``_WorkflowArmConfig``: which ``spec-*`` plugins to read-only mount and load
@@ -66,7 +71,8 @@ import shutil
 import subprocess
 import tempfile
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -101,6 +107,13 @@ from benchmark.harness.arms.a2_a3 import (
     a3_prompt,
     extract_gate_events,
 )
+from benchmark.harness.arms.a4 import (
+    A4_MODEL,
+    A4_N,
+    A4_PER_AGENT_MAX_BUDGET_USD,
+    A4_SLUG,
+    a4_slice_prompt,
+)
 from benchmark.harness.backends.interfaces import CandidatePatch
 from benchmark.harness.domain import (
     ARTIFACT_BUNDLE_ID_PREFIX,
@@ -109,6 +122,7 @@ from benchmark.harness.domain import (
     ArtifactBundle,
     GateEvent,
     TaskInstance,
+    Telemetry,
     new_record_id,
 )
 from benchmark.harness.telemetry import telemetry_from_agent_result
@@ -211,6 +225,38 @@ _ARTIFACT_RECORD_SEP = "\x1e"  # ASCII record separator
 #: records (A2/A3 differ from A1 only in config, not in being plugin arms).
 _WORKFLOW_ARM_SLUGS: frozenset[str] = frozenset({A1_SLUG, A2_SLUG, A3_SLUG})
 
+#: Wall-clock ceiling (seconds) for each of A4's N parallel agent runs. Reuses
+#: the plain-agent bound (A4 agents are plain ``claude -p`` like A0, just N of
+#: them concurrently). The N agents run in parallel, so the arm's wall clock is
+#: ~one agent's, not N times it.
+A4_AGENT_RUN_TIMEOUT_SECONDS = AGENT_RUN_TIMEOUT_SECONDS
+
+#: The naive merge applies each agent's diff against the SAME base commit in
+#: agent-index order with a PLAIN ``git apply`` (atomic — see
+#: :meth:`ContainerRunBackend._try_apply_agent_diff` for why NOT ``--3way``). An
+#: agent diff that does NOT apply cleanly on top of what is already merged is a
+#: CONFLICT: it is RECORDED (which agent, the apply stderr) and SKIPPED — A4 has
+#: no structure to resolve it well, and surfacing the conflict is the point. The
+#: first agent whose diff applies seeds the merged tree; later conflicting agents
+#: are dropped, not force-merged. This header keys the merge-conflict record in
+#: the transcript so a reviewer can see the naive-merge outcome without re-running.
+_A4_MERGE_CONFLICT_NOTE = "A4 naive-merge conflict record"
+
+
+@dataclass(frozen=True)
+class _A4AgentResult:
+    """One A4 parallel agent's outcome: its result JSON and its per-agent diff.
+
+    ``patch`` is the empty string when the agent produced no diff (or failed —
+    in which case ``result_json`` carries an ``error`` marker). ``agent_index``
+    is 0-based, the agent's slot in the N-way split (used to order the naive merge
+    and to label conflicts).
+    """
+
+    agent_index: int
+    result_json: dict[str, object]
+    patch: str
+
 
 @dataclass(frozen=True)
 class _WorkflowArmConfig:
@@ -308,6 +354,10 @@ class ContainerRunBackend:
         #: GateEvents extracted from the last workflow run's certificates (A1/A2
         #: discharge them; A3 does not). Read via :attr:`last_gate_events`.
         self._last_gate_events: list[GateEvent] = []
+        #: Naive-merge conflict records from the LAST A4 run (one per agent whose
+        #: diff did not apply cleanly onto the merged tree). Read via
+        #: :attr:`last_merge_conflicts`. Empty for non-A4 paths or a clean merge.
+        self._last_merge_conflicts: list[dict[str, object]] = []
 
     def run(
         self, instance: TaskInstance, arm_or_solver: object
@@ -333,13 +383,15 @@ class ContainerRunBackend:
         if self._selects_workflow(arm_or_solver):
             assert isinstance(arm_or_solver, Arm)  # narrowed by _selects_workflow
             return self._run_workflow_arm(instance, _workflow_config_for(arm_or_solver))
+        if self._selects_a4(arm_or_solver):
+            return self._run_a4(instance)
         if self._selects_agent(arm_or_solver):
             return self._run_a0(instance)
         raise NotImplementedError(
             "ContainerRunBackend runs the agent solver "
-            f"({AGENT_SOLVER!r}), the A0 arm, or a workflow arm "
-            f"({sorted(_WORKFLOW_ARM_SLUGS)}); got {arm_or_solver!r}. The fixture "
-            "solver is the local backend's job."
+            f"({AGENT_SOLVER!r}), the A0 arm, a workflow arm "
+            f"({sorted(_WORKFLOW_ARM_SLUGS)}), or the A4 arm ({A4_SLUG}); got "
+            f"{arm_or_solver!r}. The fixture solver is the local backend's job."
         )
 
     def _run_a0(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
@@ -372,6 +424,255 @@ class ContainerRunBackend:
             transcript=json.dumps(result_json, sort_keys=True),
         )
         return bundle, candidate_patch
+
+    def _run_a4(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
+        """Run the A4 naive N-way parallel path and NAIVE-merge the N outputs.
+
+        Provisions :data:`A4_N` INDEPENDENT plain-agent containers (NO plugins,
+        like A0), one per parallel agent, each with its OWN writable creds copy and
+        its OWN base commit, and runs them CONCURRENTLY (a thread per agent — real
+        parallelism). Every agent gets the IDENTICAL problem statement plus the
+        fixed coordination-free framing (the pinned naive split) under the matched
+        per-agent budget (:data:`A4_PER_AGENT_MAX_BUDGET_USD` == A1 cap / N), so the
+        N-way parallelism SPEND is budget-matched to A1's single run.
+
+        Each agent's per-agent diff is extracted, then the N diffs are combined by
+        the NAIVE merge (:meth:`_naive_merge_patches`): apply each in agent-index
+        order against a fresh base; an agent diff that does not apply cleanly is
+        RECORDED as a conflict and SKIPPED (A4 has no structure to resolve it). The
+        merged diff is the single ``candidatePatch``. Telemetry is AGGREGATED across
+        the N agents (tokens/cost/turns SUMMED; wall clock = the parallel arm's wall
+        clock, i.e. the slowest agent ≈ max, NOT the sum — the agents ran at once).
+        The conflict record rides in the bundle transcript and on
+        :attr:`last_merge_conflicts`.
+        """
+        self._require_docker_and_creds()
+        image = self._resolve_image(instance)
+
+        started = time.monotonic()
+        agent_results = self._run_agents_in_parallel(instance, image)
+        wall_clock_seconds = time.monotonic() - started
+
+        per_agent_diffs = [r.patch for r in agent_results]
+        merged_patch, conflicts = self._naive_merge_patches(image, per_agent_diffs)
+        self._last_merge_conflicts = conflicts
+
+        result_jsons = [r.result_json for r in agent_results]
+        telemetry = _aggregate_a4_telemetry(result_jsons, wall_clock_seconds)
+        transcript = json.dumps(
+            {
+                "arm": A4_SLUG,
+                "agentCount": A4_N,
+                "perAgentResults": result_jsons,
+                _A4_MERGE_CONFLICT_NOTE: conflicts,
+            },
+            sort_keys=True,
+        )
+        bundle = ArtifactBundle(
+            id=new_record_id(ARTIFACT_BUNDLE_ID_PREFIX),
+            trial=self._trial_id,
+            telemetry=telemetry,
+            transcript=transcript,
+        )
+        return bundle, merged_patch
+
+    def _run_agents_in_parallel(
+        self, instance: TaskInstance, image: str
+    ) -> list[_A4AgentResult]:
+        """Run A4's :data:`A4_N` plain agents CONCURRENTLY; return per-agent results.
+
+        Each agent runs in its OWN fresh container with its OWN creds copy and base
+        commit, on its OWN slice prompt under the matched per-agent budget. A thread
+        per agent gives real parallelism. Returns a list (one :class:`_A4AgentResult`
+        per agent, in AGENT-INDEX order). An agent that fails its own run records an
+        empty patch + an error marker rather than aborting the whole arm (a
+        structure-less arm tolerates partial agents) — the record makes that honest.
+        """
+        prompt = instance.problemStatement
+        results: list[_A4AgentResult | None] = [None] * A4_N
+
+        def run_one(idx: int) -> None:
+            results[idx] = self._run_single_a4_agent(image, prompt, idx)
+
+        with ThreadPoolExecutor(max_workers=A4_N) as pool:
+            futures = [pool.submit(run_one, i) for i in range(A4_N)]
+            for future in futures:
+                future.result()
+        # All slots filled by run_one (it never returns None into the slot).
+        return [r for r in results if r is not None]
+
+    def _run_single_a4_agent(
+        self, image: str, problem_statement: str, agent_index: int
+    ) -> _A4AgentResult:
+        """Provision ONE A4 agent container, run it, and extract its diff.
+
+        Agent ``agent_index`` is 0-based here; the prompt is built 1-based for
+        human-facing "agent i of N" framing. On any per-agent failure the result
+        carries an empty patch and an ``error`` marker so the arm continues with
+        the agents that did finish (honest partial parallelism).
+        """
+        creds_dir = Path(tempfile.mkdtemp(prefix="benchmark-creds-a4-"))
+        container_id: str | None = None
+        try:
+            self._stage_credentials(creds_dir)
+            container_id = self._start_container(image, creds_dir)
+            self._make_base_commit(container_id)
+            self._auth_probe(container_id)
+            prompt = a4_slice_prompt(
+                problem_statement, agent_index=agent_index + 1, agent_count=A4_N
+            )
+            result_json = self._run_a4_agent(container_id, prompt)
+            patch = self._extract_patch(container_id) or ""
+            return _A4AgentResult(
+                agent_index=agent_index, result_json=result_json, patch=patch
+            )
+        except ContainerRunError as exc:
+            return _A4AgentResult(
+                agent_index=agent_index,
+                result_json={"error": str(exc)},
+                patch="",
+            )
+        finally:
+            if container_id is not None:
+                self._remove_container(container_id)
+            shutil.rmtree(creds_dir, ignore_errors=True)
+
+    def _run_a4_agent(self, container_id: str, prompt: str) -> dict[str, object]:
+        """Run ONE plain A4 agent to completion under the per-agent budget.
+
+        Identical to the A0 plain agent (NO ``--plugin-dir``, NO ``spec-*``) except
+        the budget is the matched per-agent slice :data:`A4_PER_AGENT_MAX_BUDGET_USD`
+        and the timeout is :data:`A4_AGENT_RUN_TIMEOUT_SECONDS`.
+        """
+        command = (
+            f"cd {IMAGE_WORKDIR}; "
+            f"claude -p {_shell_quote(prompt)} "
+            f"--model {A4_MODEL} --permission-mode bypassPermissions "
+            f"--max-budget-usd {A4_PER_AGENT_MAX_BUDGET_USD} --output-format json"
+        )
+        result = subprocess.run(
+            ["docker", "exec", container_id, "sh", "-c", command],
+            capture_output=True,
+            text=True,
+            timeout=A4_AGENT_RUN_TIMEOUT_SECONDS,
+        )
+        if result.returncode != _CLAUDE_EXIT_OK:
+            raise ContainerRunError(
+                f"A4 agent run failed (exit {result.returncode}).\n"
+                f"stdout: {result.stdout}\nstderr: {result.stderr}"
+            )
+        try:
+            parsed = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise ContainerRunError(
+                f"could not parse claude --output-format json result:\n{result.stdout}"
+            ) from exc
+        if not isinstance(parsed, dict):
+            raise ContainerRunError(f"claude result JSON was not an object: {parsed!r}")
+        return parsed
+
+    def _naive_merge_patches(
+        self, image: str, per_agent_diffs: list[str]
+    ) -> tuple[CandidatePatch, list[dict[str, object]]]:
+        """NAIVELY merge the N per-agent diffs into one patch; RECORD conflicts.
+
+        Spins up a fresh throwaway container from ``image`` with a base commit, then
+        applies each non-empty agent diff in AGENT-INDEX order with a PLAIN ``git
+        apply``. A diff that applies cleanly is folded into the merged tree (and
+        committed so the next apply sees it). A diff that does NOT apply is a
+        CONFLICT: it is RECORDED (agent index, the apply stderr) and SKIPPED — A4
+        has no structure to resolve overlapping edits, so it does NOT force-merge or
+        cleverly reconcile; the first-applied agent wins the overlap and later
+        conflicting agents are dropped. The merged ``candidatePatch`` is the final
+        diff of the accumulated tree against the base. Returns ``(patch, conflicts)``;
+        ``conflicts`` is empty on a clean merge (no overlap). An all-empty input
+        yields a no-op patch (``None``) and no conflicts.
+        """
+        if not any(d and d.strip() for d in per_agent_diffs):
+            return None, []
+
+        creds_dir = Path(tempfile.mkdtemp(prefix="benchmark-creds-a4merge-"))
+        container_id: str | None = None
+        try:
+            self._stage_credentials(creds_dir)
+            container_id = self._start_container(image, creds_dir)
+            self._make_base_commit(container_id)
+            cid = container_id  # narrowed for the closures
+            return _run_naive_merge(
+                per_agent_diffs,
+                apply_diff=lambda diff: self._try_apply_agent_diff(cid, diff),
+                commit_step=lambda idx: self._commit_merged_step(cid, idx),
+                extract_merged=lambda: self._extract_merged_patch(cid),
+            )
+        finally:
+            if container_id is not None:
+                self._remove_container(container_id)
+            shutil.rmtree(creds_dir, ignore_errors=True)
+
+    def _try_apply_agent_diff(
+        self, container_id: str, diff: str
+    ) -> subprocess.CompletedProcess[str]:
+        """PLAIN ``git apply`` one agent diff in the merge container (no raise).
+
+        Returns the completed process so the caller decides clean vs conflict.
+        Uses a PLAIN ``git apply`` (NOT ``--3way``) ON PURPOSE: a plain apply is
+        ATOMIC — on an overlap it fails (non-zero exit) and makes NO change to the
+        worktree, so the conflicting agent is cleanly skipped. ``--3way`` would
+        instead write ``<<<<<<<``/``>>>>>>>`` CONFLICT MARKERS into the files and
+        still exit non-zero, polluting the merged patch with un-applyable markers —
+        exactly the bug the first live A4 run surfaced. A clean apply ``--index``
+        stages the change so the running merge accumulates; ``--whitespace=nowarn``
+        keeps benign whitespace from being treated as a failure.
+        """
+        command = f"cd {IMAGE_WORKDIR}; git apply --index --whitespace=nowarn -"
+        return subprocess.run(
+            ["docker", "exec", "-i", container_id, "sh", "-c", command],
+            input=diff,
+            capture_output=True,
+            text=True,
+            timeout=SETUP_TIMEOUT_SECONDS,
+        )
+
+    def _commit_merged_step(self, container_id: str, agent_index: int) -> None:
+        """Stage + commit the cleanly-applied agent diff so the next apply sees it."""
+        command = (
+            f"set -e; cd {IMAGE_WORKDIR}; git add -A; "
+            f"git -c user.email={_GIT_USER_EMAIL} -c user.name={_GIT_USER_NAME} "
+            f"commit -q -m _a4_merge_agent_{agent_index} --allow-empty"
+        )
+        self._exec(container_id, command, SETUP_TIMEOUT_SECONDS, "commit A4 merge step")
+
+    def _extract_merged_patch(self, container_id: str) -> CandidatePatch:
+        """The merged A4 candidate patch = diff of the BASE commit tag against HEAD.
+
+        Each cleanly-applied agent diff is COMMITTED by :meth:`_commit_merged_step`,
+        so HEAD has moved past the base; the merged patch is therefore the diff
+        ``benchmark-base..HEAD`` (NOT the staged index vs HEAD, which is empty after
+        the commits). Returns ``None`` for an empty diff (no agent applied).
+        """
+        command = f"cd {IMAGE_WORKDIR}; git diff {_BASE_COMMIT_TAG} HEAD"
+        result = subprocess.run(
+            ["docker", "exec", container_id, "sh", "-c", command],
+            capture_output=True,
+            text=True,
+            timeout=SETUP_TIMEOUT_SECONDS,
+        )
+        if result.returncode != 0:
+            raise ContainerRunError(
+                f"failed to extract merged A4 patch:\n{result.stderr}"
+            )
+        diff = result.stdout
+        return diff if diff.strip() else None
+
+    @property
+    def last_merge_conflicts(self) -> list[dict[str, object]]:
+        """Naive-merge conflict records from the LAST A4 run (empty otherwise).
+
+        One entry per agent whose diff did not apply cleanly onto the merged tree,
+        ``{"agentIndex", "stderr"}``. Populated by :meth:`_run_a4`; empty for the
+        A0/workflow paths, before any A4 run, or on a clean (no-overlap) merge.
+        """
+        return list(self._last_merge_conflicts)
 
     def _run_workflow_arm(
         self, instance: TaskInstance, config: _WorkflowArmConfig
@@ -506,6 +807,18 @@ class ContainerRunBackend:
         return (
             isinstance(arm_or_solver, Arm) and arm_or_solver.slug in _WORKFLOW_ARM_SLUGS
         )
+
+    @staticmethod
+    def _selects_a4(arm_or_solver: object) -> bool:
+        """Whether ``arm_or_solver`` selects the A4 naive-parallel path.
+
+        Routes BY SLUG against :data:`A4_SLUG`. A4 is, like A0, a no-plugin /
+        gates-off / no-spec ``Arm`` record, so it would otherwise match
+        :meth:`_selects_agent` (which accepts the A0 record) — dispatching by the
+        A4 slug FIRST is what keeps A4 on its own N-way parallel path instead of
+        the single-agent A0 path.
+        """
+        return isinstance(arm_or_solver, Arm) and arm_or_solver.slug == A4_SLUG
 
     def _resolve_image(self, instance: TaskInstance) -> str:
         """Return the AGENT RUN image tag for ``instance``, building if needed."""
@@ -918,6 +1231,76 @@ class ContainerRunBackend:
             text=True,
             timeout=SETUP_TIMEOUT_SECONDS,
         )
+
+
+def _run_naive_merge(
+    per_agent_diffs: Sequence[str],
+    *,
+    apply_diff: Callable[[str], subprocess.CompletedProcess[str]],
+    commit_step: Callable[[int], None],
+    extract_merged: Callable[[], CandidatePatch],
+) -> tuple[CandidatePatch, list[dict[str, object]]]:
+    """The PURE naive-merge loop (substrate injected so it is testable off-Docker).
+
+    Applies each non-empty agent diff in AGENT-INDEX order via ``apply_diff``. A
+    clean apply (returncode 0) is committed via ``commit_step`` so the next diff
+    sees it; a non-clean apply is RECORDED as a conflict (``{"agentIndex",
+    "stderr"}``) and SKIPPED — A4 does NOT resolve overlapping edits, the
+    first-applied agent wins and later conflicting agents are dropped. The merged
+    patch (``extract_merged``) is returned only if at least one diff applied; an
+    all-empty input yields ``(None, [])``. The same loop drives the live container
+    merge and the off-Docker unit test (which injects a real local-git applier).
+    """
+    conflicts: list[dict[str, object]] = []
+    nonempty = [(i, d) for i, d in enumerate(per_agent_diffs) if d and d.strip()]
+    if not nonempty:
+        return None, conflicts
+    applied_any = False
+    for agent_index, diff in nonempty:
+        applied = apply_diff(diff)
+        if applied.returncode == 0:
+            applied_any = True
+            commit_step(agent_index)
+        else:
+            conflicts.append(
+                {"agentIndex": agent_index, "stderr": applied.stderr.strip()}
+            )
+    merged = extract_merged() if applied_any else None
+    return merged, conflicts
+
+
+def _aggregate_a4_telemetry(
+    result_jsons: Sequence[Mapping[str, object]], wall_clock_seconds: float
+) -> Telemetry:
+    """AGGREGATE the N A4 agents' result JSONs into ONE :class:`Telemetry`.
+
+    Tokens, cost, and turns are SUMMED across the N agents (the arm's total spend
+    is what is budget-matched to A1). The wall clock is the PARALLEL arm's measured
+    wall clock — the agents ran CONCURRENTLY, so the arm took roughly the slowest
+    agent's time, not the sum; ``wall_clock_seconds`` is that measured parallel
+    elapsed (passed in by :meth:`ContainerRunBackend._run_a4`). This is the
+    documented choice: SUM the resource counters, take the PARALLEL wall clock.
+    Each per-agent JSON is mapped through the arm-agnostic
+    :func:`telemetry_from_agent_result` first (per-agent wall clock is irrelevant
+    to the summed counters and is set to 0 before the arm-level clock is applied).
+    """
+    input_tokens = 0
+    output_tokens = 0
+    cost_usd = 0.0
+    agent_turns = 0
+    for result_json in result_jsons:
+        per_agent = telemetry_from_agent_result(result_json, 0.0)
+        input_tokens += per_agent.inputTokens
+        output_tokens += per_agent.outputTokens
+        cost_usd += per_agent.costUsd
+        agent_turns += per_agent.agentTurns
+    return Telemetry(
+        inputTokens=input_tokens,
+        outputTokens=output_tokens,
+        costUsd=cost_usd,
+        wallClockSeconds=max(0.0, float(wall_clock_seconds)),
+        agentTurns=agent_turns,
+    )
 
 
 def _shell_quote(text: str) -> str:
