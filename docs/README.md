@@ -20,7 +20,11 @@ App- or component-specific design, layered on the global specs.
 
 Proposed deltas to canonical specs (`Proposed → Accepted → Implemented → Merged`); merged ones move to a `changes/merged/` area.
 
-- [benchmark/specs/changes/2026-05-27-local_backends.md](benchmark/specs/changes/2026-05-27-local_backends.md) — *Accepted.* Pluggable run/scoring backends (`container` + `local`) and a `local-fixture` suite, so the harness builds and runs without Docker.
+Pending: none.
+
+Merged ([benchmark/specs/changes/merged/](benchmark/specs/changes/merged/)):
+
+- [benchmark/specs/changes/merged/2026-05-27-local_backends.md](benchmark/specs/changes/merged/2026-05-27-local_backends.md) — *Merged 2026-05-27.* Pluggable run/scoring backends (`container` + `local`) and a `local-fixture` suite, so the harness builds and runs without Docker. Folded into benchmark specs 01/03/05/06 and the canonical schema.
 
 ## Plans
 

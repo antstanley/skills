@@ -56,22 +56,40 @@ Reusing BenchFlow keeps the bespoke surface to what is genuinely specific to thi
 
 ---
 
+## Backends
+
+The run side and the scoring side are each a **pluggable backend** behind a fixed interface, so the driver, the scorer's resolution rule, and the statistics are agnostic to how a trial is actually run and scored.
+
+- **`RunBackend`** — provisions an environment, runs an arm (or a fixture solver) against a `TaskInstance`, and returns a `candidatePatch` plus an `ArtifactBundle`. Implementations: `container` (provision from the instance's `dockerImage`, install the arm's plugins, run in the container — the production default) and `local` (run in an isolated temp working directory / subprocess, no Docker).
+- **`ScoringBackend`** — applies a `candidatePatch` to a clean copy of the instance base, injects the hidden tests, runs them, and returns a `ScoreReport`. Implementations: `container` (a fresh scoring container, reusing the SWE-bench Pro evaluation flow) and `local` (a fresh temp checkout, hidden tests run as a local subprocess).
+
+A `Campaign` selects the backend (`backend: container | local`, default `container`). The `local` backend requires only Python, `uv`, and the repo under test; the `container` backend requires Docker and the prebuilt images. The two backends honour the **same** integrity rule (below): the run side never sees the hidden tests, whichever backend runs.
+
+---
+
 ## Run container
 
-Provisioned per Trial from the TaskInstance's `dockerImage`:
+The run side is a **`RunBackend`** (see [Backends](#backends)). The `container` `RunBackend` provisions a run container per trial from the instance's `dockerImage` with `jj` and `git` available, installs the arm's plugin set, runs the arm to completion, and extracts the `candidatePatch` (the diff of the working state against `baseCommit`) and the `ArtifactBundle`. The `local` `RunBackend` does the same in an isolated temp working directory checked out at `baseCommit` — no container — for arms whose execution does not require one and for the fixture solver. Neither backend's run environment carries any hidden test content.
+
+The `container` backend provisions per suite from the TaskInstance's `dockerImage`:
 
 - **Issue-fixing suite** — the SWE-bench Pro `jefzda/sweap-images` tag for the instance, reused as-is.
 - **Greenfield suite** — an image built for the instance from its skeleton repo, with the hidden test suite **excluded** from this image.
 
-Onto the base, the driver installs the arm's plugin set (per the `Arm` record) and ensures `jj` and `git` are present, since `spec-builder` selects its workspace backend itself (jj preferred). The arm runs non-interactively to completion. On finish, the driver extracts the candidate patch (the diff of the working state, or the integration tip, against `baseCommit`) and the artifact bundle (specs, plans, certificates, transcript, telemetry), then discards the container.
+Onto the base, the driver installs the arm's plugin set (per the `Arm` record) and ensures `jj` and `git` are present, since `spec-builder` selects its workspace backend itself (jj preferred). The arm runs non-interactively to completion. On finish, the driver extracts the candidate patch (the diff of the working state, or the integration tip, against `baseCommit`) and the artifact bundle (specs, plans, certificates, transcript, telemetry), then discards the run environment.
 
 ---
 
 ## Scoring isolation — the integrity rule
 
-This is the rule the harness exists to enforce, and the reason run and scoring are separate containers.
+This is the rule the harness exists to enforce, and the reason run and scoring are separate environments.
 
-> The workflow's own gates — `semi-formal-review` and `validate-done-certificate` — operate **only** on each task's definition of done. They never see the hidden `failToPass` / `passToPass` suite. The hidden suite is injected only into the clean scoring container, after the run container is gone.
+> The workflow's own gates — `semi-formal-review` and `validate-done-certificate` — operate **only** on each task's definition of done. They never see the hidden `failToPass` / `passToPass` suite, which is introduced only on the scoring side. The rule holds across **both** backends:
+>
+> - The `container` `ScoringBackend` injects the hidden tests into a fresh scoring container, separate from the run container.
+> - The `local` `ScoringBackend` injects them into a fresh temp checkout in a directory distinct from the run working directory, run as a separate process.
+>
+> In both cases the run side and the scoring side are different filesystems/processes, and the hidden suite exists only on the scoring side.
 
 Without this separation, a workflow arm could discharge its gates against the very tests it is later scored on, overfitting the metric and making the gate-efficacy numbers ([04-metrics.md](04-metrics.md)) meaningless. SWE-bench Pro gives this separation for free on the issue-fixing suite — the test patch is held out of the agent's environment — and the greenfield suite enforces it by construction, baking the hidden tests only into the scoring image. The gate-efficacy probes ([06-scoring-and-statistics.md](06-scoring-and-statistics.md)) depend entirely on this rule holding.
 

@@ -14,14 +14,20 @@ Neither step is ever run by the arm under test. The oracle is the harness's, not
 
 ## The test oracle
 
-Per Trial, in the clean scoring container:
+Per Trial, on the clean scoring side (a scoring container for the `container` backend, a fresh temp checkout for the `local` backend — [05-harness-architecture.md](05-harness-architecture.md) → Backends):
 
-1. Start from the TaskInstance base image.
+1. Start from the TaskInstance base.
 2. Apply the `candidatePatch`.
-3. Inject the hidden `failToPass` and `passToPass` test selectors (absent from the run container).
+3. Inject the hidden `failToPass` and `passToPass` test selectors (absent from the run side).
 4. Run them.
 
-A trial is **resolved** when *every* `failToPass` test passes and *every* `passToPass` test still passes — the SWE-bench Pro convention. Two derived facts are recorded on the `ScoreReport`:
+The oracle runs under one of three conventions, selected by the suite and the active `ScoringBackend`:
+
+- **`swe-bench-pro`** — reuse SWE-bench Pro's evaluation harness in a scoring container (the `container` backend, issue-fixing suite).
+- **`greenfield-hidden-tests`** — run the instance's withheld suite in a scoring container built with the hidden tests included (the `container` backend, greenfield suite).
+- **`local`** — apply the candidate patch to a fresh temp checkout and run the hidden tests as a local subprocess (the `local` backend).
+
+A trial is **resolved** when *every* `failToPass` test passes and *every* `passToPass` test still passes — the SWE-bench Pro convention, identical across every backend and oracle convention. Two derived facts are recorded on the `ScoreReport`:
 
 - **regressed** — a `passToPass` test that previously passed now fails. A trial can be both `resolved: false` and `regressed: true`.
 - **gateEscape** — for arms with gates, a `Done` task whose hidden tests fail: the false-`Done` signal that feeds the gate-efficacy metric ([04-metrics.md](04-metrics.md)). Per-task attribution requires the instance's `testTags` mapping ([01-domain-model.md](01-domain-model.md)) to link a failing test to the spec section a `Done` task claims via its `Implements` pointer. Absent that mapping, escape is recorded only at instance granularity — the whole plan reached `Done` yet the instance is unresolved.

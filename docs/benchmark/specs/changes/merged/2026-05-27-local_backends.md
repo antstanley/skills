@@ -1,6 +1,6 @@
 # Change: Pluggable run/scoring backends and a local-fixture suite
 
-**Status:** Accepted · **Date:** 2026-05-27 · **Owner:** Ant Stanley · **Target:** apps/benchmark
+**Status:** Merged · **Date:** 2026-05-27 · **Merged:** 2026-05-27 · **Owner:** Ant Stanley · **Target:** apps/benchmark
 
 Generalise the run side and scoring side of the harness into pluggable **backends** — a `RunBackend` and a `ScoringBackend`, each with a `container` implementation (the existing Docker/SWE-bench-Pro path, still the default) and a `local` implementation that needs no Docker (run in a temp working directory, score by applying the candidate patch to a temp checkout and running the hidden tests as a local subprocess). Add a `local-fixture` suite — a tiny self-contained instance with a gold patch — so the run → score → aggregate pipeline can be built and verified deterministically without Docker, a network, or an LLM-agent budget. The production architecture is unchanged: `container` stays the default, the canonical pages still describe it, and the run/scoring integrity rule holds in both backends.
 
@@ -8,7 +8,7 @@ Generalise the run side and scoring side of the harness into pluggable **backend
 
 ## Motivation
 
-The canonical architecture fixes Docker as the execution substrate — "Docker per trial", a run container and a separate scoring container ([`05-harness-architecture.md`](../05-harness-architecture.md)). That is right for production but makes the harness unbuildable and unverifiable anywhere Docker, the SWE-bench Pro images, or an agent/API budget are absent — including ordinary development machines and the first milestone of the build plan. With no Docker-free path, even the pure-logic components (the driver lifecycle, the statistics, the score-report flow) cannot be exercised end to end until the entire container stack is standing.
+The canonical architecture fixes Docker as the execution substrate — "Docker per trial", a run container and a separate scoring container ([`05-harness-architecture.md`](../../05-harness-architecture.md)). That is right for production but makes the harness unbuildable and unverifiable anywhere Docker, the SWE-bench Pro images, or an agent/API budget are absent — including ordinary development machines and the first milestone of the build plan. With no Docker-free path, even the pure-logic components (the driver lifecycle, the statistics, the score-report flow) cannot be exercised end to end until the entire container stack is standing.
 
 A backend seam fixes this without weakening the production design. The driver, the scorer's resolution rule, the statistics, and the report all become backend-agnostic; `container` and `local` are two implementations of the same contracts. A `local-fixture` suite with a known gold patch lets the whole pipeline run deterministically in-process, so the harness has a fast, hermetic test path and the build plan has a Docker-free first milestone. The integrity rule that keeps the workflow's gates from seeing the hidden tests is preserved by construction in both backends.
 
@@ -18,11 +18,11 @@ A backend seam fixes this without weakening the production design. The driver, t
 
 | Canonical page | Nature of change |
 |---|---|
-| [`05-harness-architecture.md`](../05-harness-architecture.md) | Add a **Backends** section (`RunBackend` / `ScoringBackend`, `container` + `local`); generalise §Run container and §Scoring isolation to be backend-neutral while keeping the integrity rule |
-| [`06-scoring-and-statistics.md`](../06-scoring-and-statistics.md) | §The test oracle: add the `local` oracle convention alongside `swe-bench-pro` and `greenfield-hidden-tests` |
-| [`03-task-suites.md`](../03-task-suites.md) | Add §Suite: `local-fixture` — a self-contained, Docker-free verification instance |
-| [`01-domain-model.md`](../01-domain-model.md) | Extend `Suite.kind` and `Suite.oracleConvention` enums; add `backend` and `solver` to `Campaign` |
-| [`canonical-types.schema.json`](../canonical-types.schema.json) | Enum additions on `Suite`; new `backend` / `solver` properties on `Campaign` |
+| [`05-harness-architecture.md`](../../05-harness-architecture.md) | Add a **Backends** section (`RunBackend` / `ScoringBackend`, `container` + `local`); generalise §Run container and §Scoring isolation to be backend-neutral while keeping the integrity rule |
+| [`06-scoring-and-statistics.md`](../../06-scoring-and-statistics.md) | §The test oracle: add the `local` oracle convention alongside `swe-bench-pro` and `greenfield-hidden-tests` |
+| [`03-task-suites.md`](../../03-task-suites.md) | Add §Suite: `local-fixture` — a self-contained, Docker-free verification instance |
+| [`01-domain-model.md`](../../01-domain-model.md) | Extend `Suite.kind` and `Suite.oracleConvention` enums; add `backend` and `solver` to `Campaign` |
+| [`canonical-types.schema.json`](../../canonical-types.schema.json) | Enum additions on `Suite`; new `backend` / `solver` properties on `Campaign` |
 
 No new canonical page is added; the change extends existing pages.
 
@@ -138,7 +138,7 @@ The `local-fixture` suite sets `dockerImage: null`, already permitted by the exi
 
 ## Implementation notes
 
-Pointers for the implementing agent; the code does not exist yet, so these name planned modules in [`05-harness-architecture.md`](../05-harness-architecture.md)'s layout.
+Pointers for the implementing agent; the code does not exist yet, so these name planned modules in [`05-harness-architecture.md`](../../05-harness-architecture.md)'s layout.
 
 ```
 1. Define the backend interfaces in benchmark/harness/backends/ — RunBackend and ScoringBackend

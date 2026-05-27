@@ -41,8 +41,8 @@ A named collection of task instances drawn from one source with one oracle conve
 Carries:
 
 - `slug` — stable suite identifier.
-- `kind` — `issue-fixing` or `greenfield`.
-- `oracleConvention` — how a candidate is scored (`swe-bench-pro` reuse, or `greenfield-hidden-tests`).
+- `kind` — `issue-fixing`, `greenfield`, or `local-fixture`.
+- `oracleConvention` — `swe-bench-pro`, `greenfield-hidden-tests`, or `local`.
 
 ### TaskInstance (suite-scoped slug)
 
@@ -84,6 +84,8 @@ Carries:
 - `arms` — the Arm slugs included (all five by default).
 - `suites` — the Suite slugs included.
 - `trialsPerInstance` — repetition count for Pass@k and nondeterminism.
+- `backend` — `container` (default) or `local`; the run/scoring backend the campaign uses.
+- `solver` — `agent` (default) or `fixture`; `fixture` runs the scripted solver that emits the instance `goldPatch`, for deterministic pipeline verification on the `local-fixture` suite without an LLM agent. Real arms use `agent`.
 
 ### Trial (`trial_`)
 

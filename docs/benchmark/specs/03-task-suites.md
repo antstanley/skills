@@ -56,6 +56,26 @@ This suite is where the full pipeline's strengths — decomposition into a task 
 
 ---
 
+## Suite: `local-fixture`
+
+**Kind:** `local-fixture`. **Oracle convention:** `local`.
+
+A self-contained verification instance that needs no Docker and no network: a small repository at a fixed commit, a hidden `pytest` suite, and a known `goldPatch` that makes the hidden tests pass. It exists to exercise the run → score → aggregate pipeline deterministically — running the fixture solver (which emits the `goldPatch`) yields `resolved: true`, and a no-op patch yields `resolved: false` — so the driver, the scorer, and the statistics are verifiable end to end without the production stack.
+
+| `TaskInstance` field | `local-fixture` source |
+|---|---|
+| `problemStatement` | a short prose description of the fixture task |
+| `repo` / `baseCommit` | the bundled fixture repo at its fixed commit |
+| `goldPatch` | the patch that makes the hidden suite pass |
+| `failToPass` | the bundled hidden `pytest` selectors |
+| `passToPass` | any smoke tests that must keep passing |
+| `dockerImage` | `null` — the `local` backend uses no image |
+| `contaminationTier` | `authored-private` |
+
+The suite is not part of the ablation result; it is harness infrastructure. Real arms (A0–A4) and the comparative metrics still run on the `swe-bench-pro` and `greenfield-features` suites under the `container` backend.
+
+---
+
 ## Instance selection and fairness
 
 | Concern | Handling |
