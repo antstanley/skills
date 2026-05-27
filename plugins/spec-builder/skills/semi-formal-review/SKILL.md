@@ -34,7 +34,7 @@ This skill is one of the two completion gates in **spec-builder**'s build loop:
   task's definition of done (discharging its done certificate, or the DoD checklist
   directly when no certificate exists)? Verdict: `DONE / PARTIAL / NOT_DONE`.
 
-Both reuse the same three checkpoints from [`references/method.md`](references/method.md)
+Both reuse the same procedure from [`references/method.md`](references/method.md)
 against different rubrics. A task is only marked `Done` when this skill returns
 `CORRECT`/`LIKELY_CORRECT` **and** validate-done-certificate returns `DONE`.
 
@@ -79,10 +79,10 @@ Apply the certificate from [`references/method.md`](references/method.md):
 6. **Verdict.** Derive `CORRECT / LIKELY_CORRECT / CONCERNS / BUGGY` with confidence and a
    one-sentence summary — never declared up front.
 
-For Sonnet/Opus the compact three-checkpoint form is enough; for Haiku or when a tangled
-scope chain demands it, follow the full procedure in the reference. If the verdict is
-`BUGGY` and the caller needs the offending line, expand to fault localization (also in
-the reference) and report the line with its sufficiency test.
+Follow this full procedure on every review, regardless of which model or agent runs it —
+there is no compact shortcut. If the verdict is `BUGGY` and the caller needs the
+offending line, expand to fault localization (also in the reference) and report the line
+with its sufficiency test.
 
 ## What NOT to do
 
@@ -98,7 +98,6 @@ the reference) and report the line with its sufficiency test.
 ## Reference files
 
 - [`references/method.md`](references/method.md) — The vendored, consolidated semi-formal
-  method: the certificate shape, the compact three checkpoints for strong models, the
-  full step-by-step procedure for Haiku class, the 5-step function-resolution sequence,
-  the execution-trace and regression checks, the verdict rubric, and a worked example.
-  Read before reviewing.
+  method: the certificate shape, the single step-by-step procedure used for every review,
+  the 5-step function-resolution sequence, the execution-trace and regression checks, the
+  verdict rubric, and a worked example. Read before reviewing.

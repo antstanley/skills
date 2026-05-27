@@ -37,48 +37,11 @@ unsupported claims.
 
 ---
 
-## Compact checkpoints (Sonnet / Opus class)
+## The procedure
 
-You already reason well about code. These three checkpoints catch the specific failure
-modes even strong reasoning misses. Verify each is addressed before any verdict — do
-not template your whole response around them.
-
-### 1. Function resolution
-
-For each function or method call in the changed lines: which definition is *actually*
-invoked? Check for name shadowing between local scope, enclosing class, module scope,
-imports, and builtins (the 5-step sequence below). If you cannot trace a call to its
-exact definition, flag it `UNRESOLVED`.
-
-### 2. Sufficiency
-
-"Does this change fully address the task, or does it fix a symptom while the root cause
-persists?" If only a symptom is handled, the implementation is incomplete even if tests
-pass for the happy path.
-
-### 3. Regression paths
-
-For each code path the change touches: does untouched code that depends on the modified
-behavior still work? Trace at least one downstream caller, or state explicitly that none
-is in scope.
-
-### Verdict format
-
-End with exactly:
-
-```
-VERDICT: [CORRECT | LIKELY_CORRECT | CONCERNS | BUGGY]
-CONFIDENCE: [high | medium | low]
-SUMMARY: [one sentence]
-```
-
-If checkpoint 1 reveals real name shadowing or ambiguous resolution, expand to a full
-execution trace for the affected paths — the compact format is for verification, not
-for working through genuinely tangled scope chains.
-
----
-
-## Full procedure (Haiku class, or when rigor is demanded)
+Run this procedure on every review, regardless of which LLM or agent executes it. There
+is no compact or "strong reasoner" shortcut — the structure is the point, and the same
+explicit steps bar the same failure modes whatever model is reasoning.
 
 Follow these steps literally. Do not skip steps. Write out each step's result before
 moving on — do not summarize.
@@ -189,8 +152,8 @@ SUMMARY: The change bypasses name shadowing by referencing the global explicitly
   root cause; no → contributor only").
 - Comparing two candidate fixes: run the procedure on each and compare per-test outcomes.
 - This skill verifies *correctness*. Confirming the task's **definition of done** is met
-  is the separate job of `validate-done-certificate`, which reuses these same three
-  checkpoints against a different rubric (`DONE / PARTIAL / NOT_DONE`).
+  is the separate job of `validate-done-certificate`, which reuses this same procedure
+  against a different rubric (`DONE / PARTIAL / NOT_DONE`).
 
 ## Common mistakes
 

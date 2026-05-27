@@ -41,7 +41,7 @@ The orchestrator. It lives at [`skills/spec-builder/SKILL.md`](skills/spec-build
 
 Gate 1 — **correctness**. The consolidated, self-contained form of the [reasoning-semiformally](../reasoning-semiformally) method, pointed at one question: does this implementation correctly and completely do what its task asked, without breaking what it touched? It runs a semi-formal certificate — premises, the 5-step function-resolution sequence, an execution trace, a regression check, a sufficiency check — and derives a `CORRECT / LIKELY_CORRECT / CONCERNS / BUGGY` verdict rather than declaring one. Run by an agent other than the implementer. It lives at [`skills/semi-formal-review/SKILL.md`](skills/semi-formal-review/SKILL.md):
 
-- [`references/method.md`](skills/semi-formal-review/references/method.md) — the vendored, consolidated method: the certificate shape, the compact three checkpoints for Sonnet/Opus, the full step-by-step procedure for Haiku class, the verdict rubric, and a worked example.
+- [`references/method.md`](skills/semi-formal-review/references/method.md) — the vendored, consolidated method: the certificate shape, the single step-by-step procedure used for every review regardless of model, the verdict rubric, and a worked example.
 
 ## validate-done-certificate
 
