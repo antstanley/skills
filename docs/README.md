@@ -7,6 +7,7 @@ Design specifications and plans for the `antstanley/skills` marketplace repo.
 Repo-wide, cross-cutting design.
 
 - [Plugin Marketplace Design](specs/spec.md) — how the repo is structured as a Claude Code plugin marketplace.
+- [Development Guidelines](specs/development-guidelines.md) — rules of the road for writing code (Clean Code style; Python conventions; jj version control; definition of done).
 
 ## Per-app specs
 
