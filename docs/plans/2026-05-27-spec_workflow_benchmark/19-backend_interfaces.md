@@ -1,6 +1,6 @@
 # Task 19 — Backend interfaces
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/19-backend_interfaces.md](certificates/19-backend_interfaces.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/19-backend_interfaces.md](certificates/19-backend_interfaces.md)
 
 **Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`05-harness-architecture.md` → Backends, §Run container, §Scoring isolation)
 **Depends on:** 02
@@ -9,10 +9,10 @@
 
 ## Steps
 
-- [ ] Define `RunBackend` — `run(instance, arm_or_solver) -> (ArtifactBundle, candidatePatch)` — as a Python protocol/ABC, documenting that the run side never sees the hidden tests.
-- [ ] Define `ScoringBackend` — `score(instance, candidatePatch) -> ScoreReport` — documenting that hidden tests are injected only here and the resolution rule is shared (all `failToPass` pass and `passToPass` hold).
-- [ ] State the integrity-rule contract in the interface docs: run environment and scoring environment are distinct, hidden tests on the scoring side only.
-- [ ] Provide an in-memory conformance test-double implementing both, and a test that drives it through the protocols.
+- [x] Define `RunBackend` — `run(instance, arm_or_solver) -> (ArtifactBundle, candidatePatch)` — as a Python protocol/ABC, documenting that the run side never sees the hidden tests.
+- [x] Define `ScoringBackend` — `score(instance, candidatePatch) -> ScoreReport` — documenting that hidden tests are injected only here and the resolution rule is shared (all `failToPass` pass and `passToPass` hold).
+- [x] State the integrity-rule contract in the interface docs: run environment and scoring environment are distinct, hidden tests on the scoring side only.
+- [x] Provide an in-memory conformance test-double implementing both, and a test that drives it through the protocols.
 
 ## Definition of done
 
