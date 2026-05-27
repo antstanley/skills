@@ -1,0 +1,8 @@
+{
+  "name": "spec-builder",
+  "version": "0.1.0",
+  "description": "Implement a spec-planner plan by dispatching one sub-agent per task in its own jj workspace, gating every task through a semi-formal correctness review and a definition-of-done validation before it merges and is marked Done — parallel by default (max 4 agents) or sequential, walking the dependency graph in waves and keeping the plan folder current as a live board.",
+  "author": { "name": "antstanley" },
+  "repository": "https://github.com/antstanley/skills",
+  "keywords": ["spec", "implementation", "sub-agents", "jj", "workspace", "parallel", "done-certificate", "semi-formal-review", "validation", "task-graph"]
+}

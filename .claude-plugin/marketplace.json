@@ -32,6 +32,13 @@
       "description": "jj (jujutsu) workspaces skill for Claude Code — creates isolated workspaces for parallel work and sub-agent driven development, and intercepts git-worktree requests in jj-managed repos.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
+    },
+    {
+      "name": "spec-builder",
+      "source": "./plugins/spec-builder",
+      "description": "Implement a spec-planner plan — one sub-agent per task in its own jj workspace, gated through a semi-formal correctness review and a definition-of-done validation before each task merges and is marked Done; parallel by default (max 4 agents) or sequential.",
+      "category": "development",
+      "homepage": "https://github.com/antstanley/skills"
     }
   ]
 }
