@@ -14,7 +14,7 @@ No component described here is implemented. This page and its siblings define th
 
 The `spec-*` plugins implement a multi-stage workflow: `spec-creator` writes a formal spec, `spec-planner` decomposes it into a dependency-ordered task graph with a definition of done per task, and `spec-builder` executes each task in an isolated workspace behind two review gates before merging. The workflow is a substantial scaffold around whatever base model runs it. Whether that scaffold produces better software than the same model used plainly — and whether each stage earns its token and latency cost — is unmeasured.
 
-Existing code benchmarks answer a narrower question. [SWE-bench Pro](https://scaleapi.github.io/SWE-bench_Pro-os/) measures whether an agent resolves a long-horizon issue, scored by a hidden `fail-to-pass` / `pass-to-pass` test oracle. It evaluates a model-plus-agent as a single black box and reports one `%Resolved` number. It does not isolate the contribution of a workflow layered on top, and it does not exercise the spec-authoring and planning stages at all. The literature on agent skills warns that this gap matters: skills do not uniformly help (*SWE-Skills-Bench*, arXiv 2603.15401), and code that passes tests can still violate its specification (*Specification-Driven Code Generation*, arXiv 2601.03878). A benchmark for this workflow must attribute outcomes to workflow stages, not just report a single score.
+Existing code benchmarks answer a narrower question. The established long-horizon issue-fixing benchmarks measure whether an agent resolves an issue, scored by a hidden `fail-to-pass` / `pass-to-pass` test oracle, and evaluate a model-plus-agent as a single black box that reports one `%Resolved` number. They do not isolate the contribution of a workflow layered on top, and they do not exercise the spec-authoring and planning stages at all. The literature on agent skills warns that this gap matters: skills do not uniformly help (*SWE-Skills-Bench*, arXiv 2603.15401), and code that passes tests can still violate its specification (*Specification-Driven Code Generation*, arXiv 2601.03878). A benchmark for this workflow must attribute outcomes to workflow stages, not just report a single score.
 
 ---
 
@@ -25,7 +25,6 @@ Existing code benchmarks answer a narrower question. [SWE-bench Pro](https://sca
 3. Report outcomes against a hidden test oracle that the workflow's own gates never see, so the workflow cannot overfit the metric ([06-scoring-and-statistics.md](06-scoring-and-statistics.md)).
 4. Report cost alongside outcome, so a token-hungry workflow is judged on cost-matched resolution, not raw resolution.
 5. Measure artifacts the workflow produces — spec conformance, plan coverage, and gate efficacy — that a black-box outcome score cannot observe ([04-metrics.md](04-metrics.md)).
-6. Reuse SWE-bench Pro's instances, Docker images, and test oracle for the issue-fixing suite, so the baseline arm's numbers are comparable to a published benchmark.
 
 ## Non-goals
 
@@ -41,8 +40,8 @@ Existing code benchmarks answer a narrower question. [SWE-bench Pro](https://sca
 ```
    task registry (TaskInstance × Suite)
    ┌─────────────────────────────────────────────────────────────┐
-   │  swe-bench-pro-public        greenfield-features             │
-   │  (issue + gold/test patch)   (spec + hidden test suite)      │
+   │  greenfield-features                                         │
+   │  (spec + hidden test suite)                                  │
    └───────────────────────────────┬─────────────────────────────┘
                                     │
         Campaign = Arms × Suites × Trials, on one fixed model
@@ -78,7 +77,7 @@ A **Campaign** fixes a model and runs every **Arm** over every **Suite** for a s
 |---|---|
 | [01-domain-model.md](01-domain-model.md) | Entities, IDs, lifecycles — Campaign, Trial, Arm, TaskInstance, ArtifactBundle, GateEvent, ScoreReport, MetricResult |
 | [02-arms.md](02-arms.md) | The five ablation arms and the pairwise deltas each isolates |
-| [03-task-suites.md](03-task-suites.md) | The SWE-bench Pro public suite and the greenfield feature suite |
+| [03-task-suites.md](03-task-suites.md) | The greenfield feature suite and the local-fixture verification suite |
 | [04-metrics.md](04-metrics.md) | The four metric buckets: outcome, cost, process/artifact quality, robustness |
 | [05-harness-architecture.md](05-harness-architecture.md) | The driver, containerization, the BenchFlow substrate, the scoring-isolation rule |
 | [06-scoring-and-statistics.md](06-scoring-and-statistics.md) | The test oracle, the conformance judge, gate-efficacy probes, and the paired statistics |
@@ -91,7 +90,7 @@ A **Campaign** fixes a model and runs every **Arm** over every **Suite** for a s
 | Area | Design | Notes |
 |---|---|---|
 | Arms | Five: A0 baseline, A1 full pipeline, A2 plan+build, A3 gates on/off, A4 structured-vs-parallel | [02-arms.md](02-arms.md). All five are in scope from the first campaign. |
-| Suites | Two: `swe-bench-pro-public` (11 repos), `greenfield-features` (newly authored) | [03-task-suites.md](03-task-suites.md). Both built in parallel. |
+| Suites | `greenfield-features` (newly authored), plus the `local-fixture` verification suite | [03-task-suites.md](03-task-suites.md). |
 | Oracle | Hidden `fail-to-pass` / `pass-to-pass`, plus a conformance judge | [06-scoring-and-statistics.md](06-scoring-and-statistics.md). The workflow's gates never see it. |
 | Substrate | BenchFlow `bench` SDK; Docker per trial | [05-harness-architecture.md](05-harness-architecture.md). jj and git both available in-container. |
 | Model | Fixed per campaign | A campaign variable, not a benchmark axis. |
@@ -104,14 +103,12 @@ A **Campaign** fixes a model and runs every **Arm** over every **Suite** for a s
 **Assumptions**
 
 - The `spec-*` plugins can be installed and driven non-interactively inside a container, with telemetry (token counts, cost, wall-clock, turn counts) recoverable per run.
-- SWE-bench Pro's public Docker images (`jefzda/sweap-images`) and its `fail-to-pass` / `pass-to-pass` test data remain available for the issue-fixing suite.
 - The greenfield suite's tasks can be authored fresh and kept private, so they are absent from any base model's training data at campaign time.
 - A jj-or-git colocated repo is available in each container; `spec-builder` selects the backend itself.
 
 **Decisions**
 
 - *Subject of the spec.* **The benchmark's design, not a built system.** Nothing is implemented; the body describes the intended design and `Status` stays `Draft` until components exist. The alternative — withholding the spec until code exists — would block planning the build from it.
-- *Baseline benchmark.* **SWE-bench Pro public set.** It is a published, hidden-oracle, long-horizon SWE benchmark, so the A0 arm's numbers are comparable to external results rather than self-defined.
 - *Variable under test.* **The scaffold, with the model fixed.** The question is whether the workflow helps, which is only answerable when the model is held constant across arms (the *SWE-Skills-Bench* attribution discipline, arXiv 2603.15401).
 
 **Open questions**

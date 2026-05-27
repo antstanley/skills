@@ -22,7 +22,7 @@ names — not by assertion.
 ## Obligations
 
 - **O1 — Conformance is scored for the right arm/suite combinations and null where no spec exists.**
-  - *Claim:* every arm on greenfield (scored against the instance spec seed) and spec-bearing arms (A1, A2, A3) on SWE-bench Pro get a `conformanceScore` in `[0,1]`; A0/A4 on SWE-bench Pro get null.
+  - *Claim:* every arm on greenfield (scored against the instance spec seed, A0–A4 alike) gets a `conformanceScore` in `[0,1]`; arms on a suite that supplies no spec to score against get null.
   - *Evidence to collect:* run the judge over a mixed campaign; read `conformanceScore` per (arm, suite) → expect populated where a spec exists, null otherwise. Run the applicability test.
   - *Checks:* resolve the judging procedure to `spec-reviewer` R2/R3 where the spec-creator plugin is available, else the rubric directly; confirm greenfield scoring uses the instance's input spec seed.
   - *Status:* ☐ unverified

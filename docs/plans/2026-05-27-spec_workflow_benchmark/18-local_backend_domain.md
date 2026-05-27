@@ -2,7 +2,7 @@
 
 **Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/18-local_backend_domain.md](certificates/18-local_backend_domain.md)
 
-**Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`01-domain-model.md` → Suite, Campaign), §Type changes
+**Implements:** [changes/merged/2026-05-27-local_backends.md](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) §Proposed changes (`01-domain-model.md` → Suite, Campaign), §Type changes
 **Depends on:** 02
 **Produces:** the domain types and the canonical schema carry the local-backend members — `Suite.kind` += `local-fixture`, `Suite.oracleConvention` += `local`, and `Campaign.backend` / `Campaign.solver`
 **Pointers:** `benchmark/harness/` (the Task 02 types); [canonical-types.schema.json](../../benchmark/specs/canonical-types.schema.json)

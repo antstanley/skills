@@ -38,8 +38,8 @@
       "additionalProperties": false,
       "properties": {
         "slug": { "$ref": "#/$defs/Slug" },
-        "kind": { "type": "string", "enum": ["issue-fixing", "greenfield", "local-fixture"] },
-        "oracleConvention": { "type": "string", "enum": ["swe-bench-pro", "greenfield-hidden-tests", "local"] }
+        "kind": { "type": "string", "enum": ["greenfield", "local-fixture"] },
+        "oracleConvention": { "type": "string", "enum": ["greenfield-hidden-tests", "local"] }
       }
     },
     "TaskInstance": {

@@ -2,7 +2,7 @@
 
 **Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/21-local_fixture_suite.md](certificates/21-local_fixture_suite.md)
 
-**Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`03-task-suites.md` → Suite: `local-fixture`)
+**Implements:** [changes/merged/2026-05-27-local_backends.md](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) §Proposed changes (`03-task-suites.md` → Suite: `local-fixture`)
 **Depends on:** 18, 20
 **Produces:** the bundled `local-fixture` instance — a small repo, a hidden `pytest` suite, and a gold patch — as a validated `TaskInstance` scorable by the local `ScoringBackend`
 **Pointers:** `benchmark/suites/local-fixture/`; the local `ScoringBackend` from task 20

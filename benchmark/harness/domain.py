@@ -108,11 +108,10 @@ GATE_KINDS: tuple[str, ...] = ("semi-formal-review", "validate-done-certificate"
 GATE_VERDICTS: tuple[str, ...] = ("PASS", "FAIL", "PARTIAL", "UNVERIFIED")
 
 #: Suite kinds.
-SUITE_KINDS: tuple[str, ...] = ("issue-fixing", "greenfield", "local-fixture")
+SUITE_KINDS: tuple[str, ...] = ("greenfield", "local-fixture")
 
 #: Suite oracle conventions.
 ORACLE_CONVENTIONS: tuple[str, ...] = (
-    "swe-bench-pro",
     "greenfield-hidden-tests",
     "local",
 )

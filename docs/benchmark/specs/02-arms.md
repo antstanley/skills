@@ -24,7 +24,7 @@ The arm set does **not** vary the base model, the task suite, or the test oracle
 
 ### A0 — Baseline
 
-A plain Claude Code agent on the fixed model, no `spec-*` plugins. It receives the TaskInstance's `problemStatement` and produces a patch. On the `swe-bench-pro-public` suite A0 runs the same tasks and the same hidden oracle as SWE-bench Pro, so its `%Resolved` is comparable on tasks and oracle — though not directly to a published leaderboard number, which is produced by SWE-bench Pro's own reference agent rather than plain Claude Code.
+A plain Claude Code agent on the fixed model, no `spec-*` plugins. It receives the TaskInstance's `problemStatement` and produces a patch. A0 is the floor against which every workflow arm's pairwise delta is read ([06-scoring-and-statistics.md](06-scoring-and-statistics.md)).
 
 ### A1 — Full pipeline
 

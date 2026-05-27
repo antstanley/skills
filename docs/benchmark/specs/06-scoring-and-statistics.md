@@ -21,18 +21,17 @@ Per Trial, on the clean scoring side (a scoring container for the `container` ba
 3. Inject the hidden `failToPass` and `passToPass` test selectors (absent from the run side).
 4. Run them.
 
-The oracle runs under one of three conventions, selected by the suite and the active `ScoringBackend`:
+The oracle runs under one of two conventions, selected by the suite and the active `ScoringBackend`:
 
-- **`swe-bench-pro`** — reuse SWE-bench Pro's evaluation harness in a scoring container (the `container` backend, issue-fixing suite).
 - **`greenfield-hidden-tests`** — run the instance's withheld suite in a scoring container built with the hidden tests included (the `container` backend, greenfield suite).
 - **`local`** — apply the candidate patch to a fresh temp checkout and run the hidden tests as a local subprocess (the `local` backend).
 
-A trial is **resolved** when *every* `failToPass` test passes and *every* `passToPass` test still passes — the SWE-bench Pro convention, identical across every backend and oracle convention. Two derived facts are recorded on the `ScoreReport`:
+A trial is **resolved** when *every* `failToPass` test passes and *every* `passToPass` test still passes — identical across every backend and oracle convention. Two derived facts are recorded on the `ScoreReport`:
 
 - **regressed** — a `passToPass` test that previously passed now fails. A trial can be both `resolved: false` and `regressed: true`.
 - **gateEscape** — for arms with gates, a `Done` task whose hidden tests fail: the false-`Done` signal that feeds the gate-efficacy metric ([04-metrics.md](04-metrics.md)). Per-task attribution requires the instance's `testTags` mapping ([01-domain-model.md](01-domain-model.md)) to link a failing test to the spec section a `Done` task claims via its `Implements` pointer. Absent that mapping, escape is recorded only at instance granularity — the whole plan reached `Done` yet the instance is unresolved.
 
-The `failToPass` / `passToPass` split is the same for both suites; only the source of the tests differs ([03-task-suites.md](03-task-suites.md)).
+The `failToPass` / `passToPass` split is the same across suites and backends; only the source of the tests differs ([03-task-suites.md](03-task-suites.md)).
 
 ---
 
@@ -70,7 +69,7 @@ Only `scored` trials enter the statistics; `failed` (infra) trials are excluded 
 
 | Quantity | Treatment |
 |---|---|
-| **Per-arm %Resolved** | Point estimate with a **95% binomial confidence interval**, as SWE-bench Pro reports. |
+| **Per-arm %Resolved** | Point estimate with a **95% binomial confidence interval**. |
 | **Arm-pair delta** (e.g. A1 − A0) | Computed on **paired** TaskInstances — the same instances run by both arms — using **McNemar's test** on the discordant pairs (resolved-by-one-not-the-other). |
 | **Cost-matched delta** | The same paired comparison after equalising the token/dollar budget across the two arms ([04-metrics.md](04-metrics.md)). |
 
@@ -107,8 +106,8 @@ benchmark/
 
 **Decisions**
 
-- *Resolution follows the SWE-bench Pro convention.* **All `failToPass` pass and all `passToPass` hold.** Reusing the established definition keeps A0's numbers comparable to the published leaderboard.
-- *Deltas are paired and tested with McNemar.* **Same instances, both arms.** Pairing cancels shared difficulty and contamination, which is what makes the within-suite comparison hold despite the `public` tier of the SWE-bench Pro suite.
+- *Resolution is all-or-nothing.* **All `failToPass` pass and all `passToPass` hold.** A single definition across backends and suites keeps the resolved verdict comparable across arms.
+- *Deltas are paired and tested with McNemar.* **Same instances, both arms.** Pairing cancels shared difficulty and any training-data contamination, which is what makes the within-suite comparison hold.
 - *Output is an ablation table, not a rank.* **Per-arm metrics plus four delta rows.** A single leaderboard number would discard the attribution the benchmark is built to produce.
 
 **Open questions**

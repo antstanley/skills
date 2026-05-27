@@ -7,9 +7,9 @@ and the ``local`` ``ScoringBackend`` derive their verdict here, so the rule
 stays identical across backends (``05-harness-architecture.md`` → Scoring
 isolation; the resolution rule is "the same across backends").
 
-Resolution (SWE-bench Pro convention): a candidate **resolves** iff *every*
-``failToPass`` test passes AND *every* ``passToPass`` test still holds.
-Regression: a ``passToPass`` test that no longer holds.
+Resolution: a candidate **resolves** iff *every* ``failToPass`` test passes
+AND *every* ``passToPass`` test still holds. Regression: a ``passToPass`` test
+that no longer holds.
 """
 
 from __future__ import annotations

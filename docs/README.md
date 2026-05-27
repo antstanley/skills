@@ -21,15 +21,18 @@ App- or component-specific design, layered on the global specs.
 
 Proposed deltas to canonical specs (`Proposed → Accepted → Implemented → Merged`); merged ones move to a `changes/merged/` area.
 
-Pending: none.
+Pending:
+
+- [benchmark/specs/changes/2026-05-27-add_swe_bench_pro_suite.md](benchmark/specs/changes/2026-05-27-add_swe_bench_pro_suite.md) — *Proposed.* Add the `swe-bench-pro-public` issue-fixing suite (reusing SWE-bench Pro's instances, `jefzda/sweap-images`, and oracle) back to the benchmark, on the `container` backend. Re-adds the suite the minimal canonical deferred; touches benchmark specs 00/01/02/03/04/05/06 and the canonical schema.
 
 Merged ([benchmark/specs/changes/merged/](benchmark/specs/changes/merged/)):
 
 - [benchmark/specs/changes/merged/2026-05-27-local_backends.md](benchmark/specs/changes/merged/2026-05-27-local_backends.md) — *Merged 2026-05-27.* Pluggable run/scoring backends (`container` + `local`) and a `local-fixture` suite, so the harness builds and runs without Docker. Folded into benchmark specs 01/03/05/06 and the canonical schema.
+- [benchmark/specs/changes/merged/2026-05-27-trim_deferred_swe_bench_pro_code.md](benchmark/specs/changes/merged/2026-05-27-trim_deferred_swe_bench_pro_code.md) — *Merged 2026-05-27.* Removed the leftover `issue-fixing` / `swe-bench-pro` enum values, a `resolution.py` docstring attribution, and the SWE-bench Pro test fixtures so the code matches the minimal canonical. Code-only; no canonical or schema delta.
 
 ## Plans
 
 Implementation plans (forward-looking; sequence work by dependency and reviewability).
 
-- [docs/plans/2026-05-27-spec_workflow_benchmark/](plans/2026-05-27-spec_workflow_benchmark/plan.md) — build plan for the spec-workflow benchmark harness (*Accepted*; 23 tasks, 5 milestones M0–M4 with a Docker-free local M0, done certificates per task).
+- [docs/plans/2026-05-27-spec_workflow_benchmark/](plans/2026-05-27-spec_workflow_benchmark/plan.md) — build plan for the spec-workflow benchmark harness (*In progress*; 22 tasks, 5 milestones M0–M4 with a Docker-free local M0, done certificates per task). M0 built; M1–M4 re-planned 2026-05-27 to drop SWE-bench Pro and run the ablation on the greenfield suite only.
 - [docs/superpowers/plans/2026-05-18-plugin-marketplace.md](superpowers/plans/2026-05-18-plugin-marketplace.md) — plugin-marketplace migration plan.

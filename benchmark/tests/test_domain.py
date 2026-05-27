@@ -46,22 +46,22 @@ _TIMESTAMP = "2026-05-27T12:00:00Z"
 
 def _suite() -> Suite:
     return Suite(
-        slug="swe-bench-pro-public",
-        kind="issue-fixing",
-        oracleConvention="swe-bench-pro",
+        slug="greenfield-features",
+        kind="greenfield",
+        oracleConvention="greenfield-hidden-tests",
     )
 
 
 def _task_instance() -> TaskInstance:
     return TaskInstance(
-        slug="swepro__django__12345",
-        suite="swe-bench-pro-public",
-        repo="django/django",
+        slug="greenfield__url_shortener",
+        suite="greenfield-features",
+        repo="acme/url-shortener",
         baseCommit="abc1234",
-        problemStatement="Fix the thing.",
+        problemStatement="Build a URL shortener per the spec.",
         failToPass=["tests::test_a"],
         passToPass=["tests::test_b"],
-        contaminationTier="public",
+        contaminationTier="authored-private",
         headlessVerifiable=True,
     )
 
@@ -82,7 +82,7 @@ def _campaign() -> Campaign:
         createdAt=_TIMESTAMP,
         model="claude-opus-4-7",
         arms=list(ARM_SLUGS),
-        suites=["swe-bench-pro-public"],
+        suites=["greenfield-features"],
         trialsPerInstance=3,
     )
 
@@ -92,7 +92,7 @@ def _trial() -> Trial:
         id=_TRIAL_ID,
         campaign=_CAMPAIGN_ID,
         arm="A1",
-        taskInstance="swepro__django__12345",
+        taskInstance="greenfield__url_shortener",
         seed=7,
         createdAt=_TIMESTAMP,
         status="queued",
@@ -133,7 +133,7 @@ def _gate_event() -> GateEvent:
 def _injected_defect() -> InjectedDefect:
     return InjectedDefect(
         id=new_record_id(domain.INJECTED_DEFECT_ID_PREFIX),
-        taskInstance="swepro__django__12345",
+        taskInstance="greenfield__url_shortener",
         defectKind="off-by-one",
         caughtBy="semi-formal-review",
     )
@@ -156,7 +156,7 @@ def _metric_result() -> MetricResult:
         id=new_record_id(domain.METRIC_RESULT_ID_PREFIX),
         campaign=_CAMPAIGN_ID,
         arm="A1",
-        suite="swe-bench-pro-public",
+        suite="greenfield-features",
         metricName="resolved-rate",
         value=0.42,
         ciLow=0.30,
@@ -401,7 +401,7 @@ def test_campaign_backend_solver_default_to_container_agent() -> None:
         "createdAt": _TIMESTAMP,
         "model": "claude-opus-4-7",
         "arms": list(ARM_SLUGS),
-        "suites": ["swe-bench-pro-public"],
+        "suites": ["greenfield-features"],
         "trialsPerInstance": 3,
     }
     campaign = Campaign.from_dict(omitted)
@@ -428,9 +428,13 @@ def test_out_of_enum_solver_rejected() -> None:
 
 
 def test_unknown_suite_kind_rejected() -> None:
-    """A Suite kind outside the enum is rejected with a clear error."""
+    """A Suite kind outside the enum is rejected with a clear error.
+
+    ``issue-fixing`` is used as the rejected value: it was a valid kind before
+    SWE-bench Pro was deferred, so this also guards the trim against regressing.
+    """
     bad = _suite().to_dict()
-    bad["kind"] = "made-up-kind"
+    bad["kind"] = "issue-fixing"
     with pytest.raises(DomainValidationError) as exc:
         Suite.from_dict(bad)
     assert "kind" in str(exc.value)

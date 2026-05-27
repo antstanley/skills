@@ -15,7 +15,7 @@ names — not by assertion.
 
 ## Premises
 
-- **P1 — Goal.** A4 — a budget-matched naive N-way parallel split with no plugins, no DAG, no DoD, no gates — scored on SWE-bench Pro.
+- **P1 — Goal.** A4 — a budget-matched naive N-way parallel split with no plugins, no DAG, no DoD, no gates — scored on the greenfield suite.
 - **P2 — Obligations.** Done iff O1…O4 all hold; O4 is the Reviewable item.
 - **P3 — Invariants.** A4 has its own orchestration (not the `spec-*` plugins); must run through Task 07's driver and Task 04's oracle without changing them.
 

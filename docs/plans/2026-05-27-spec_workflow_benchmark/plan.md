@@ -2,13 +2,13 @@
 
 **Status:** In progress · **Date:** 2026-05-27 · **Owner:** Ant Stanley · **Source spec:** [docs/benchmark/specs/](../../benchmark/specs/)
 
-Build the benchmark harness described in `docs/benchmark/specs/` — a runner that executes a five-arm ablation matrix (A0–A4) over the task suites and scores candidates against a hidden oracle the workflow's gates never see. The decomposition follows a thin reviewability spine, re-sequenced (2026-05-27) around the accepted change spec [`changes/2026-05-27-local_backends.md`](../../benchmark/specs/changes/2026-05-27-local_backends.md) so the first milestone needs no Docker: a **local** milestone (M0) stands up a Python skeleton, the domain types, a pluggable `RunBackend`/`ScoringBackend` seam, Docker-free local backends, and a self-contained `local-fixture` suite, then runs the driver and a minimal aggregation over the fixture for a deterministic, locally-verifiable run→score→aggregate pipeline. The **container** milestone (M1) then adds the BenchFlow substrate, the SWE-bench Pro suite, and the container backends to get the **A0 baseline** scored; M2 adds the **A1 pipeline** and the headline A1−A0 ablation table; M3 broadens to the remaining arms and the greenfield suite; M4 layers on the distinctive metrics — conformance, gate efficacy, cost-matched resolution — and the full report. Numbers are append-only: the re-plan added tasks 17–23 and re-pointed a few edges (02←17, 07←19, 04/05 gained the interface edge), so task numbers are ids, not the build order — the order is the Implementation-order line below.
+Build the benchmark harness described in `docs/benchmark/specs/` — a runner that executes a five-arm ablation matrix (A0–A4) over the greenfield suite and scores candidates against a hidden oracle the workflow's gates never see. The decomposition follows a thin reviewability spine, re-sequenced (2026-05-27) around the merged change spec [`changes/merged/2026-05-27-local_backends.md`](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) so the first milestone needs no Docker: a **local** milestone (M0) stands up a Python skeleton, the domain types, a pluggable `RunBackend`/`ScoringBackend` seam, Docker-free local backends, and a self-contained `local-fixture` suite, then runs the driver and a minimal aggregation over the fixture for a deterministic, locally-verifiable run→score→aggregate pipeline. The **container** milestone (M1) then adds the BenchFlow substrate, the **greenfield suite**, and the container backends to get the **A0 baseline** scored on greenfield; M2 adds the **A1 pipeline** and the headline A1−A0 ablation table; M3 broadens to the remaining arms (A2/A3/A4); M4 layers on the distinctive metrics — conformance, gate efficacy, cost-matched resolution — and the full report. Numbers are append-only: the local re-plan added tasks 17–23, and a second re-plan (2026-05-27) removed SWE-bench Pro from the canonical spec — dropping task 03 (the SWE-bench Pro suite), moving the greenfield suite (12) into M1 as the sole ablation suite, and re-pointing the container backends (04, 05) at greenfield. Task numbers are ids, not the build order — the order is the Implementation-order line below.
 
 ---
 
 ## Source and definition-of-done baseline
 
-- **Spec.** [docs/benchmark/specs/](../../benchmark/specs/) — the whole set is in scope: [00-overview](../../benchmark/specs/00-overview.md), [01-domain-model](../../benchmark/specs/01-domain-model.md), [02-arms](../../benchmark/specs/02-arms.md), [03-task-suites](../../benchmark/specs/03-task-suites.md), [04-metrics](../../benchmark/specs/04-metrics.md), [05-harness-architecture](../../benchmark/specs/05-harness-architecture.md), [06-scoring-and-statistics](../../benchmark/specs/06-scoring-and-statistics.md), and [canonical-types.schema.json](../../benchmark/specs/canonical-types.schema.json). Plus the accepted change spec [`changes/2026-05-27-local_backends.md`](../../benchmark/specs/changes/2026-05-27-local_backends.md) (pluggable backends + local-fixture suite), which tasks 17–23 implement and which is merged into the canonical pages once M0 lands.
+- **Spec.** [docs/benchmark/specs/](../../benchmark/specs/) — the whole set is in scope: [00-overview](../../benchmark/specs/00-overview.md), [01-domain-model](../../benchmark/specs/01-domain-model.md), [02-arms](../../benchmark/specs/02-arms.md), [03-task-suites](../../benchmark/specs/03-task-suites.md), [04-metrics](../../benchmark/specs/04-metrics.md), [05-harness-architecture](../../benchmark/specs/05-harness-architecture.md), [06-scoring-and-statistics](../../benchmark/specs/06-scoring-and-statistics.md), and [canonical-types.schema.json](../../benchmark/specs/canonical-types.schema.json). The merged change spec [`changes/merged/2026-05-27-local_backends.md`](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) (pluggable backends + local-fixture suite), which tasks 17–23 implemented, is folded into those pages. **SWE-bench Pro is out of scope:** it was removed from the canonical spec (2026-05-27), so the issue-fixing suite, the `swe-bench-pro` oracle convention, and the prebuilt SWE-bench Pro images are not part of this plan; re-adding them is the pending change spec [`changes/2026-05-27-add_swe_bench_pro_suite.md`](../../benchmark/specs/changes/2026-05-27-add_swe_bench_pro_suite.md), to be planned separately when accepted.
 - **Already built.** Greenfield — nothing exists yet. The repo holds only a placeholder `main.py`; no harness, suites, or tests.
 - **Definition of done.** A repo-wide [`docs/specs/development-guidelines.md`](../../specs/development-guidelines.md) now formalizes the bar (Clean Code style, Python conventions, jj, definition of done), authored 2026-05-27; ruff + pytest + pyright (standard) are wired into a pre-push hook (`.githooks/pre-push`) and CI (`.github/workflows/ci.yml`), both running `scripts/check.sh`. The per-task bar is derived from that page, repo signals, and the spec's own conventions: Python 3.13 with `uv`-managed, locked dependencies; `pytest` tests including the negative-space case named in each task; `ruff` lint and format clean; every record validates against [canonical-types.schema.json](../../benchmark/specs/canonical-types.schema.json); every limit a named constant; version control via `jj`. Adopting a formal guidelines page is an Open question. Each task file adds its task-specific acceptance on top of this baseline.
 
@@ -28,7 +28,6 @@ graph TD
   22["22 · local RunBackend"]
   23["23 · local pipeline demo"]
   01["01 · benchflow scaffold"]
-  03["03 · swe-pro suite"]
   04["04 · scoring oracle (container)"]
   05["05 · run container (container)"]
   06["06 · telemetry capture"]
@@ -46,7 +45,6 @@ graph TD
   17 --> 01
   02 --> 18
   02 --> 19
-  02 --> 03
   02 --> 04
   02 --> 05
   02 --> 12
@@ -64,10 +62,9 @@ graph TD
   21 --> 23
   22 --> 23
   07 --> 23
-  03 --> 04
-  03 --> 05
   01 --> 05
-  04 --> 12
+  12 --> 04
+  12 --> 05
   05 --> 06
   05 --> 08
   07 --> 08
@@ -99,16 +96,15 @@ Rows are listed in numeric (id) order for findability; the build sequence is the
 |---|---|---|---|
 | [01 benchflow scaffold](01-benchflow_scaffold.md) | 17 | build | the BenchFlow substrate layered on the skeleton; `bench tasks check` passes |
 | [02 domain types](02-domain_types.md) | 17 | build | typed entity records that validate against the canonical schema, round-tripped |
-| [03 swe-pro suite](03-swe_pro_suite.md) | 02 | data | SWE-bench Pro public instances ingested as validated `TaskInstance` records |
-| [04 scoring oracle (container)](04-scoring_oracle.md) | 02, 03, 19 | build, data, contract | the `container` ScoringBackend; resolves the gold patch, hidden tests off the run side |
-| [05 run container (container)](05-run_container.md) | 01, 02, 03, 19 | build, data, contract | the `container` RunBackend; A0 yields a candidate patch + transcript |
+| [04 scoring oracle (container)](04-scoring_oracle.md) | 02, 12, 19 | build, data, contract | the `container` ScoringBackend; resolves a greenfield reference solution, hidden tests off the run side |
+| [05 run container (container)](05-run_container.md) | 01, 02, 12, 19 | build, data, contract | the `container` RunBackend; A0 yields a candidate patch + transcript on greenfield |
 | [06 telemetry capture](06-telemetry_capture.md) | 05 | build | tokens, cost, wall-clock, and turns recorded into the artifact bundle |
 | [07 driver scheduler](07-driver_scheduler.md) | 19 | build | a backend-neutral driver; a campaign yields one score report per trial |
-| [08 arm A1 pipeline](08-arm_a1_pipeline.md) | 05, 07 | build, review | A1 drives creator→planner→builder and is scored on SWE-bench Pro |
+| [08 arm A1 pipeline](08-arm_a1_pipeline.md) | 05, 07 | build, review | A1 drives creator→planner→builder and is scored on greenfield |
 | [09 stats: Pass@1 + delta](09-stats_pass1_delta.md) | 07, 08 | build, review | the A0-vs-A1 ablation table with binomial CIs, Pass@k, and a McNemar delta |
-| [10 arms A2 / A3](10-arms_a2_a3.md) | 08 | build | A2 (spec given) and A3 (gates off) scored on SWE-bench Pro |
-| [11 arm A4 unstructured](11-arm_a4_unstructured.md) | 07 | build | A4 (budget-matched naive parallel split) scored on SWE-bench Pro |
-| [12 greenfield suite](12-greenfield_suite.md) | 02, 04 | data, build | greenfield instances scored by their hidden suites, hidden tests absent from run images |
+| [10 arms A2 / A3](10-arms_a2_a3.md) | 08 | build | A2 (spec given) and A3 (gates off) scored on greenfield |
+| [11 arm A4 unstructured](11-arm_a4_unstructured.md) | 07 | build | A4 (budget-matched naive parallel split) scored on greenfield |
+| [12 greenfield suite](12-greenfield_suite.md) | 02 | data, build | greenfield instances + two-image build (run image hidden-test-free, scoring image with them); the sole ablation suite |
 | [13 conformance judge](13-conformance_judge.md) | 07, 08, 12 | build, data | spec-conformance scores with a stated human-label agreement figure |
 | [14 workflow-artifact metrics](14-workflow_artifact_metrics.md) | 08, 10, 12 | build, data | plan coverage, DAG validity, gate catch rate, and false-`Done` escape rate |
 | [15 cost + robustness metrics](15-cost_robustness_metrics.md) | 06, 09, 10, 11 | build, data | cost-matched %Resolved, parallel speedup, and the robustness columns |
@@ -127,19 +123,19 @@ The `contract` edge (19 → 04/05/07/20/22) is the backend interface: the driver
 
 ## Implementation order and milestones
 
-**Order:** `17, 02, 18, 19, 07, 20, 21, 22, 23, 01, 03, 04, 05, 06, 08, 09, 10, 11, 12, 13, 14, 15, 16`. The spine is re-sequenced so the **local milestone (M0)** comes first and needs no Docker: the skeleton (17), domain types (02), the backend seam (18, 19), the driver against the interface (07), the local backends and fixture (20, 21, 22), and the local pipeline demo (23). Within M0 the **interface (19)** leads the backends it defines, and the **driver (07)** is built against the interface before its first real exercise in the demo (23). The **container milestone (M1)** then adds BenchFlow (01), the SWE-bench Pro suite (03), and the container backends (04, 05) — reusing the already-built driver — to score **A0**; the container `ScoringBackend` (04) still leads its `RunBackend` (05) so the gold-patch sanity check retires the integrity risk early. **Stats (09)** follows A1 (08) so its first output is the headline A1−A0 delta.
+**Order:** `17, 02, 18, 19, 07, 20, 21, 22, 23, 01, 12, 04, 05, 06, 08, 09, 10, 11, 13, 14, 15, 16`. The spine is re-sequenced so the **local milestone (M0)** comes first and needs no Docker: the skeleton (17), domain types (02), the backend seam (18, 19), the driver against the interface (07), the local backends and fixture (20, 21, 22), and the local pipeline demo (23). Within M0 the **interface (19)** leads the backends it defines, and the **driver (07)** is built against the interface before its first real exercise in the demo (23). The **container milestone (M1)** then adds BenchFlow (01) and the **greenfield suite (12)** — now the sole ablation suite, so it leads the container backends that provision against it — then the container backends (04, 05) reusing the already-built driver to score **A0** on greenfield; the container `ScoringBackend` (04) still leads its `RunBackend` (05) so the reference-solution sanity check retires the integrity risk early. **Stats (09)** follows A1 (08) so its first output is the headline A1−A0 delta.
 
 **Milestones:**
 
 | Milestone | Tasks | Demonstrable when complete | Review gate |
 |---|---|---|---|
 | M0 — local pipeline (Docker-free) | 17, 02, 18, 19, 07, 20, 21, 22, 23 | run a local campaign over the `local-fixture` suite with the fixture solver and read a deterministic resolved verdict + %Resolved — the whole run→score→aggregate pipeline, no Docker, BenchFlow, or API | the fixture trial resolves deterministically across re-runs; run dir and scoring dir are separate with hidden tests on the scoring side only; `uv run pytest` + `ruff` clean |
-| M1 — container foundations & A0 | 01, 03, 04, 05, 06 | run A0 on a handful of SWE-bench Pro instances via the **container** backend and read raw %Resolved; scoring runs in a separate container; telemetry recorded | A0 scored end to end on ≥3 instances; the gold-patch sanity check resolves in the container oracle; hidden tests confirmed absent from the run container |
-| M2 — headline A1−A0 slice | 08, 09 | the A0-vs-A1 ablation table with binomial CIs, Pass@k, and a McNemar delta on SWE-bench Pro | the table is reproducible across a re-run within its stated intervals |
-| M3 — full arm matrix & greenfield | 10, 11, 12 | all five arms run over both suites and are scored | every (arm × suite) cell yields score reports; greenfield hidden tests confirmed absent from run images |
+| M1 — container foundations, greenfield suite & A0 | 01, 12, 04, 05, 06 | run A0 on a handful of greenfield instances via the **container** backend and read raw %Resolved; scoring runs in a separate container; telemetry recorded | A0 scored end to end on ≥3 greenfield instances; the reference-solution sanity check resolves in the container oracle; hidden tests confirmed absent from the run container |
+| M2 — headline A1−A0 slice | 08, 09 | the A0-vs-A1 ablation table with binomial CIs, Pass@k, and a McNemar delta on greenfield | the table is reproducible across a re-run within its stated intervals |
+| M3 — full arm matrix | 10, 11 | all five arms (A0–A4) run over the greenfield suite and are scored | every arm yields score reports on the greenfield instances |
 | M4 — distinctive metrics & full report | 13, 14, 15, 16 | the complete ablation table — conformance, gate efficacy, cost-matched resolution, robustness, and all four pairwise deltas | the conformance judge is calibrated to the agreed human-label agreement figure |
 
-After M0 lands, merge the change spec [`changes/2026-05-27-local_backends.md`](../../benchmark/specs/changes/2026-05-27-local_backends.md) into the canonical pages (spec-creator's merge step) so the canonical set describes the backend seam as shipped.
+The change spec [`changes/merged/2026-05-27-local_backends.md`](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) has been merged into the canonical pages (spec-creator's merge step), so the canonical set describes the backend seam as shipped.
 
 ---
 
@@ -147,10 +143,11 @@ After M0 lands, merge the change spec [`changes/2026-05-27-local_backends.md`](.
 
 **M0 — DONE and pushed.** All nine M0 tasks (17, 02, 18, 19, 07, 20, 21, 22, 23) were built each in an isolated jj workspace, gated by a separate agent through semi-formal-review (**CORRECT**) and validate-done-certificate (**DONE**), then merged — one commit per task — onto the `spec-workflow-benchmark` bookmark (pushed to origin, tip `82999933`). Final state on the integration tip: **66 tests pass**, `ruff check` + `ruff format --check` clean, and `uv run python -m benchmark.harness.run_local_demo` runs the full run→score→aggregate pipeline deterministically (%Resolved 1.0 fixture / 0.0 no-op, no Docker/BenchFlow/API). Every M0 certificate under `certificates/` is discharged `Validated 2026-05-27`.
 
-**M1–M4 — NOT STARTED (blocked on environment).** Tasks 01, 03, 04, 05, 06, 08–16 require infrastructure absent from the build environment and were deliberately **not** built rather than shipped unverified: **Docker** (no daemon/binary — needed by the container backends 04/05/12 and BenchFlow sandboxing), the **SWE-bench Pro dataset** (task 03), and an **API budget + the `spec-*` plugins running non-interactively in sandboxes** (the arm tasks 08/10/11/13). Per the spec-builder rule that a task reaches Done only when a separate gate proves it correct *and* complete, these cannot be honestly gated here. They remain `Todo`; resume the gated build in an environment with Docker + dataset + API access. (Decision recorded with the user, 2026-05-27.)
+**M1–M4 — NOT STARTED (blocked on environment).** Tasks 01, 04, 05, 06, 08–16 require infrastructure absent from the build environment and were deliberately **not** built rather than shipped unverified: **Docker** (no daemon/binary — needed by the greenfield two-image build and the container backends 04/05/12 plus BenchFlow sandboxing), the **authored greenfield instances** (task 12 — a seed set of multi-component build-from-spec tasks with hidden suites and at least one private reference solution), and an **API budget + the `spec-*` plugins running non-interactively in sandboxes** (the arm tasks 08/10/11/13). Per the spec-builder rule that a task reaches Done only when a separate gate proves it correct *and* complete, these cannot be honestly gated here. They remain `Todo`; resume the gated build in an environment with Docker + the authored greenfield seed + API access. (Decision recorded with the user, 2026-05-27.)
+
+**Re-planned 2026-05-27 (SWE-bench Pro removed).** After M0 shipped, SWE-bench Pro was removed from the canonical spec; this plan was re-cut to match — task 03 (SWE-bench Pro suite) and its certificate were deleted, the greenfield suite (12) moved into M1 as the sole ablation suite, and the container backends (04, 05) re-pointed at greenfield (the gold-patch sanity check became a greenfield private-reference-solution check). No M0 work was disturbed. Re-adding SWE-bench Pro is a separate pending change spec, to be re-planned if accepted.
 
 **Pending (deferred, the user's to run):**
-- Merge the change spec `changes/2026-05-27-local_backends.md` into the canonical pages (spec-creator merge step) now that the backend seam has shipped in M0.
 - A spec-conformance pass (spec-reviewer R2/R3) over the integrated M0 code vs. the source spec — outside the per-task gates.
 
 ---
@@ -167,18 +164,20 @@ After M0 lands, merge the change spec [`changes/2026-05-27-local_backends.md`](.
 
 **Decisions**
 
-- *Thin A0→A1 spine before breadth.* **A0 path (M1) then A1 delta (M2) before any other arm or suite.** It makes the headline result demonstrable earliest and proves the run→score→aggregate pipeline before the heavy workflow arm and the authored greenfield suite are built.
-- *Score the oracle before the runner exists.* **04 before 05, reviewed via the gold patch.** The run/scoring isolation rule is the spec's integrity backbone; exercising the oracle with the known-good gold patch retires that risk while nothing depends on it yet.
+- *Thin A0→A1 spine before breadth.* **A0 path (M1) then A1 delta (M2) before any other arm.** It makes the headline result demonstrable earliest and proves the container run→score→aggregate pipeline with the plain baseline before the heavy workflow arm is built.
+- *Greenfield is the sole ablation suite.* **SWE-bench Pro removed from the canonical spec (2026-05-27).** The benchmark now runs the A0–A4 matrix on the authored greenfield suite only; the issue-fixing suite, the `swe-bench-pro` oracle convention, and the prebuilt images are deferred to a separate change spec, so task 03 was dropped and greenfield (12) became the M1 foundation that A0 is first scored on.
+- *Score the oracle before the runner exists.* **04 before 05, reviewed via a greenfield reference solution.** The run/scoring isolation rule is the spec's integrity backbone; greenfield carries no arms-visible `goldPatch`, so a private reference solution shipped with a self-test instance (task 12) plays the gold patch's role — feeding it resolves, a no-op does not — retiring the integrity risk while nothing depends on the oracle yet.
 - *Five arms split across three tasks by shared machinery.* **A1 alone (08); A2/A3 as config variants together (10); A4 alone (11).** A2 and A3 are flag-level changes to A1's pipeline; A4 is a different orchestration (naive split, no plugins) and stands on its own.
-- *Greenfield suite is one package.* **Two-image mechanics plus a seed set of instances (12).** The run/scoring image split and the instances that prove it are one reviewable vertical slice; full suite sizing is deferred.
-- *Re-planned for a Docker-free first milestone.* **M0 builds a local backend + fixture before any container work.** The original M1 could not be built or validated without Docker, BenchFlow, and an API budget; the [accepted change spec](../../benchmark/specs/changes/2026-05-27-local_backends.md) adds a backend seam so the whole pipeline is verifiable locally first, de-risking the design before the infrastructure-heavy tasks.
-- *Numbers are ids, not order, after the re-plan.* **Tasks 17–23 appended; 01/02/04/05/07 edges re-pointed, not renumbered.** Renumbering would break every cross-reference; the build order lives in the Implementation-order line, and the graph is kept acyclic.
+- *Greenfield suite is one package and an M1 foundation.* **Two-image mechanics, a seed set of instances, and a private reference solution (12).** The run/scoring image split, the instances that prove it, and the self-test patch are one reviewable vertical slice; as the only suite, it now precedes the container backends that score against it. Full suite sizing is deferred.
+- *Re-planned for a Docker-free first milestone.* **M0 builds a local backend + fixture before any container work.** The original M1 could not be built or validated without Docker, BenchFlow, and an API budget; the [merged change spec](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) adds a backend seam so the whole pipeline is verifiable locally first, de-risking the design before the infrastructure-heavy tasks.
+- *Numbers are ids, not order, across both re-plans.* **Tasks 17–23 appended (local re-plan); task 03 deleted and 04/05/12 edges re-pointed (SWE-bench Pro re-plan); nothing renumbered.** Renumbering would break every cross-reference; the build order lives in the Implementation-order line, and the graph is kept acyclic. A deleted id (03) is left retired rather than backfilled.
 - *The driver depends on the interface, not on concrete backends.* **07 depends on 19; 04/05 (container) and 20/22 (local) implement it.** This is what lets one driver run over either backend and what makes a Docker-free M0 reach the driver at all.
 
 **Open questions**
 
 - *Development-guidelines page.* ~~Should a formal guidelines page be authored so the bar is explicit and shared?~~ **Resolved 2026-05-27** — [`docs/specs/development-guidelines.md`](../../specs/development-guidelines.md) authored in Clean Code style for Python. Its own Open questions track the still-unwired enforcement (pre-push hook, CI, strict type checker).
-- *Suite sizes and trial counts.* How many instances per suite and `trialsPerInstance` give informative paired intervals? Early milestones use a small seed (≈5 instances, ≥3 trials); full sizing waits on a power analysis ([03-task-suites.md](../../benchmark/specs/03-task-suites.md), [06-scoring-and-statistics.md](../../benchmark/specs/06-scoring-and-statistics.md)).
+- *Greenfield suite size and trial counts.* How many greenfield instances and `trialsPerInstance` give informative paired intervals? Early milestones use a small seed (≈5 instances, ≥3 trials); full sizing waits on a power analysis ([03-task-suites.md](../../benchmark/specs/03-task-suites.md), [06-scoring-and-statistics.md](../../benchmark/specs/06-scoring-and-statistics.md)). With SWE-bench Pro removed, greenfield carries the whole comparison, so its size is the binding constraint on whether the arms separate.
+- *Container–local verdict parity.* Does the container `ScoringBackend` (task 04) agree with the already-built `local` backend on the same patch — a shared conformance test, or accepted as backend-specific? Carried over from the local_backends change spec; matters more now that greenfield self-test instances stand in for SWE-bench Pro's gold patches.
 - *Cost-matching basis.* Tokens, dollars, or wall-clock? The choice sets the headline of task 15 ([04-metrics.md](../../benchmark/specs/04-metrics.md)) and must be fixed before that delta is reported.
 - *Conformance judge calibration.* The human-label agreement threshold and sample size that make the conformance score reportable — task 13's gate ([06-scoring-and-statistics.md](../../benchmark/specs/06-scoring-and-statistics.md)).
 - *Given-spec provenance for A2/A3.* Whether the handed-in spec is authored by `spec-creator` separately, by a human, or from the greenfield materials — it changes what A1−A2 means and what task 10 implements ([02-arms.md](../../benchmark/specs/02-arms.md)).

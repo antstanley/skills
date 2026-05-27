@@ -2,7 +2,7 @@
 
 **Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/22-local_run_backend.md](certificates/22-local_run_backend.md)
 
-**Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`05-harness-architecture.md` → Run container: `local`, Backends — the `fixture` solver)
+**Implements:** [changes/merged/2026-05-27-local_backends.md](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) §Proposed changes (`05-harness-architecture.md` → Run container: `local`, Backends — the `fixture` solver)
 **Depends on:** 18, 19, 21
 **Produces:** a `RunBackend` that runs in a temp working directory with no Docker, supporting a `fixture` scripted solver that emits the instance `goldPatch`
 **Pointers:** `benchmark/harness/arms/` or `benchmark/harness/backends/` (local run backend), the `RunBackend` interface from task 19

@@ -13,7 +13,7 @@
 - [ ] Compute and call out the four pairwise-delta rows with their McNemar results.
 - [ ] Apply (or justify omitting) a multiple-comparison correction across the four deltas (resolve the Open question).
 - [ ] Render the table to a shareable artifact for a campaign.
-- [ ] Add a test that the report includes all five arms, all metric columns, and the four delta rows, and that absent metrics (e.g. conformance for A0 on SWE-bench Pro) are shown as not-applicable rather than zero.
+- [ ] Add a test that the report includes all five arms, all metric columns, and the four delta rows, and that absent metrics (e.g. the gate metrics for A0/A4, which run no gates, and plan coverage/DAG validity for A0/A4, which produce no plan) are shown as not-applicable rather than zero.
 
 ## Definition of done
 

@@ -4,7 +4,7 @@
 
 **Implements:** [02-arms.md](../../benchmark/specs/02-arms.md) §A1 — Full pipeline, [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Run container (patch extraction for parallel arms)
 **Depends on:** 05, 07
-**Produces:** A1 drives `spec-creator` → `spec-planner` → `spec-builder` end to end in a run container and is scored on SWE-bench Pro
+**Produces:** A1 drives `spec-creator` → `spec-planner` → `spec-builder` end to end in a run container and is scored on the greenfield suite
 **Pointers:** `benchmark/harness/arms/` (A1 recipe), extends the provisioning from task 05
 
 ## Steps

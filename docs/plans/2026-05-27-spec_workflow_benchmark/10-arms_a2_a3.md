@@ -4,7 +4,7 @@
 
 **Implements:** [02-arms.md](../../benchmark/specs/02-arms.md) §A2 — Plan + build (spec handed in), §A3 — Build without gates
 **Depends on:** 08
-**Produces:** A2 (spec given, gates on) and A3 (spec given, gates off) provisioning recipes, both scored on SWE-bench Pro
+**Produces:** A2 (spec given, gates on) and A3 (spec given, gates off) provisioning recipes, both scored on the greenfield suite
 **Pointers:** `benchmark/harness/arms/` (A2, A3 recipes as config variants of the A1 recipe)
 
 ## Steps

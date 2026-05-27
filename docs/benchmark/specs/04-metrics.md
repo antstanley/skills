@@ -14,7 +14,7 @@ Metrics are grouped in four buckets. Every metric is reported per (Arm, Suite); 
 
 ## Bucket 1 — Outcome
 
-The "did it work" bucket, comparable to SWE-bench Pro.
+The "did it work" bucket.
 
 | Metric | Definition | Source |
 |---|---|---|
@@ -22,7 +22,7 @@ The "did it work" bucket, comparable to SWE-bench Pro.
 | **Pass@k** | Fraction of instances resolved by at least one of `k` trials. | aggregate over trials |
 | **Regression rate** | Fraction of trials where a previously-passing `passToPass` test now fails. | `ScoreReport.regressed` |
 
-`%Resolved` is the metric directly comparable across A0 and the published SWE-bench Pro leaderboard. Regression rate is reported separately because a multi-agent merge can resolve the target while breaking something adjacent — a failure mode the parallel arms (A1, A2, A3, A4) risk more than A0.
+`%Resolved` is the headline outcome metric, read pairwise against the A0 baseline ([02-arms.md](02-arms.md)). Regression rate is reported separately because a multi-agent merge can resolve the target while breaking something adjacent — a failure mode the parallel arms (A1, A2, A3, A4) risk more than A0.
 
 ---
 
@@ -46,7 +46,7 @@ Cost-matched %Resolved is the bucket's headline. Raw %Resolved says whether the 
 
 The "did the workflow's machinery work" bucket. These metrics are unobtainable from a black-box outcome score and are the benchmark's distinctive contribution. Applicability varies by metric and arm:
 
-- **Spec conformance** is scored wherever a spec exists to score against: on the greenfield suite for *every* arm (the spec is the instance input, so even A0 and A4 are judged against it), and on the issue-fixing suite for the arms that have a spec (A1 authored it; A2 and A3 were given it).
+- **Spec conformance** is scored on the greenfield suite for *every* arm: the spec is the instance input, so even A0 and A4 are judged against it, and A1's authored spec (or the spec handed to A2 and A3) is judged the same way.
 - **Plan coverage** and **DAG validity** apply to the arms that produce a plan — A1, A2, A3.
 - The two **gate** metrics apply to the arms that run gates — A1 and A2 (A3 disables them; A0 and A4 have none).
 

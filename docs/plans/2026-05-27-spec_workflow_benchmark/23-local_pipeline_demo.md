@@ -2,7 +2,7 @@
 
 **Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/23-local_pipeline_demo.md](certificates/23-local_pipeline_demo.md)
 
-**Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Component shape (backend-neutral driver); [06-scoring-and-statistics.md](../../benchmark/specs/06-scoring-and-statistics.md) §Repetition and Pass@k (over the fixture); [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) (end to end)
+**Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Component shape (backend-neutral driver); [06-scoring-and-statistics.md](../../benchmark/specs/06-scoring-and-statistics.md) §Repetition and Pass@k (over the fixture); [changes/merged/2026-05-27-local_backends.md](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) (end to end)
 **Depends on:** 07, 20, 21, 22
 **Produces:** the driver runs a local `Campaign` (`backend: local`, `solver: fixture`) over the `local-fixture` suite end to end and yields a deterministic resolved verdict plus a minimal %Resolved — the whole run → score → aggregate pipeline, no Docker
 **Pointers:** `benchmark/harness/driver/` (task 07), the local backends (tasks 20, 22), the fixture suite (task 21)

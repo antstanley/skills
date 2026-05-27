@@ -3,13 +3,13 @@
 **Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/05-run_container.md](certificates/05-run_container.md)
 
 **Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Run container, [02-arms.md](../../benchmark/specs/02-arms.md) §A0 — Baseline (provisioning)
-**Depends on:** 01, 02, 03, 19
-**Produces:** the `container` `RunBackend` (implementing the task 19 interface) — A0 runs in a provisioned container against a `TaskInstance` and yields a `candidatePatch` plus a transcript captured into an `ArtifactBundle`
-**Pointers:** `benchmark/harness/arms/` (A0 recipe), `benchmark/harness/driver/` (container provisioning)
+**Depends on:** 01, 02, 12, 19
+**Produces:** the `container` `RunBackend` (implementing the task 19 interface) — A0 runs in a provisioned container against a greenfield `TaskInstance` and yields a `candidatePatch` plus a transcript captured into an `ArtifactBundle`
+**Pointers:** `benchmark/harness/arms/` (A0 recipe), `benchmark/harness/driver/` (container provisioning); provision from the greenfield run image (hidden tests excluded, task 12)
 
 ## Steps
 
-- [ ] Provision a run container from the instance's `dockerImage` with `jj` and `git` available.
+- [ ] Provision a run container from the instance's greenfield run image (`dockerImage`, hidden tests excluded) with `jj` and `git` available.
 - [ ] Implement the A0 provisioning recipe: a plain agent on the fixed model, no `spec-*` plugins, given the instance `problemStatement`.
 - [ ] Run A0 to completion non-interactively and extract the `candidatePatch` as the diff of the working state against `baseCommit`.
 - [ ] Capture the transcript into the `ArtifactBundle`; discard the container afterward.

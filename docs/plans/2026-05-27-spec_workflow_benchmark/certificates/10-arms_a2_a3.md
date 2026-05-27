@@ -15,7 +15,7 @@ names — not by assertion.
 
 ## Premises
 
-- **P1 — Goal.** A2 (spec given, gates on) and A3 (spec given, gates off) provisioning recipes, both scored on SWE-bench Pro.
+- **P1 — Goal.** A2 (spec given, gates on) and A3 (spec given, gates off) provisioning recipes, both scored on the greenfield suite.
 - **P2 — Obligations.** Done iff O1…O4 all hold; O4 is the Reviewable item.
 - **P3 — Invariants.** A2/A3 are config variants of the Task 08 A1 recipe; A1 and A0 must continue to run unchanged.
 

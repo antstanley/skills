@@ -4,7 +4,7 @@
 
 **Implements:** [02-arms.md](../../benchmark/specs/02-arms.md) §A4 — Parallel but unstructured
 **Depends on:** 07
-**Produces:** A4 — a budget-matched naive N-way parallel split with no plugins, no DAG, no DoD, no gates — scored on SWE-bench Pro
+**Produces:** A4 — a budget-matched naive N-way parallel split with no plugins, no DAG, no DoD, no gates — scored on the greenfield suite
 **Pointers:** `benchmark/harness/arms/` (A4 recipe; its own orchestration, not the `spec-*` plugins)
 
 ## Steps

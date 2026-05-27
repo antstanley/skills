@@ -28,7 +28,7 @@ names — not by assertion.
   - *Status:* ☐ unverified
 
 - **O2 — Multiple-comparison handling is applied or justified; not-applicable cells are distinguished from zero.**
-  - *Claim:* a multiple-comparison correction across the four deltas is applied or its omission justified, and cells like conformance for A0 on SWE-bench Pro render as not-applicable, not zero.
+  - *Claim:* a multiple-comparison correction across the four deltas is applied or its omission justified, and cells like the gate metrics for A0/A4 (which run no gates) render as not-applicable, not zero.
   - *Evidence to collect:* read the report's multiple-comparison note; run the test asserting an N/A cell is rendered distinctly from a `0.0` value.
   - *Status:* ☐ unverified
 

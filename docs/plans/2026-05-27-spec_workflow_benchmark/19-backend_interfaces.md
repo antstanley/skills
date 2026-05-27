@@ -2,7 +2,7 @@
 
 **Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/19-backend_interfaces.md](certificates/19-backend_interfaces.md)
 
-**Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`05-harness-architecture.md` → Backends, §Run container, §Scoring isolation)
+**Implements:** [changes/merged/2026-05-27-local_backends.md](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) §Proposed changes (`05-harness-architecture.md` → Backends, §Run container, §Scoring isolation)
 **Depends on:** 02
 **Produces:** the `RunBackend` and `ScoringBackend` interfaces the driver and the concrete backends code against
 **Pointers:** `benchmark/harness/backends/`

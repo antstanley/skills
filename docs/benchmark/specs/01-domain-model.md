@@ -18,8 +18,8 @@ Mutable, human-meaningful entities carry a **stable slug**; per-execution record
 | Prefix / slug | Entity |
 |---|---|
 | `A0`–`A4` (slug) | Arm |
-| suite slug (`swe-bench-pro-public`, `greenfield-features`) | Suite |
-| task slug (suite-scoped, e.g. `swepro__django__12345`) | TaskInstance |
+| suite slug (`greenfield-features`, `local-fixture`) | Suite |
+| task slug (suite-scoped, e.g. `greenfield__url_shortener`) | TaskInstance |
 | `camp_` | Campaign |
 | `trial_` | Trial |
 | `bundle_` | ArtifactBundle |
@@ -36,13 +36,13 @@ Arm slugs are fixed and never reused; the set is closed at five ([02-arms.md](02
 
 ### Suite (slug)
 
-A named collection of task instances drawn from one source with one oracle convention. Two suites exist by design: `swe-bench-pro-public` (issue-fixing, reusing SWE-bench Pro instances) and `greenfield-features` (build-from-spec, newly authored). See [03-task-suites.md](03-task-suites.md).
+A named collection of task instances drawn from one source with one oracle convention. The ablation result runs on `greenfield-features` (build-from-spec, newly authored); the `local-fixture` suite is a Docker-free verification instance for the pipeline itself. See [03-task-suites.md](03-task-suites.md).
 
 Carries:
 
 - `slug` — stable suite identifier.
-- `kind` — `issue-fixing`, `greenfield`, or `local-fixture`.
-- `oracleConvention` — `swe-bench-pro`, `greenfield-hidden-tests`, or `local`.
+- `kind` — `greenfield` or `local-fixture`.
+- `oracleConvention` — `greenfield-hidden-tests` or `local`.
 
 ### TaskInstance (suite-scoped slug)
 
@@ -53,10 +53,10 @@ Carries:
 - `slug` — suite-scoped stable id.
 - `suite` — owning Suite slug.
 - `repo` / `baseCommit` — the starting code state.
-- `problemStatement` — the issue text (issue-fixing) or the prose specification seed (greenfield) that the arms receive as input.
-- `goldPatch` — reference solution, present for issue-fixing instances reused from SWE-bench Pro; absent for greenfield.
+- `problemStatement` — the prose specification seed (greenfield) or short task description (local-fixture) that the arms receive as input.
+- `goldPatch` — reference solution, present for the `local-fixture` instance (the patch that makes its hidden suite pass); `null` for greenfield, which has no single reference solution.
 - `failToPass` / `passToPass` — the hidden test selectors that define resolution. Never exposed to any arm.
-- `testTags` — for greenfield instances, an optional mapping from each hidden test selector to the spec section or component it exercises. It lets the `gateEscape` metric ([06-scoring-and-statistics.md](06-scoring-and-statistics.md)) attribute a failing test to the specific `Done` task that claims that section (via the task's `Implements` pointer). Absent it — and on issue-fixing, where it is always absent — escape is computed only at instance granularity.
+- `testTags` — for greenfield instances, an optional mapping from each hidden test selector to the spec section or component it exercises. It lets the `gateEscape` metric ([06-scoring-and-statistics.md](06-scoring-and-statistics.md)) attribute a failing test to the specific `Done` task that claims that section (via the task's `Implements` pointer). Absent it, escape is computed only at instance granularity.
 - `dockerImage` — the prebuilt environment tag the trial container is based on.
 - `contaminationTier` — `public`, `held-out`, or `authored-private`; records training-data exposure risk.
 - `headlessVerifiable` — whether the oracle runs without a human in the loop (gates the UI-pause concern from [00-overview.md](00-overview.md)).

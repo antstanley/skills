@@ -2,7 +2,7 @@
 
 **Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/17-package_skeleton.md](certificates/17-package_skeleton.md)
 
-**Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Implementation layout (the Docker-free core, minus the BenchFlow substrate); [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md)
+**Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Implementation layout (the Docker-free core, minus the BenchFlow substrate); [changes/merged/2026-05-27-local_backends.md](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md)
 **Depends on:** —
 **Produces:** a uv-managed Python package — the `benchmark/` tree with `pytest` + `ruff` wired and dependencies locked — that imports and tests clean **without** BenchFlow
 **Pointers:** repo root (`pyproject.toml`, `.python-version` = 3.13); new `benchmark/` package per the spec's layout

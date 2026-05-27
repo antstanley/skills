@@ -28,8 +28,8 @@ names — not by assertion.
   - *Status:* ☐ unverified
 
 - **O2 — Per-task escape attribution works where `testTags` exist and falls back otherwise.**
-  - *Claim:* with `testTags` (greenfield) escape is attributed per task via the `Implements` pointer; without them (issue-fixing) escape is computed at instance granularity.
-  - *Evidence to collect:* run on a greenfield instance with `testTags` → expect per-task attribution; run on a SWE-bench Pro instance → expect instance-granularity escape. Run the known-bad-patch tests (one caught, one escaped) and confirm the counts.
+  - *Claim:* with `testTags` (greenfield) escape is attributed per task via the `Implements` pointer; without them escape is computed at instance granularity.
+  - *Evidence to collect:* run on a greenfield instance with `testTags` → expect per-task attribution; run on an instance without `testTags` → expect instance-granularity escape. Run the known-bad-patch tests (one caught, one escaped) and confirm the counts.
   - *Status:* ☐ unverified
 
 - **O3 — Meets the repo definition of done.**

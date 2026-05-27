@@ -15,7 +15,7 @@ names — not by assertion.
 
 ## Premises
 
-- **P1 — Goal.** A1 drives `spec-creator` → `spec-planner` → `spec-builder` end to end in a run container and is scored on SWE-bench Pro.
+- **P1 — Goal.** A1 drives `spec-creator` → `spec-planner` → `spec-builder` end to end in a run container and is scored on the greenfield suite.
 - **P2 — Obligations.** Done iff O1…O4 all hold; O4 is the Reviewable item.
 - **P3 — Invariants.** Extends Task 05 provisioning and runs through Task 07's driver and Task 04's oracle; must not regress the A0 path.
 

@@ -2,7 +2,7 @@
 
 **Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/20-local_scoring_backend.md](certificates/20-local_scoring_backend.md)
 
-**Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`06-scoring-and-statistics.md` → The test oracle: `local`; `05-harness-architecture.md` → Scoring isolation: `local`)
+**Implements:** [changes/merged/2026-05-27-local_backends.md](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) §Proposed changes (`06-scoring-and-statistics.md` → The test oracle: `local`; `05-harness-architecture.md` → Scoring isolation: `local`)
 **Depends on:** 18, 19
 **Produces:** a `ScoringBackend` that scores a candidate patch via a temp checkout and a local `pytest` run — no Docker
 **Pointers:** `benchmark/harness/scoring/` (local backend), the `ScoringBackend` interface from task 19

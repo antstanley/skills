@@ -2,9 +2,9 @@
 
 **Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/07-driver_scheduler.md](certificates/07-driver_scheduler.md)
 
-**Implements:** [01-domain-model.md](../../benchmark/specs/01-domain-model.md) §Lifecycle / state machine, [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Component shape, §Concurrency and reproducibility; [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Backends (backend-neutral driver)
+**Implements:** [01-domain-model.md](../../benchmark/specs/01-domain-model.md) §Lifecycle / state machine, [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Component shape, §Concurrency and reproducibility; [changes/merged/2026-05-27-local_backends.md](../../benchmark/specs/changes/merged/2026-05-27-local_backends.md) §Backends (backend-neutral driver)
 **Depends on:** 19
-**Produces:** a backend-neutral driver — a campaign runs end to end through the `RunBackend` / `ScoringBackend` interface, expanding the matrix, driving each trial through its lifecycle, and emitting one `ScoreReport` per trial (first exercised over the local-fixture suite in task 23, and on SWE-bench Pro via the container backend in M1)
+**Produces:** a backend-neutral driver — a campaign runs end to end through the `RunBackend` / `ScoringBackend` interface, expanding the matrix, driving each trial through its lifecycle, and emitting one `ScoreReport` per trial (first exercised over the local-fixture suite in task 23, and on the greenfield suite via the container backend in M1)
 **Pointers:** `benchmark/harness/driver/`; the backend interface from task 19
 
 ## Steps

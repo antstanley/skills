@@ -15,21 +15,21 @@ names — not by assertion.
 
 ## Premises
 
-- **P1 — Goal.** Greenfield instances that run through an arm and are scored by their hidden suites, with hidden tests baked only into the scoring image.
+- **P1 — Goal.** The greenfield instances and the two-image build (run image with hidden tests excluded, scoring image with them included), plus a private reference solution for a self-test instance — the data and images the container backends (Tasks 04, 05) provision against. Greenfield is the sole ablation suite.
 - **P2 — Obligations.** Done iff O1…O4 all hold; O4 is the Reviewable item.
-- **P3 — Invariants.** Uses Task 02 `TaskInstance` and extends Task 04's oracle with the `greenfield-hidden-tests` convention; the integrity rule (hidden tests off the run side) must hold.
+- **P3 — Invariants.** Uses Task 02 `TaskInstance`; the container scorer (Task 04) and runner (Task 05) depend on this task, not the reverse; the integrity rule (hidden tests off the run side) must hold by construction in the two-image split.
 
 ## Obligations
 
-- **O1 — A greenfield instance is scored by its hidden suite; hidden tests absent from run image, present in scoring image.**
-  - *Claim:* an arm's output on a greenfield instance is scored against the withheld suite, and a test asserts the run image has no hidden tests while the scoring image does.
-  - *Evidence to collect:* run an arm on a greenfield instance and score it → expect a `ScoreReport`; run the two-image test → expect run image clean, scoring image carries the hidden suite.
-  - *Checks:* resolve the scoring path to the `greenfield-hidden-tests` oracle convention (Task 04), not the `swe-bench-pro` one; confirm the run image build excludes the test layer.
+- **O1 — Greenfield instances validate; hidden tests absent from run image, present in scoring image.**
+  - *Claim:* the greenfield instances load as validated `TaskInstance` records (`goldPatch: null`, `contaminationTier: authored-private`), and a test asserts the run image has no hidden tests while the scoring image does.
+  - *Evidence to collect:* load the suite → expect validated `TaskInstance` records; run the two-image test → expect run image clean, scoring image carries the hidden suite.
+  - *Checks:* confirm the run image build excludes the test layer; confirm each row validates against the Task 02 canonical schema.
   - *Status:* ☐ unverified
 
-- **O2 — Seed instances are multi-component and carry `testTags`.**
-  - *Claim:* each seed instance's spec names several components with dependencies, and `testTags` maps hidden tests to spec sections/components.
-  - *Evidence to collect:* read a seed instance's spec seed → expect ≥2 dependent components; read its `testTags` → expect a test→section mapping covering the hidden suite.
+- **O2 — Seed instances are multi-component, carry `testTags`, and one ships a private reference solution.**
+  - *Claim:* each seed instance's spec names several dependent components and `testTags` maps hidden tests to spec sections; at least one self-test instance ships a private reference solution in the suite directory, not in the arms-visible `goldPatch` field.
+  - *Evidence to collect:* read a seed instance's spec seed → expect ≥2 dependent components; read its `testTags` → expect a test→section mapping; locate the self-test instance's reference solution and confirm it is outside the `goldPatch` field (which stays `null`).
   - *Status:* ☐ unverified
 
 - **O3 — Meets the repo definition of done.**
@@ -37,14 +37,14 @@ names — not by assertion.
   - *Evidence to collect:* run `uv run pytest`, `uv run ruff check`, `uv run ruff format --check` — expect all clean; confirm greenfield instances validate as `TaskInstance` records.
   - *Status:* ☐ unverified
 
-- **O4 — Reviewable: run one arm on a greenfield instance; see it scored by the withheld suite; confirm run image has no hidden tests. (M3 capstone.)**
-  - *Claim:* a reviewer runs one arm on a greenfield instance, sees it scored by the withheld suite, and confirms the run image carries no hidden tests.
-  - *Evidence to collect:* run an arm once; print the `ScoreReport`; inspect the run image for absence of hidden tests.
+- **O4 — Reviewable: load the suite; confirm run image hidden-test-free and scoring image with them; locate the self-test reference solution.**
+  - *Claim:* a reviewer loads the suite, lists the seed instances, confirms the run image carries no hidden tests while the scoring image does, and locates the self-test instance's private reference solution.
+  - *Evidence to collect:* list the instances; inspect the run and scoring images for the hidden suite; open the self-test instance's reference solution.
   - *Status:* ☐ unverified
 
 ## Regression check
 
-- Task 04's `swe-bench-pro` oracle convention must still work after the greenfield convention is added. Trace a SWE-bench Pro gold-patch scoring → expect it still resolves : ☐ (PRESERVED / REGRESSION)
+- No existing callers — the suite's data and images are consumed by the container backends (Tasks 04, 05), built later. Confirm the new greenfield instances validate against the Task 02 schema without changing it : ☐ (PRESERVED / REGRESSION)
 
 ## Residue
 
