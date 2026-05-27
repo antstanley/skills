@@ -1,6 +1,6 @@
 # Task 17 — Python package skeleton (no BenchFlow)
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/17-package_skeleton.md](certificates/17-package_skeleton.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/17-package_skeleton.md](certificates/17-package_skeleton.md)
 
 **Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Implementation layout (the Docker-free core, minus the BenchFlow substrate); [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md)
 **Depends on:** —
@@ -9,10 +9,10 @@
 
 ## Steps
 
-- [ ] Create the `benchmark/` package tree: `harness/{driver,arms,scoring,backends,telemetry,stats}` and `suites/`, as empty importable modules.
-- [ ] Wire `pytest` and `ruff` (lint + format) in `pyproject.toml`; add one trivial smoke test.
-- [ ] Add and lock the minimal runtime deps (a JSON Schema validator for task 02); do **not** add BenchFlow — it is deferred to task 01.
-- [ ] Confirm `uv run pytest` passes and `import benchmark.harness` resolves.
+- [x] Create the `benchmark/` package tree: `harness/{driver,arms,scoring,backends,telemetry,stats}` and `suites/`, as empty importable modules.
+- [x] Wire `pytest` and `ruff` (lint + format) in `pyproject.toml`; add one trivial smoke test.
+- [x] Add and lock the minimal runtime deps (a JSON Schema validator for task 02); do **not** add BenchFlow — it is deferred to task 01.
+- [x] Confirm `uv run pytest` passes and `import benchmark.harness` resolves.
 
 ## Definition of done
 
