@@ -17,7 +17,7 @@ Two knobs, with defaults, resolved in this order (later wins):
    ---
    execution_mode: parallel        # parallel | sequential
    max_parallel_agents: 4          # ignored when sequential
-   workspace_layout: sibling       # sibling | grouped (passed to using-jj-workspaces)
+   workspace_layout: sibling       # sibling | grouped (see workspaces.md)
    ---
    ```
    Read it with the `plugin-settings` pattern if present; create it only if the user asks
@@ -58,7 +58,7 @@ A bounded-concurrency topological walk. Maintain three sets: `done`, `running`, 
 ```
 ready   = tasks whose Depends-on ⊆ done, not yet running or done
 running = tasks dispatched to a sub-agent, not yet resolved
-done    = tasks marked Done (both gates passed) and merged into the integration revision
+done    = tasks marked Done (both gates passed) and merged into the integration point
 ```
 
 Loop until every task is `done`:
@@ -68,7 +68,7 @@ Loop until every task is `done`:
    since the plan already numbered in reviewability order) and dispatch it (see
    [`build-loop.md`](build-loop.md)). Move it `ready → running`.
 2. When a running task resolves:
-   - **Both gates pass →** merge its workspace into the integration revision, mark it
+   - **Both gates pass →** merge its workspace into the integration point, mark it
      `done`, update its task `Status` to `Done`, recompute `ready` (newly-unblocked tasks),
      and tear down its workspace.
    - **A gate fails →** handle per [`build-loop.md`](build-loop.md) (re-dispatch with the
@@ -85,35 +85,35 @@ a single message), not one after another, so the wave actually runs in parallel.
 
 ---
 
-## jj workspace lifecycle
+## Workspace lifecycle
 
-Isolation is delegated to the **using-jj-workspaces** skill — do not hand-roll workspace
-commands; invoke that skill and follow its detection, directory-selection, and cleanup
-steps. The detail it adds (sibling paths, `jj new` for a clean base, the baseline test
-run, `jj workspace forget` + `rm -rf` on teardown) all applies. This file covers only how
-spec-builder *uses* workspaces across the wave.
+Isolation runs on either backend — **jj (preferred) or git** — using the vendored,
+self-contained method in [`workspaces.md`](workspaces.md): backend detection (jj first,
+so a colocated repo uses jj), sibling directory selection, the per-workspace commands, the
+baseline test run, and teardown. Read it for the commands; this section covers only how
+spec-builder *uses* workspaces across the wave, in backend-neutral terms.
 
-### Integration revision — the accumulating tip
+### Integration point — the accumulating tip
 
-spec-builder keeps one **integration revision**: the running revision that holds every
-task merged `done` so far. It starts at the plan's base (the current `@` after a clean
-`jj new`, or a revision the user names) and advances each time a task is merged.
+spec-builder keeps one **integration point**: the running tip that holds every task merged
+`done` so far — a **jj revision** on the jj backend, the **`spec-builder/integration`
+branch** tip on the git backend. It starts at the plan's clean base (after `jj new`, or on
+a clean integration branch) — or at a revision/ref the user names — and advances each time
+a task is merged.
 
 - **Branching a task's workspace.** A task's workspace must start from a base that already
-  contains its dependencies' work. Create it from the **current integration revision**:
-  `jj workspace add -r <integration-rev> ../<repo>-task-NN`. Then the sub-agent sees
-  exactly the code its `Depends on` tasks produced — no more, no less.
-- **Parallel tasks in one wave** share the same integration revision as their base
-  (they have no dependency on each other, by construction of the ready set), so they
-  branch from the same point and cannot see each other's in-flight edits.
-- **Merging a completed task.** Once both gates pass, fold the workspace's revision into
-  the integration tip — `jj new <integration-rev> <task-rev>` for a combined change, or
-  `jj rebase -s <task-rev> -d <integration-rev>` — and advance the integration revision to
-  the result. Because parallel tasks branched from the *same* base, the second and later
-  merges of a wave rebase onto an integration tip that already moved; jj usually does this
-  cleanly. On a conflict, see below.
-- **Tearing down.** After a successful merge, `jj workspace forget <name>` + `rm -rf
-  <path>`. After an abandoned attempt, `jj abandon <task-rev>` first, then forget + remove.
+  contains its dependencies' work, so create it from the **current integration point**
+  (`jj workspace add -r <int>` / `git worktree add -b spec-builder/task-NN … spec-builder/integration`).
+  The sub-agent then sees exactly the code its `Depends on` tasks produced — no more, no less.
+- **Parallel tasks in one wave** share the same integration point as their base (the ready
+  set guarantees they don't depend on each other), so they branch from the same tip and
+  cannot see each other's in-flight edits.
+- **Merging a completed task.** Once both gates pass, fold the workspace into the
+  integration tip (`jj new`/`jj rebase` / `git merge --no-ff`) and advance the integration
+  point to the result. Because parallel tasks branched from the *same* base, the second and
+  later merges of a wave land on a tip that already moved; usually clean, but see below.
+- **Tearing down.** After a successful merge, unregister and remove the workspace; after an
+  abandoned attempt, drop its revision/branch first. Exact commands in [`workspaces.md`](workspaces.md).
 
 ### Merge conflicts between parallel tasks
 
@@ -128,11 +128,12 @@ merging the second one conflicts:
 3. Note the conflict in the build log and consider flagging the missing dependency edge
    back to the plan (an `Open question` for a spec-planner pass).
 
-### Stale working copy
+### Stale working copy (jj backend)
 
-If a merge rewrote a revision another workspace was editing, that workspace's next `jj`
-command reports it stale. Resolve with `jj workspace update-stale` (per using-jj-workspaces)
-— never force-reset; jj preserves prior state in a recovery commit if needed.
+If a merge rewrote a revision another jj workspace was editing, that workspace's next `jj`
+command reports it stale. Resolve with `jj workspace update-stale` — never force-reset; jj
+preserves prior state in a recovery commit if needed. On the git backend this does not
+arise: a worktree's branch is locked to it and is not rewritten underneath it.
 
 ---
 

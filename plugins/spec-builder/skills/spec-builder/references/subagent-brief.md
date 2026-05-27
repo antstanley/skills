@@ -1,7 +1,8 @@
 # Sub-agent brief — context assembly and the implementer prompt
 
-Each task is built by its own implementer sub-agent in its own jj workspace. The agent
-sees *only* what its brief carries, so the brief must hold **enough context to complete
+Each task is built by its own implementer sub-agent in its own isolated workspace (a jj
+workspace or a git worktree — see [`workspaces.md`](workspaces.md)). The agent sees *only*
+what its brief carries, so the brief must hold **enough context to complete
 the task and no more** — the spec-planner task file already named exactly that context.
 This file is how the orchestrator turns a task file into a self-contained brief.
 
@@ -45,11 +46,11 @@ Dispatch the sub-agent (general-purpose, or a feature-dev implementer) into its 
 with a brief shaped like this — adapt, do not paste verbatim:
 
 ```
-You are implementing one task of a larger plan, in an isolated jj workspace. Build ONLY
+You are implementing one task of a larger plan, in an isolated workspace. Build ONLY
 this task. Do not start work the task does not name; do not touch files outside its scope.
 
 ## Workspace
-Work in: <workspace-path>   (a jj workspace; your edits are auto-snapshotted)
+Work in: <workspace-path>   (an isolated jj workspace / git worktree — just edit files here)
 Your base already contains the completed work of this task's dependencies. Run the
 project's test suite once before you start to confirm a green baseline; if it is red,
 stop and report — do not build on a broken base.

@@ -1,6 +1,6 @@
 # spec-builder
 
-Implement a spec-planner plan — dispatch one sub-agent per task in its own jj workspace, and gate every task through a semi-formal correctness review and a definition-of-done validation before it merges and is marked `Done`.
+Implement a spec-planner plan — dispatch one sub-agent per task in its own isolated workspace, and gate every task through a semi-formal correctness review and a definition-of-done validation before it merges and is marked `Done`. Isolation runs on **jj or git** repos (jj preferred when both exist) and is vendored self-contained, so the plugin needs no other plugin installed.
 
 Triggers on phrases like "build this plan", "implement the plan in docs/plans/…", "run the spec-builder", "build the tasks in parallel" or "…sequentially". It consumes a spec-planner plan folder (`docs/plans/YYYY-MM-DD-title/` — `plan.md`, the `NN-task.md` files, and the optional `certificates/` subfolder) and produces merged, reviewed, validated code, keeping the plan folder current as a live board so progress is readable from the files and an interrupted build resumes from them.
 
@@ -26,13 +26,14 @@ spec-creator → spec-planner → done-certificates → spec-builder
                 done)
 ```
 
-At build time it delegates isolation to **using-jj-workspaces** (one workspace per task, branched from an accumulating integration revision, torn down after merge) and runs its own two gate skills. It is optimised for spec-planner plans — it reads the dependency table as the source of truth, the per-task `Implements / Produces / Pointers / Steps / Definition of done` fields, and the `certificates/` subfolder.
+It is **self-contained** — it needs no other plugin installed. Workspace isolation is vendored into the skill (one workspace per task, branched from an accumulating integration point, torn down after merge) and works on **both jj and git**: jj (jujutsu) is preferred when a repo supports both (a colocated repo), plain git repos use git worktrees. The standalone `jj-workspaces` skill is a richer companion when present, but not required. The two gate skills ship in this plugin. It is optimised for spec-planner plans — it reads the dependency table as the source of truth, the per-task `Implements / Produces / Pointers / Steps / Definition of done` fields, and the `certificates/` subfolder.
 
 ## spec-builder
 
 The orchestrator. It lives at [`skills/spec-builder/SKILL.md`](skills/spec-builder/SKILL.md). It loads the plan, resolves execution settings (parallel/sequential, max agents — defaults parallel/4, overridable inline or via `.claude/spec-builder.local.md`), runs a bounded-concurrency wave scheduler over the dependency graph, and runs the per-task build loop (implement → review → validate → merge → mark `Done`). The method is under [`skills/spec-builder/references/`](skills/spec-builder/references/):
 
-- [`references/orchestration.md`](skills/spec-builder/references/orchestration.md) — configuration, reading the plan into a schedule, the wave scheduler, the jj workspace lifecycle and the accumulating integration revision, merge-conflict handling, and status bookkeeping.
+- [`references/orchestration.md`](skills/spec-builder/references/orchestration.md) — configuration, reading the plan into a schedule, the wave scheduler, the backend-neutral workspace lifecycle and the accumulating integration point, merge-conflict handling, and status bookkeeping.
+- [`references/workspaces.md`](skills/spec-builder/references/workspaces.md) — the vendored, self-contained workspace-isolation method for both backends: detection (jj preferred, else git), sibling directory selection, the per-workspace commands, the baseline test run, merging and teardown, and an operation-mapping table (concept → jj → git).
 - [`references/subagent-brief.md`](skills/spec-builder/references/subagent-brief.md) — assembling a context-sized brief from a task package (the package defines the context), the implementer prompt template, and the narrower reviewer/validator briefs.
 - [`references/build-loop.md`](skills/spec-builder/references/build-loop.md) — the per-task lifecycle, the two gates and their pass/fail rules, merge-and-mark-done, handling a failed gate (feedback, bounded retries, parking), and the invariants.
 
@@ -54,6 +55,6 @@ Gate 2 — **completeness**. The validating agent the [done-certificates](../spe
 |---|---|---|
 | `execution_mode` | `parallel` | `.claude/spec-builder.local.md` frontmatter, or inline in the request |
 | `max_parallel_agents` | `4` | same (ignored when sequential) |
-| `workspace_layout` | `sibling` | same (passed through to using-jj-workspaces) |
+| `workspace_layout` | `sibling` | same (`sibling` \| `grouped` — see workspaces.md) |
 
 An explicit request ("build sequentially", "max 2 agents") overrides the file and the defaults for that run.

@@ -1,6 +1,6 @@
 ---
 name: spec-builder
-description: Implement a spec-planner plan by dispatching one sub-agent per task in its own jj workspace, gating every task through a semi-formal correctness review and a definition-of-done validation before it is merged and marked Done. Walks the plan's dependency graph in waves — parallel by default (max 4 concurrent agents) or sequential — updating task and plan status as the build progresses. Triggers on "build this plan", "implement the plan", "execute the plan in docs/plans/...", "run the spec-builder", "build the tasks in parallel/sequentially", or handing a spec-planner plan folder over for implementation. Consumes docs/plans/YYYY-MM-DD-title/ (plan.md, NN-task.md files, optional certificates/); produces merged, reviewed, validated implementations with the plan folder kept current as a live board.
+description: Implement a spec-planner plan by dispatching one sub-agent per task in its own isolated workspace, gating every task through a semi-formal correctness review and a definition-of-done validation before it is merged and marked Done. Isolation works on jj or git repos (jj preferred when both exist), vendored self-contained so the plugin needs no other plugin installed. Walks the plan's dependency graph in waves — parallel by default (max 4 concurrent agents) or sequential — updating task and plan status as the build progresses. Triggers on "build this plan", "implement the plan", "execute the plan in docs/plans/...", "run the spec-builder", "build the tasks in parallel/sequentially", or handing a spec-planner plan folder over for implementation. Consumes docs/plans/YYYY-MM-DD-title/ (plan.md, NN-task.md files, optional certificates/); produces merged, reviewed, validated implementations with the plan folder kept current as a live board.
 ---
 
 # Spec Builder
@@ -24,7 +24,7 @@ self-report.
 Three rules follow:
 
 1. **One sub-agent per task, in one isolated workspace.** Tasks are built in parallel where
-   the graph allows it; isolation comes from jj workspaces, not from trust.
+   the graph allows it; isolation comes from per-task workspaces (jj or git), not from trust.
 2. **Two gates, both mandatory, neither self-graded.** Correctness (semi-formal-review) and
    completeness (validate-done-certificate) both pass before a task merges. The implementer
    runs neither on its own work.
@@ -39,10 +39,13 @@ spec-builder is the execution end of a four-skill pipeline:
 - **spec-creator** writes the spec → **spec-planner** decomposes it into a task graph with a
   definition of done per task → **done-certificates** authors the per-task verification
   protocol → **spec-builder** (this skill) builds the tasks and discharges those protocols.
-- It depends on three skills at build time:
-  - **using-jj-workspaces** — creates and tears down the per-task isolated workspaces, and
-    intercepts any git-worktree assumption in this jj repo. spec-builder delegates all
-    workspace mechanics to it.
+- It is **self-contained** — it needs no other plugin installed. Workspace isolation is
+  vendored into this skill at [`references/workspaces.md`](references/workspaces.md),
+  covering both backends:
+  - **Workspace isolation (jj or git)** — creates and tears down the per-task isolated
+    workspaces. jj (jujutsu) is preferred when a repo supports both (a colocated repo);
+    plain git repos use git worktrees. The standalone `jj-workspaces` skill is a richer
+    companion when installed, but not required.
   - **semi-formal-review** (this plugin) — gate 1, correctness.
   - **validate-done-certificate** (this plugin) — gate 2, completeness; discharges the
     certificate done-certificates authored, or the DoD checklist when none exists.
@@ -77,8 +80,9 @@ Five phases. The mechanics live in the three references — read them before the
 
 ### Phase 1 — Load the plan and resolve settings
 
-1. Locate the plan folder; confirm it is jj-managed (delegate detection to
-   using-jj-workspaces). Read `plan.md`, every `NN-<task>.md`, and `certificates/` if present.
+1. Locate the plan folder; detect the VCS backend and pick it — jj if present (preferred,
+   even in a colocated repo), else git ([`references/workspaces.md`](references/workspaces.md));
+   announce the choice. Read `plan.md`, every `NN-<task>.md`, and `certificates/` if present.
 2. Resolve `execution_mode` and `max_parallel_agents` (defaults: parallel, 4) from any
    `.claude/spec-builder.local.md` and the invocation; echo the resolved settings back.
 3. Build the schedule from the **dependency table** (the source of truth, not the Mermaid
@@ -86,18 +90,19 @@ Five phases. The mechanics live in the three references — read them before the
    task's `Status` so already-`Done` tasks are treated as preconditions. See
    [`references/orchestration.md`](references/orchestration.md).
 
-### Phase 2 — Establish the base and the integration revision
+### Phase 2 — Establish the base and the integration point
 
-Create a clean shared base (`jj new`) and set the **integration revision** — the tip that
-accumulates completed tasks — to it (or to a revision the user names). Confirm a green test
-baseline before building, so later failures are attributable. (orchestration.md → *jj
-workspace lifecycle*.)
+Create a clean shared base and set the **integration point** — the tip that accumulates
+completed tasks (a jj revision, or the `spec-builder/integration` git branch) — to it (or
+to a revision/ref the user names). Confirm a green test baseline before building, so later
+failures are attributable. (orchestration.md → *Workspace lifecycle*; commands in
+[`references/workspaces.md`](references/workspaces.md).)
 
 ### Phase 3 — Run the wave scheduler
 
 Walk the graph with bounded concurrency (orchestration.md → *The wave scheduler*): dispatch
 ready tasks up to `max_parallel_agents`, each into its own workspace branched from the
-current integration revision, each via a context-sized brief
+current integration point, each via a context-sized brief
 ([`references/subagent-brief.md`](references/subagent-brief.md)). Dispatch a wave's
 independent agents concurrently. Sequential mode is the same loop with the cap at 1.
 
@@ -105,18 +110,18 @@ independent agents concurrently. Sequential mode is the same loop with the cap a
 
 Each task runs the build loop ([`references/build-loop.md`](references/build-loop.md)):
 implement → **gate 1: semi-formal-review** (correctness) → **gate 2: validate-done-certificate**
-(completeness) → merge into the integration revision → mark `Done`. A failed gate re-dispatches
+(completeness) → merge into the integration point → mark `Done`. A failed gate re-dispatches
 the implementer with the verdict as feedback, bounded by a small retry count; past that, the
 task is parked and surfaced to the user. Update the task file `Status`, check off its steps,
 let the validator write the certificate verdict, and recompute the ready set as each task lands.
 
 ### Phase 5 — Finish and report
 
-When every task is `Done`, set `plan.md` `Status: Done`, confirm the integration revision
+When every task is `Done`, set `plan.md` `Status: Done`, confirm the integration point
 holds the whole build and the suite is green on it, and report the build summary: tasks
 built, the review and validation verdict per task, any parked tasks and why, and where the
-integrated work sits. Bookmarking/shipping the integration revision is the user's call —
-offer it; do not push or land without being asked.
+integrated work sits. Shipping it — a jj bookmark, or merging the git integration branch
+into the target — is the user's call; offer it, but do not push or land without being asked.
 
 ## What NOT to do
 
@@ -128,8 +133,9 @@ offer it; do not push or land without being asked.
   falsely-`Done` one. Failures surface; they are not papered over.
 - **Don't build from a spec with no plan.** Decomposition and ordering are spec-planner's
   job; without them the build is not reviewable. Redirect.
-- **Don't hand-roll workspaces or ignore jj.** Delegate isolation to using-jj-workspaces;
-  one workspace per task, branched from the integration revision, torn down after merge.
+- **Don't hand-roll workspace commands.** Follow the vendored method in workspaces.md
+  (jj preferred, git supported); one workspace per task, branched from the integration
+  point, torn down after merge.
 - **Don't over- or under-context a sub-agent.** Carry the task package's own fields and its
   dependencies' merged output (already in the workspace base) — not the whole repo, not the
   whole spec, not other tasks' files.
@@ -141,9 +147,13 @@ offer it; do not push or land without being asked.
 ## Reference files
 
 - [`references/orchestration.md`](references/orchestration.md) — Configuration (mode, max
-  agents), reading the plan into a schedule, the bounded-concurrency wave scheduler, the jj
-  workspace lifecycle and the accumulating integration revision, merge-conflict handling,
-  and status bookkeeping. Read before Phases 1–3.
+  agents), reading the plan into a schedule, the bounded-concurrency wave scheduler, the
+  backend-neutral workspace lifecycle and the accumulating integration point, merge-conflict
+  handling, and status bookkeeping. Read before Phases 1–3.
+- [`references/workspaces.md`](references/workspaces.md) — The vendored, self-contained
+  workspace-isolation method for **both backends**: detection (jj preferred, else git),
+  sibling directory selection, the per-workspace commands, the baseline test run, merging
+  and teardown, and an operation-mapping table (concept → jj → git). Read before Phase 2.
 - [`references/subagent-brief.md`](references/subagent-brief.md) — How to assemble a
   context-sized brief from a task package, the implementer prompt template, brief sizing,
   and the narrower reviewer/validator briefs. Read before dispatching.

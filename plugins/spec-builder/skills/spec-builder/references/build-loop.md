@@ -15,8 +15,9 @@ ready ─► implement ─► gate 1: semi-formal review ─► gate 2: validate
 
 ## Step 1 — Implement (sub-agent, isolated)
 
-1. Create the task's workspace from the current integration revision (orchestration.md →
-   *Integration revision*) so the builder's base holds its dependencies' work.
+1. Create the task's workspace from the current integration point (orchestration.md →
+   *Integration point*; commands in workspaces.md) so the builder's base holds its
+   dependencies' work.
 2. Assemble the brief from the task file ([`subagent-brief.md`](subagent-brief.md)) and
    dispatch the implementer sub-agent into the workspace. Mark the task `In progress`.
 3. The sub-agent builds only this task, runs the repo's test/lint commands in its
@@ -62,11 +63,11 @@ checklist while breaking something it touched.
 
 Only when gate 1 ∈ {CORRECT, LIKELY_CORRECT} **and** gate 2 = DONE:
 
-1. Fold the workspace revision into the integration revision and advance the tip
-   (orchestration.md → *Merging a completed task*). Resolve any merge conflict and, if the
-   merge changed the result, re-run both gates on the merged code for this task.
+1. Fold the workspace into the integration point and advance the tip (orchestration.md →
+   *Merging a completed task*; commands in workspaces.md). Resolve any merge conflict and,
+   if the merge changed the result, re-run both gates on the merged code for this task.
 2. Set the task file `Status: Done` and check off its remaining `- [ ]` items.
-3. Tear down the workspace (`jj workspace forget` + `rm -rf`).
+3. Tear down the workspace (unregister + remove — workspaces.md → *Teardown*).
 4. Record in the build log: review verdict, validation verdict, merged. Recompute the
    scheduler's `ready` set — newly-unblocked tasks may now dispatch.
 

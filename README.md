@@ -23,7 +23,7 @@ Register the marketplace, then install plugins individually:
 | [spec-creator](plugins/spec-creator/) | Create or expand formal design specifications — numbered, layered, cross-linked markdown that defines what exists in the current branch. |
 | [spec-planner](plugins/spec-planner/) | Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. |
 | [jj-workspaces](plugins/jj-workspaces/) | jj (jujutsu) workspaces skill for Claude Code — creates isolated workspaces for parallel work and sub-agent-driven development, and intercepts git-worktree requests in jj-managed repos. |
-| [spec-builder](plugins/spec-builder/) | Implement a spec-planner plan — one sub-agent per task in its own jj workspace, gated through a semi-formal correctness review and a definition-of-done validation before each task merges and is marked Done; parallel by default (max 4 agents) or sequential. |
+| [spec-builder](plugins/spec-builder/) | Implement a spec-planner plan — one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gated through a semi-formal correctness review and a definition-of-done validation before each task merges and is marked Done; parallel by default (max 4 agents) or sequential. |
 
 ## Repo layout
 
