@@ -1,6 +1,6 @@
 # Task 21 — Local-fixture suite
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/21-local_fixture_suite.md](certificates/21-local_fixture_suite.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/21-local_fixture_suite.md](certificates/21-local_fixture_suite.md)
 
 **Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`03-task-suites.md` → Suite: `local-fixture`)
 **Depends on:** 18, 20
@@ -9,10 +9,10 @@
 
 ## Steps
 
-- [ ] Author a tiny repo at a fixed commit with a hidden `pytest` suite and a `goldPatch` that makes the suite pass.
-- [ ] Create the `TaskInstance`: `kind: local-fixture`, `oracleConvention: local`, `dockerImage: null`, `contaminationTier: authored-private`, with `failToPass` selectors and any `passToPass` smoke tests.
-- [ ] Confirm the local `ScoringBackend` (task 20) scores the `goldPatch` as resolved and a no-op patch as not resolved.
-- [ ] Add a test that the fixture loads and validates and needs no Docker or network.
+- [x] Author a tiny repo at a fixed commit with a hidden `pytest` suite and a `goldPatch` that makes the suite pass.
+- [x] Create the `TaskInstance`: `kind: local-fixture`, `oracleConvention: local`, `dockerImage: null`, `contaminationTier: authored-private`, with `failToPass` selectors and any `passToPass` smoke tests. (kind/oracleConvention carried on the Suite per schema; instance carries `suite: local-fixture`.)
+- [x] Confirm the local `ScoringBackend` (task 20) scores the `goldPatch` as resolved and a no-op patch as not resolved.
+- [x] Add a test that the fixture loads and validates and needs no Docker or network.
 
 ## Definition of done
 
