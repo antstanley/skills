@@ -66,9 +66,9 @@ from benchmark.harness.domain import (
     DEFAULT_SOLVER,
     ArtifactBundle,
     TaskInstance,
-    Telemetry,
     new_record_id,
 )
+from benchmark.harness.telemetry import telemetry_from_agent_result
 from benchmark.suites.greenfield_images import (
     AGENT_HOME,
     IMAGE_WORKDIR,
@@ -204,7 +204,7 @@ class ContainerRunBackend:
             shutil.rmtree(creds_dir, ignore_errors=True)
 
         wall_clock_seconds = time.monotonic() - started
-        telemetry = self._telemetry_from_result(result_json, wall_clock_seconds)
+        telemetry = telemetry_from_agent_result(result_json, wall_clock_seconds)
         bundle = ArtifactBundle(
             id=new_record_id(ARTIFACT_BUNDLE_ID_PREFIX),
             trial=self._trial_id,
@@ -403,36 +403,6 @@ class ContainerRunBackend:
             text=True,
             timeout=SETUP_TIMEOUT_SECONDS,
         )
-
-    @staticmethod
-    def _telemetry_from_result(
-        result_json: dict[str, object], wall_clock_seconds: float
-    ) -> Telemetry:
-        """Build a real ``Telemetry`` from the claude result JSON + wall clock.
-
-        Token counts come from the result ``usage`` (input/output), cost from
-        ``total_cost_usd``, turns from ``num_turns``. Missing fields default to
-        zero so the record stays schema-valid; task 06 hardens this further.
-        """
-        usage = result_json.get("usage")
-        usage_map = usage if isinstance(usage, dict) else {}
-        return Telemetry(
-            inputTokens=_as_int(usage_map.get("input_tokens")),
-            outputTokens=_as_int(usage_map.get("output_tokens")),
-            costUsd=_as_float(result_json.get("total_cost_usd")),
-            wallClockSeconds=wall_clock_seconds,
-            agentTurns=_as_int(result_json.get("num_turns")),
-        )
-
-
-def _as_int(value: object) -> int:
-    """Coerce a JSON numeric to ``int`` (0 when absent/non-numeric)."""
-    return int(value) if isinstance(value, (int, float)) else 0
-
-
-def _as_float(value: object) -> float:
-    """Coerce a JSON numeric to ``float`` (0.0 when absent/non-numeric)."""
-    return float(value) if isinstance(value, (int, float)) else 0.0
 
 
 def _shell_quote(text: str) -> str:

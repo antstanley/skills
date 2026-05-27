@@ -1,6 +1,6 @@
 # Task 06 — Telemetry capture
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/06-telemetry_capture.md](certificates/06-telemetry_capture.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/06-telemetry_capture.md](certificates/06-telemetry_capture.md)
 
 **Implements:** [04-metrics.md](../../benchmark/specs/04-metrics.md) §Bucket 2 — Cost and efficiency (sources), [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Implementation layout (telemetry)
 **Depends on:** 05
