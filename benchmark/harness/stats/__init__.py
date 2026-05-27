@@ -27,6 +27,14 @@ excluded (``06`` §Repetition and Pass@k). No scipy/numpy — stdlib ``math`` on
 
 from __future__ import annotations
 
+from benchmark.harness.stats.artifact_metrics import (
+    DagValidity,
+    PlanCoverage,
+    dag_validity,
+    implemented_section_keys,
+    in_scope_spec_sections,
+    plan_coverage,
+)
 from benchmark.harness.stats.outcome import (
     CONFIDENCE_LEVEL,
     MCNEMAR_EXACT_MAX_DISCORDANT,
@@ -53,13 +61,19 @@ __all__ = [
     "AblationTable",
     "ArmOutcome",
     "ConfidenceInterval",
+    "DagValidity",
     "McNemarResult",
+    "PlanCoverage",
     "ablation_table",
     "arm_outcome",
+    "dag_validity",
     "group_resolved_by_instance",
+    "implemented_section_keys",
+    "in_scope_spec_sections",
     "mcnemar_delta",
     "pass_at_1",
     "pass_at_k",
+    "plan_coverage",
     "regression_rate",
     "render_ablation_table",
     "wilson_interval",

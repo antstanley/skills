@@ -35,6 +35,7 @@ from benchmark.harness.domain import (
     TRIAL_ID_PREFIX,
     ArtifactBundle,
     Campaign,
+    GateEvent,
     ScoreReport,
     Trial,
     new_record_id,
@@ -45,6 +46,19 @@ if TYPE_CHECKING:
 
     from benchmark.harness.backends import ArmOrSolver
     from benchmark.harness.domain import Arm, TaskInstance
+
+# --- GateEvent threading (the deferred tasks-08/10 wiring) ------------------
+
+#: The attribute a ``RunBackend`` exposes its run's ``GateEvent``s on (the
+#: ``ContainerRunBackend`` stashes the certificates' extracted events here; see
+#: ``benchmark.harness.backends.container.ContainerRunBackend.last_gate_events``
+#: and ``benchmark.harness.arms.a2_a3.extract_gate_events``). The driver reads
+#: this AFTER ``run`` and re-keys the events onto the Trial — closing the
+#: tasks-08/10 open question of how a run's GateEvents reach the Trial. A backend
+#: that does not surface gate events (e.g. the ``local`` backend, the A0 path)
+#: simply lacks the attribute and contributes no events. Read by duck-typing so
+#: the backend-NEUTRAL ``RunBackend`` protocol need not grow a field.
+RUN_BACKEND_GATE_EVENTS_ATTR = "last_gate_events"
 
 # --- named limits / constants ---------------------------------------------
 
@@ -90,6 +104,7 @@ class TrialResult:
     bundle: ArtifactBundle | None = None
     report: ScoreReport | None = None
     fault: str | None = None
+    gate_events: tuple[GateEvent, ...] = ()
 
     @property
     def is_scored(self) -> bool:
@@ -123,6 +138,17 @@ class CampaignRun:
     def failed_results(self) -> list[TrialResult]:
         """Results excluded from metrics (infra ``failed``, re-queueable)."""
         return [r for r in self.results if r.is_failed]
+
+    @property
+    def gate_events(self) -> list[GateEvent]:
+        """Every threaded ``GateEvent`` across the run's Trials, in stable order.
+
+        The run's gates made observable to the artifact metrics: each scored or
+        failed Trial carries the ``GateEvent``s the driver re-keyed onto it (the
+        tasks-08/10 wiring). Gated arms (A1/A2) contribute events; A3 / A0 / A4
+        contribute none.
+        """
+        return [event for result in self.results for event in result.gate_events]
 
     @property
     def raw_resolved_rate(self) -> float:
@@ -210,8 +236,11 @@ def _drive_trial(
             fault=str(fault) or "run fault",
         )
 
-    # captured: patch + bundle persisted, run environment discarded.
+    # captured: patch + bundle persisted, run environment discarded. The run's
+    # GateEvents (if the backend surfaced any) are read off the backend now and
+    # re-keyed onto this Trial — the tasks-08/10 wiring (see step 4).
     bundle = _rebind_bundle_trial(bundle, current.id)
+    gate_events = _gate_events_for_trial(run_backend, current.id)
     current = replace(
         current,
         status=STATUS_CAPTURED,
@@ -227,13 +256,16 @@ def _drive_trial(
             trial=replace(current, status=STATUS_FAILED),
             bundle=bundle,
             fault=str(fault) or "score fault",
+            gate_events=gate_events,
         )
     report = _rebind_report_trial(report, current.id)
     current = replace(current, status=STATUS_SCORED, scoreReport=report.id)
 
     # aggregated: the ScoreReport has been folded into the campaign results.
     current = replace(current, status=STATUS_AGGREGATED)
-    return TrialResult(trial=current, bundle=bundle, report=report)
+    return TrialResult(
+        trial=current, bundle=bundle, report=report, gate_events=gate_events
+    )
 
 
 def _rebind_bundle_trial(bundle: ArtifactBundle, trial_id: str) -> ArtifactBundle:
@@ -247,6 +279,25 @@ def _rebind_bundle_trial(bundle: ArtifactBundle, trial_id: str) -> ArtifactBundl
 def _rebind_report_trial(report: ScoreReport, trial_id: str) -> ScoreReport:
     """Re-key a backend's ScoreReport to this Trial's id (preserve verdict)."""
     return replace(report, trial=trial_id)
+
+
+def _gate_events_for_trial(
+    run_backend: RunBackend, trial_id: str
+) -> tuple[GateEvent, ...]:
+    """Read the run's ``GateEvent``s off the backend and re-key them to the Trial.
+
+    The deferred tasks-08/10 wiring: a ``RunBackend`` that surfaced gate events
+    exposes them on :data:`RUN_BACKEND_GATE_EVENTS_ATTR` (the
+    ``ContainerRunBackend`` does, after parsing the captured done-certificates).
+    The driver reads them by duck-typing — a backend without the attribute (the
+    ``local`` backend, the A0 path) yields none — and re-keys each event onto
+    this Trial's id (the backend stamped its own internal id), so the events the
+    metrics consume genuinely hang off the Trial the driver returns.
+    """
+    raw = getattr(run_backend, RUN_BACKEND_GATE_EVENTS_ATTR, None)
+    if not raw:
+        return ()
+    return tuple(replace(event, trial=trial_id) for event in raw)
 
 
 def run_campaign(

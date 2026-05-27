@@ -1,6 +1,6 @@
 # Task 14 — Workflow-artifact metrics
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/14-workflow_artifact_metrics.md](certificates/14-workflow_artifact_metrics.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/14-workflow_artifact_metrics.md](certificates/14-workflow_artifact_metrics.md)
 
 **Implements:** [04-metrics.md](../../benchmark/specs/04-metrics.md) §Bucket 3 (plan coverage, DAG validity, gate catch rate, false-`Done` escape rate); [06-scoring-and-statistics.md](../../benchmark/specs/06-scoring-and-statistics.md) §Gate-efficacy probes
 **Depends on:** 08, 10, 12
@@ -9,11 +9,11 @@
 
 ## Steps
 
-- [ ] Compute plan coverage (fraction of in-scope spec sections mapped to ≥1 task) and DAG validity (acyclic, edges resolve) from the captured `planArtifacts`.
-- [ ] Generate `InjectedDefect`s (classified by `defectKind`), inject each into a gated build, and record whether a gate flagged it (`caughtBy`) — the catch rate.
-- [ ] Compute false-`Done` escape rate from `ScoreReport.gateEscape`, attributing per-task via `testTags` where present (greenfield) and falling back to instance granularity otherwise.
-- [ ] Restrict each metric to the arms it applies to: coverage/DAG to A1/A2/A3; gate metrics to A1/A2.
-- [ ] Add tests with known-bad patches that the catch rate counts a caught defect and an escaped one correctly.
+- [x] Compute plan coverage (fraction of in-scope spec sections mapped to ≥1 task) and DAG validity (acyclic, edges resolve) from the captured `planArtifacts`. *(`stats/artifact_metrics.py`: A1 evidence → coverage 1.0, DAG valid; cyclic/self-loop/dangling/empty → invalid.)*
+- [x] Generate `InjectedDefect`s (classified by `defectKind`), inject each into a gated build, and record whether a gate flagged it (`caughtBy`) — the catch rate. *(`scoring/probes/`: off-by-one/dropped-branch/wrong-return taxonomy + `catch_rate` accounting; opt-in live probe ran once — off-by-one in `frequency` CAUGHT by semi-formal-review, evidence in `_gate_probe_live_evidence/`.)*
+- [x] Compute false-`Done` escape rate from `ScoreReport.gateEscape`, attributing per-task via `testTags` where present (greenfield) and falling back to instance granularity otherwise. *(`scoring/probes/escape.py`: A1 evidence → 0.75 per-task (3/4 components escaped); instance fallback tested.)*
+- [x] Restrict each metric to the arms it applies to: coverage/DAG to A1/A2/A3; gate metrics to A1/A2. *(`GATED_ARMS=("A1","A2")`; coverage/DAG scoped to the plan-producing arms.)*
+- [x] Add tests with known-bad patches that the catch rate counts a caught defect and an escaped one correctly. *(`test_gate_probes.py` + `test_artifact_metrics.py`; 213 passed. Also threaded GateEvents onto `TrialResult`/`CampaignRun` — resolves the tasks-08/10 deferred wiring.)*
 
 ## Definition of done
 

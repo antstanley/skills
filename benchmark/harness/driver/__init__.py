@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from benchmark.harness.driver.scheduler import (
     DEFAULT_POOL_SIZE,
+    RUN_BACKEND_GATE_EVENTS_ATTR,
     SEED_BASE,
     STATUS_AGGREGATED,
     STATUS_CAPTURED,
@@ -30,6 +31,7 @@ from benchmark.harness.driver.scheduler import (
 
 __all__ = [
     "DEFAULT_POOL_SIZE",
+    "RUN_BACKEND_GATE_EVENTS_ATTR",
     "SEED_BASE",
     "STATUS_AGGREGATED",
     "STATUS_CAPTURED",
