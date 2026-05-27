@@ -68,6 +68,15 @@ REFERENCE_SUBDIR = "reference"
 #: File name of a private reference solution under :data:`REFERENCE_SUBDIR`.
 REFERENCE_PATCH_NAME = "solution.patch"
 
+#: Per-instance subdir holding the FROZEN given-spec handed to arms A2 and A3.
+#: A single authored spec, produced once to the fixed quality bar documented in
+#: ``benchmark/harness/arms/a2_a3.py`` and consumed IDENTICALLY by both A2 and
+#: A3 (so spec variance never leaks into the A1−A2 or A2−A3 deltas).
+GIVEN_SPEC_SUBDIR = "given_spec"
+
+#: File name of the frozen given-spec under :data:`GIVEN_SPEC_SUBDIR`.
+GIVEN_SPEC_NAME = "given_spec.md"
+
 #: A fixed, synthetic commit id. The skeleton repos are content-addressed by
 #: their bundled ``base/`` trees, not a real git history, so this is a stable
 #: placeholder satisfying the ``baseCommit`` pattern (7-40 hex chars).
@@ -379,6 +388,25 @@ def load_instance(slug: str) -> TaskInstance:
 def load_instances() -> list[TaskInstance]:
     """Return every bundled greenfield :class:`TaskInstance`, validated."""
     return [_build_instance(spec) for spec in INSTANCE_SPECS]
+
+
+def given_spec_path(slug: str) -> Path:
+    """Return the path to ``slug``'s frozen A2/A3 given-spec file."""
+    return get_spec(slug).instance_dir / GIVEN_SPEC_SUBDIR / GIVEN_SPEC_NAME
+
+
+def load_given_spec(slug: str) -> str:
+    """Return the frozen given-spec markdown handed to arms A2 and A3 for ``slug``.
+
+    This is the ready-made spec the A2/A3 recipes write into the run container
+    under ``docs/specs/`` BEFORE the workflow runs (replacing the spec-creator
+    stage). It is authored ONCE per instance to a fixed, documented quality bar
+    (``benchmark.harness.arms.a2_a3.GIVEN_SPEC_QUALITY_BAR``) and is consumed
+    identically by both arms, so spec variance does not leak into the deltas.
+
+    Raises ``FileNotFoundError`` for instances that ship no given-spec.
+    """
+    return given_spec_path(slug).read_text(encoding="utf-8")
 
 
 def reference_solution_path(slug: str) -> Path:

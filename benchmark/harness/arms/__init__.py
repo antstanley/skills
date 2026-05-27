@@ -28,6 +28,21 @@ from benchmark.harness.arms.a1 import (
     HOST_PLUGIN_MARKETPLACE_DIR,
     a1_prompt,
 )
+from benchmark.harness.arms.a2_a3 import (
+    A2,
+    A2_A3_MAX_BUDGET_USD,
+    A2_A3_MODEL,
+    A2_A3_PLUGIN_DIR_NAMES,
+    A2_A3_PLUGINS_ENABLED,
+    A2_SLUG,
+    A3,
+    A3_SLUG,
+    GIVEN_SPEC_CONTAINER_RELPATH,
+    GIVEN_SPEC_QUALITY_BAR,
+    a2_prompt,
+    a3_prompt,
+    extract_gate_events,
+)
 
 __all__ = [
     "A0",
@@ -48,8 +63,21 @@ __all__ = [
     "A1_PLUGIN_DIR_NAMES",
     "A1_SLUG",
     "A1_SPEC_SUBDIR",
+    "A2",
+    "A2_A3_MAX_BUDGET_USD",
+    "A2_A3_MODEL",
+    "A2_A3_PLUGINS_ENABLED",
+    "A2_A3_PLUGIN_DIR_NAMES",
+    "A2_SLUG",
+    "A3",
+    "A3_SLUG",
     "AUTH_PROBE_MAX_BUDGET_USD",
+    "GIVEN_SPEC_CONTAINER_RELPATH",
+    "GIVEN_SPEC_QUALITY_BAR",
     "HOST_PLUGIN_MARKETPLACE_DIR",
     "a0_prompt",
     "a1_prompt",
+    "a2_prompt",
+    "a3_prompt",
+    "extract_gate_events",
 ]

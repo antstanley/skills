@@ -125,14 +125,15 @@ def test_a1_prompt_carries_the_problem_statement_and_the_three_stages() -> None:
 
 
 def test_a1_path_is_selected_for_a_plugin_arm() -> None:
-    assert ContainerRunBackend._selects_a1(A1) is True
+    # A1 is a workflow arm; dispatch routes it to the parameterized workflow path.
+    assert ContainerRunBackend._selects_workflow(A1) is True
 
 
 def test_a1_path_not_selected_for_agent_or_a0() -> None:
     from benchmark.harness.arms.a0 import A0
 
-    assert ContainerRunBackend._selects_a1(AGENT_SOLVER) is False
-    assert ContainerRunBackend._selects_a1(A0) is False
+    assert ContainerRunBackend._selects_workflow(AGENT_SOLVER) is False
+    assert ContainerRunBackend._selects_workflow(A0) is False
     # A0 still selects the plain agent path.
     assert ContainerRunBackend._selects_agent(A0) is True
 

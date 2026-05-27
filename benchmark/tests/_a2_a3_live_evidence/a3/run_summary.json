@@ -1,0 +1,13 @@
+{
+  "arm": "A3",
+  "certificate_artifact_count": 0,
+  "cost_usd": 1.5976555,
+  "fault": null,
+  "gate_event_count": 0,
+  "gates_enabled": false,
+  "regressed": false,
+  "resolved": true,
+  "spec_provided": true,
+  "trial_status": "aggregated",
+  "wall_clock_seconds": 474.5060610319997
+}

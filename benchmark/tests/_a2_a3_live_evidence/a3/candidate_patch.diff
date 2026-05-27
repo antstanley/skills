@@ -1,0 +1,97 @@
+diff --git a/text_toolkit/frequency.py b/text_toolkit/frequency.py
+index e772bfb..cc552b4 100644
+--- a/text_toolkit/frequency.py
++++ b/text_toolkit/frequency.py
+@@ -6,12 +6,24 @@ Skeleton stub.
+ 
+ from __future__ import annotations
+ 
++from text_toolkit.tokenizer import tokenize
++from text_toolkit.normalizer import normalize
++
+ 
+ def word_counts(text: str) -> dict[str, int]:
+-    """Return a mapping of normalized term -> occurrence count. (TODO.)"""
+-    raise NotImplementedError("word_counts is not implemented yet")
++    """Return a mapping of normalized term -> occurrence count."""
++    terms = normalize(tokenize(text))
++    counts: dict[str, int] = {}
++    for term in terms:
++        counts[term] = counts.get(term, 0) + 1
++    return counts
+ 
+ 
+ def top_terms(text: str, limit: int) -> list[tuple[str, int]]:
+-    """Return the ``limit`` most frequent ``(term, count)`` pairs. (TODO.)"""
+-    raise NotImplementedError("top_terms is not implemented yet")
++    """Return the ``limit`` most frequent ``(term, count)`` pairs.
++
++    Sorted by count descending, ties broken by term ascending.
++    """
++    counts = word_counts(text)
++    sorted_pairs = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
++    return sorted_pairs[:limit]
+diff --git a/text_toolkit/normalizer.py b/text_toolkit/normalizer.py
+index 12db3e7..b59704b 100644
+--- a/text_toolkit/normalizer.py
++++ b/text_toolkit/normalizer.py
+@@ -5,7 +5,9 @@ Depends on :mod:`text_toolkit.tokenizer`. Skeleton stub.
+ 
+ from __future__ import annotations
+ 
++STOP_WORDS: frozenset[str] = frozenset({"a", "an", "the", "of", "and", "to", "in"})
++
+ 
+ def normalize(tokens: list[str]) -> list[str]:
+-    """Return ``tokens`` folded to canonical form. (TODO: implement.)"""
+-    raise NotImplementedError("normalize is not implemented yet")
++    """Return ``tokens`` lowercased with stop words removed, preserving order."""
++    return [t.lower() for t in tokens if t.lower() not in STOP_WORDS]
+diff --git a/text_toolkit/pipeline.py b/text_toolkit/pipeline.py
+index 68da38b..a1a8c34 100644
+--- a/text_toolkit/pipeline.py
++++ b/text_toolkit/pipeline.py
+@@ -6,7 +6,21 @@ Depends on :mod:`text_toolkit.tokenizer`, :mod:`text_toolkit.normalizer`, and
+ 
+ from __future__ import annotations
+ 
++from text_toolkit.tokenizer import tokenize
++from text_toolkit.frequency import word_counts, top_terms
++
+ 
+ def summarize(text: str, limit: int) -> dict[str, object]:
+-    """Return a summary dict for ``text``. (TODO: implement.)"""
+-    raise NotImplementedError("summarize is not implemented yet")
++    """Return a summary dict for ``text``.
++
++    Returns ``{'tokens': len(tokenize(text)), 'terms': len(word_counts(text)),
++    'top': top_terms(text, limit)}``.
++    """
++    raw_tokens = tokenize(text)
++    counts = word_counts(text)
++    top = top_terms(text, limit)
++    return {
++        'tokens': len(raw_tokens),
++        'terms': len(counts),
++        'top': top,
++    }
+diff --git a/text_toolkit/tokenizer.py b/text_toolkit/tokenizer.py
+index 792b6cb..a8774b6 100644
+--- a/text_toolkit/tokenizer.py
++++ b/text_toolkit/tokenizer.py
+@@ -6,7 +6,13 @@ acceptance suite under ``hidden/`` is the oracle.
+ 
+ from __future__ import annotations
+ 
++import re
++
+ 
+ def tokenize(text: str) -> list[str]:
+-    """Split ``text`` into a list of word tokens. (TODO: implement.)"""
+-    raise NotImplementedError("tokenize is not implemented yet")
++    """Split ``text`` into maximal alphanumeric runs, preserving case.
++
++    Splits on any run of non-alphanumeric characters and returns only
++    non-empty tokens, preserving original case and digits.
++    """
++    return re.findall(r'[A-Za-z0-9]+', text)

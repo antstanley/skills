@@ -1,0 +1,34 @@
+[
+  {
+    "gateKind": "validate-done-certificate",
+    "id": "gate_019e6b2e-a336-75a0-8001-f95f6f675d1e",
+    "retryIndex": 0,
+    "task": "01-tokenizer",
+    "trial": "trial_019e6b1d-7d1f-754d-a745-bce907f7a714",
+    "verdict": "PASS"
+  },
+  {
+    "gateKind": "validate-done-certificate",
+    "id": "gate_019e6b2e-a337-7ca2-a860-d1de594400ab",
+    "retryIndex": 0,
+    "task": "02-normalizer",
+    "trial": "trial_019e6b1d-7d1f-754d-a745-bce907f7a714",
+    "verdict": "PASS"
+  },
+  {
+    "gateKind": "validate-done-certificate",
+    "id": "gate_019e6b2e-a338-70b8-825b-2ac5b894f42d",
+    "retryIndex": 0,
+    "task": "03-frequency",
+    "trial": "trial_019e6b1d-7d1f-754d-a745-bce907f7a714",
+    "verdict": "PASS"
+  },
+  {
+    "gateKind": "validate-done-certificate",
+    "id": "gate_019e6b2e-a338-7ae7-904d-f2a7954c6fba",
+    "retryIndex": 0,
+    "task": "04-pipeline",
+    "trial": "trial_019e6b1d-7d1f-754d-a745-bce907f7a714",
+    "verdict": "PASS"
+  }
+]

@@ -38,16 +38,22 @@ container is a DISTINCT environment from the scoring container.
 
 Arm/solver selection
 --------------------
-``arm_or_solver`` selects the path:
+``arm_or_solver`` selects the path BY ARM SLUG (configuration, not code
+branches):
 
 - the ``agent`` solver-mode slug (``DEFAULT_SOLVER``) or the A0 ``Arm`` record →
   the PLAIN A0 agent path (no plugins, single ``claude -p``);
-- an ``Arm`` with a non-empty ``pluginsEnabled`` (e.g. A1) → the A1 FULL-PIPELINE
-  path: the ``spec-*`` plugins are read-only mounted and loaded with
-  ``--plugin-dir``, and one orchestrating ``claude -p`` drives
-  ``spec-creator → spec-planner → spec-builder`` to an integration tip. The
-  candidate patch EXCLUDES the workflow artifacts (``docs/``); the
-  spec/plan/certificate files are captured into the ``ArtifactBundle`` instead.
+- a WORKFLOW arm — A1, A2, or A3 (``_WORKFLOW_ARM_SLUGS``) → ONE parameterized
+  ``spec-*`` workflow path (``_run_workflow_arm``) that reads the arm's
+  ``_WorkflowArmConfig``: which ``spec-*`` plugins to read-only mount and load
+  with ``--plugin-dir``, whether to HAND IN a frozen given-spec (A2/A3 skip
+  ``spec-creator``), whether ``spec-builder``'s two gates run (A3 disables
+  them), and the orchestrating prompt. The candidate patch EXCLUDES the workflow
+  artifacts (``docs/``); the spec/plan/certificate files are captured into the
+  ``ArtifactBundle``, and the captured certificates are parsed into
+  ``GateEvent``s (A1/A2 discharge them; A3 leaves none). Routing by SLUG — not
+  by "any Arm with plugins" — is what keeps A2/A3 (plugin arms too) out of the
+  plain-A0 branch.
 
 The ``fixture`` solver is the ``local`` backend's job; it is out of scope here
 and raises :class:`NotImplementedError`.
@@ -60,6 +66,8 @@ import shutil
 import subprocess
 import tempfile
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 
 from benchmark.harness.arms.a0 import (
@@ -77,9 +85,21 @@ from benchmark.harness.arms.a1 import (
     A1_MODEL,
     A1_PLAN_SUBDIR,
     A1_PLUGIN_DIR_NAMES,
+    A1_SLUG,
     A1_SPEC_SUBDIR,
     HOST_PLUGIN_MARKETPLACE_DIR,
     a1_prompt,
+)
+from benchmark.harness.arms.a2_a3 import (
+    A2_A3_MAX_BUDGET_USD,
+    A2_A3_MODEL,
+    A2_A3_PLUGIN_DIR_NAMES,
+    A2_SLUG,
+    A3_SLUG,
+    GIVEN_SPEC_CONTAINER_RELPATH,
+    a2_prompt,
+    a3_prompt,
+    extract_gate_events,
 )
 from benchmark.harness.backends.interfaces import CandidatePatch
 from benchmark.harness.domain import (
@@ -87,10 +107,12 @@ from benchmark.harness.domain import (
     DEFAULT_SOLVER,
     Arm,
     ArtifactBundle,
+    GateEvent,
     TaskInstance,
     new_record_id,
 )
 from benchmark.harness.telemetry import telemetry_from_agent_result
+from benchmark.suites.greenfield import load_given_spec
 from benchmark.suites.greenfield_images import (
     AGENT_HOME,
     IMAGE_WORKDIR,
@@ -183,6 +205,75 @@ _ARTIFACT_FIELD_SEP = "\x1f"  # ASCII unit separator
 _ARTIFACT_RECORD_SEP = "\x1e"  # ASCII record separator
 
 
+#: The closed set of arm slugs that select a ``spec-*`` WORKFLOW path (A1, A2,
+#: A3) — as opposed to the plain A0 agent path. Dispatch routes by slug so A2/A3
+#: never fall into the plain-A0 branch even though they, like A0, are ``Arm``
+#: records (A2/A3 differ from A1 only in config, not in being plugin arms).
+_WORKFLOW_ARM_SLUGS: frozenset[str] = frozenset({A1_SLUG, A2_SLUG, A3_SLUG})
+
+
+@dataclass(frozen=True)
+class _WorkflowArmConfig:
+    """The per-arm knobs the parameterized workflow runner reads.
+
+    A1/A2/A3 share ONE code path (:meth:`ContainerRunBackend._run_workflow_arm`);
+    they differ only in these fields. A1: creator on, gates on, no given spec.
+    A2: creator off (spec handed in), gates on. A3: creator off, gates off.
+    """
+
+    #: Plugin directories to mount + load for this arm (read-only ``--plugin-dir``).
+    plugin_dir_names: tuple[str, ...]
+    #: Build the orchestrating prompt for this arm from the problem statement.
+    prompt_builder: Callable[[str], str]
+    #: HARD per-run budget cap (USD) handed to ``claude --max-budget-usd``.
+    max_budget_usd: float
+    #: The model alias the orchestrator + sub-agents run on.
+    model: str
+    #: When set, the frozen given-spec is written into the container at
+    #: :data:`GIVEN_SPEC_CONTAINER_RELPATH` BEFORE the workflow runs (A2/A3 hand
+    #: in a spec instead of authoring one). ``None`` for A1 (the workflow authors
+    #: its own spec).
+    provides_given_spec: bool
+    #: Whether spec-builder's two gates run (A1/A2: True; A3: False). Drives the
+    #: prompt (the gate instruction) and the gate-event extraction expectation.
+    gates_enabled: bool
+
+
+def _workflow_config_for(arm: Arm) -> _WorkflowArmConfig:
+    """Return the :class:`_WorkflowArmConfig` for a workflow arm (A1/A2/A3)."""
+    if arm.slug == A1_SLUG:
+        return _WorkflowArmConfig(
+            plugin_dir_names=A1_PLUGIN_DIR_NAMES,
+            prompt_builder=a1_prompt,
+            max_budget_usd=A1_MAX_BUDGET_USD,
+            model=A1_MODEL,
+            provides_given_spec=False,
+            gates_enabled=True,
+        )
+    if arm.slug == A2_SLUG:
+        return _WorkflowArmConfig(
+            plugin_dir_names=A2_A3_PLUGIN_DIR_NAMES,
+            prompt_builder=a2_prompt,
+            max_budget_usd=A2_A3_MAX_BUDGET_USD,
+            model=A2_A3_MODEL,
+            provides_given_spec=True,
+            gates_enabled=True,
+        )
+    if arm.slug == A3_SLUG:
+        return _WorkflowArmConfig(
+            plugin_dir_names=A2_A3_PLUGIN_DIR_NAMES,
+            prompt_builder=a3_prompt,
+            max_budget_usd=A2_A3_MAX_BUDGET_USD,
+            model=A2_A3_MODEL,
+            provides_given_spec=True,
+            gates_enabled=False,
+        )
+    raise ContainerRunError(
+        f"no workflow config for arm {arm.slug!r}; "
+        f"workflow arms are {sorted(_WORKFLOW_ARM_SLUGS)}"
+    )
+
+
 class ContainerRunError(RuntimeError):
     """Raised when the container run environment cannot be prepared/driven."""
 
@@ -214,27 +305,41 @@ class ContainerRunBackend:
         #: When ``True`` (default), build the agent run image on demand if it is
         #: not already present; when ``False``, require it pre-built.
         self._build_if_missing = build_if_missing
+        #: GateEvents extracted from the last workflow run's certificates (A1/A2
+        #: discharge them; A3 does not). Read via :attr:`last_gate_events`.
+        self._last_gate_events: list[GateEvent] = []
 
     def run(
         self, instance: TaskInstance, arm_or_solver: object
     ) -> tuple[ArtifactBundle, CandidatePatch]:
         """Run ``arm_or_solver`` against ``instance``; return ``(bundle, patch)``.
 
-        Dispatches by arm: the plain A0 agent path (``_selects_agent``) or the A1
-        full-pipeline path (``_selects_a1`` — an ``Arm`` with a non-empty
-        ``pluginsEnabled``). Both provision a fresh agent run container, make the
-        base commit, probe auth, run to completion, and return the
-        ``candidatePatch`` (diff against the base commit) with a populated
-        ``ArtifactBundle``. Carries NO hidden test content across to the caller.
+        Dispatches BY ARM SLUG (configuration, not code branches per
+        ``02-arms.md`` §Implementation layout):
+
+        - the ``agent`` solver / the A0 ``Arm`` -> the plain A0 agent path
+          (``_run_a0``: no plugins, single ``claude -p``);
+        - a WORKFLOW arm (A1, A2, or A3 — :data:`_WORKFLOW_ARM_SLUGS`) -> the
+          parameterized ``spec-*`` workflow path (``_run_workflow_arm``), which
+          reads the arm's :class:`_WorkflowArmConfig` (which plugins to mount,
+          whether to hand in a spec, whether the gates run, which prompt).
+
+        Routing by slug — NOT by "any Arm with plugins" — is what keeps A2/A3
+        (which are plugin arms) from falling into the plain-A0 branch. Every path
+        provisions a fresh container, makes the base commit, probes auth, runs to
+        completion, and returns the ``candidatePatch`` (diff vs the base commit)
+        with a populated ``ArtifactBundle``. Carries NO hidden test content.
         """
-        if self._selects_a1(arm_or_solver):
-            return self._run_a1(instance)
+        if self._selects_workflow(arm_or_solver):
+            assert isinstance(arm_or_solver, Arm)  # narrowed by _selects_workflow
+            return self._run_workflow_arm(instance, _workflow_config_for(arm_or_solver))
         if self._selects_agent(arm_or_solver):
             return self._run_a0(instance)
         raise NotImplementedError(
             "ContainerRunBackend runs the agent solver "
-            f"({AGENT_SOLVER!r}), the A0 arm, or an A1-style plugin arm; got "
-            f"{arm_or_solver!r}. The fixture solver is the local backend's job."
+            f"({AGENT_SOLVER!r}), the A0 arm, or a workflow arm "
+            f"({sorted(_WORKFLOW_ARM_SLUGS)}); got {arm_or_solver!r}. The fixture "
+            "solver is the local backend's job."
         )
 
     def _run_a0(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
@@ -268,26 +373,48 @@ class ContainerRunBackend:
         )
         return bundle, candidate_patch
 
-    def _run_a1(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
-        """Run the A1 full-pipeline path: mount the ``spec-*`` plugins, drive
-        ``spec-creator → spec-planner → spec-builder`` to an integration tip, and
-        extract the CODE-only candidate patch (workflow artifacts EXCLUDED) plus a
-        bundle carrying the captured spec/plan/certificate artifacts.
+    def _run_workflow_arm(
+        self, instance: TaskInstance, config: _WorkflowArmConfig
+    ) -> tuple[ArtifactBundle, CandidatePatch]:
+        """Run ANY ``spec-*`` workflow arm (A1/A2/A3) on one parameterized path.
+
+        Provisions a plugin container, optionally hands in the frozen given-spec
+        (A2/A3), drives the workflow with the arm's orchestrating prompt to an
+        integration tip, extracts the CODE-only candidate patch (workflow
+        artifacts EXCLUDED), and captures the spec/plan/certificate artifacts.
+        A1 keeps its exact previous behaviour: ``config`` for A1 is creator-on,
+        gates-on, NO given spec — the same plugins, prompt, cap, model, and
+        artifact handling as before this refactor.
+
+        The captured done-certificates are parsed into :class:`GateEvent`
+        records (REAL structural extraction): a gates-on arm (A1/A2) discharges
+        its certificates and yields ``>= 1`` event; a gates-off arm (A3) leaves
+        them blank and yields none. The events hang off the Trial in the domain
+        model; this backend stashes them on :attr:`last_gate_events` for the
+        driver/test to read (``run`` returns ``(bundle, patch)`` per the
+        ``RunBackend`` protocol, so the events ride alongside the backend).
         """
         self._require_docker_and_creds()
-        self._require_plugins()
+        self._require_plugins(config.plugin_dir_names)
         image = self._resolve_image(instance)
-        prompt = a1_prompt(instance.problemStatement)
+        prompt = config.prompt_builder(instance.problemStatement)
+        given_spec = (
+            load_given_spec(instance.slug) if config.provides_given_spec else None
+        )
 
         creds_dir = Path(tempfile.mkdtemp(prefix="benchmark-creds-"))
         container_id: str | None = None
         started = time.monotonic()
         try:
             self._stage_credentials(creds_dir)
-            container_id = self._start_container(image, creds_dir, with_plugins=True)
+            container_id = self._start_container(
+                image, creds_dir, plugin_dir_names=config.plugin_dir_names
+            )
             self._make_base_commit(container_id)
+            if given_spec is not None:
+                self._write_given_spec(container_id, given_spec)
             self._auth_probe(container_id)
-            result_json = self._run_a1_workflow(container_id, prompt)
+            result_json = self._run_workflow(container_id, prompt, config)
             candidate_patch = self._extract_patch(container_id, exclude_artifacts=True)
             spec_files, plan_files, cert_files = self._capture_artifacts(container_id)
         finally:
@@ -306,7 +433,22 @@ class ContainerRunBackend:
             certificateArtifacts=cert_files,
             transcript=json.dumps(result_json, sort_keys=True),
         )
+        # REAL GateEvent extraction from the captured certificates (see a2_a3).
+        # A gates-on arm (A1/A2) yields >= 1 event; a gates-off arm (A3) none.
+        self._last_gate_events = extract_gate_events(
+            cert_files, trial_id=self._trial_id
+        )
         return bundle, candidate_patch
+
+    @property
+    def last_gate_events(self) -> list[GateEvent]:
+        """The :class:`GateEvent`s extracted from the LAST workflow run, if any.
+
+        Populated by :meth:`_run_workflow_arm` from the captured certificates.
+        Empty for the A0 path or before any workflow run. A gates-on arm
+        (A1/A2) leaves ``>= 1`` here; a gates-off arm (A3) leaves none.
+        """
+        return list(self._last_gate_events)
 
     # --- internals ---------------------------------------------------------
 
@@ -325,17 +467,24 @@ class ContainerRunBackend:
             )
 
     @staticmethod
-    def _require_plugins() -> None:
-        """Fail fast if the host ``spec-*`` plugin sources are not present."""
-        for name in A1_PLUGIN_DIR_NAMES:
+    def _require_plugins(
+        plugin_dir_names: tuple[str, ...] = A1_PLUGIN_DIR_NAMES,
+    ) -> None:
+        """Fail fast if any required host ``spec-*`` plugin source is absent.
+
+        ``plugin_dir_names`` is the arm's mount set (A1 mounts spec-creator too;
+        A2/A3 do not). Defaults to A1's set for backward compatibility.
+        """
+        for name in plugin_dir_names:
             manifest = (
                 HOST_PLUGIN_MARKETPLACE_DIR / name / ".claude-plugin" / "plugin.json"
             )
             if not manifest.is_file():
                 raise ContainerRunError(
                     f"spec-* plugin {name!r} not found at "
-                    f"{HOST_PLUGIN_MARKETPLACE_DIR / name}; A1 needs the spec-* "
-                    "plugins available on the host to mount into the container"
+                    f"{HOST_PLUGIN_MARKETPLACE_DIR / name}; the workflow arm needs "
+                    "the spec-* plugins available on the host to mount into the "
+                    "container"
                 )
 
     @staticmethod
@@ -344,15 +493,19 @@ class ContainerRunBackend:
         return arm_or_solver == AGENT_SOLVER or arm_or_solver == A0
 
     @staticmethod
-    def _selects_a1(arm_or_solver: object) -> bool:
-        """Whether ``arm_or_solver`` selects the A1 full-pipeline path.
+    def _selects_workflow(arm_or_solver: object) -> bool:
+        """Whether ``arm_or_solver`` selects a ``spec-*`` WORKFLOW path (A1/A2/A3).
 
-        An A1-style arm is an ``Arm`` record with a NON-EMPTY ``pluginsEnabled``
-        (the workflow arms install plugins; A0 has none). This keeps the dispatch
-        configuration-driven per ``02-arms.md`` §Implementation layout (arms are
-        records the driver reads, not code branches).
+        Routes BY SLUG against the closed :data:`_WORKFLOW_ARM_SLUGS`, NOT by
+        "any Arm with plugins" — A2/A3 are plugin arms too, so the old
+        plugins-non-empty test would WRONGLY treat them like A1 (and an A0-style
+        record would never reach here regardless). Keeping dispatch
+        configuration-driven per ``02-arms.md`` §Implementation layout: arms are
+        records the driver reads, not code branches.
         """
-        return isinstance(arm_or_solver, Arm) and bool(arm_or_solver.pluginsEnabled)
+        return (
+            isinstance(arm_or_solver, Arm) and arm_or_solver.slug in _WORKFLOW_ARM_SLUGS
+        )
 
     def _resolve_image(self, instance: TaskInstance) -> str:
         """Return the AGENT RUN image tag for ``instance``, building if needed."""
@@ -388,17 +541,22 @@ class ContainerRunBackend:
         (creds_dir / ".credentials.json").chmod(0o666)
 
     def _start_container(
-        self, image: str, creds_dir: Path, *, with_plugins: bool = False
+        self,
+        image: str,
+        creds_dir: Path,
+        *,
+        plugin_dir_names: tuple[str, ...] | None = None,
     ) -> str:
         """Start a detached container; return its id.
 
         Bind-mounts the writable creds copy at :data:`CONTAINER_CLAUDE_DIR`,
         keeps network (default bridge has outbound), workdir ``/workspace``, and
         keeps the container alive with ``sleep`` so we can ``docker exec`` into
-        it for setup, the agent run, and patch extraction. When ``with_plugins``
-        is set (the A1 path), it ALSO read-only bind-mounts each host ``spec-*``
-        plugin source under :data:`A1_CONTAINER_PLUGIN_ROOT` so the in-container
-        ``claude -p --plugin-dir ...`` resolves the workflow skills.
+        it for setup, the agent run, and patch extraction. When
+        ``plugin_dir_names`` is given (any workflow arm — A1/A2/A3), it ALSO
+        read-only bind-mounts each named host ``spec-*`` plugin source under
+        :data:`A1_CONTAINER_PLUGIN_ROOT` so the in-container ``claude -p
+        --plugin-dir ...`` resolves the workflow skills.
         """
         alive = AGENT_RUN_TIMEOUT_SECONDS + AUTH_PROBE_TIMEOUT_SECONDS + 300
         command = [
@@ -410,9 +568,9 @@ class ContainerRunBackend:
             "-v",
             f"{creds_dir}:{CONTAINER_CLAUDE_DIR}",
         ]
-        if with_plugins:
+        if plugin_dir_names:
             alive = A1_RUN_TIMEOUT_SECONDS + AUTH_PROBE_TIMEOUT_SECONDS + 300
-            for name in A1_PLUGIN_DIR_NAMES:
+            for name in plugin_dir_names:
                 host_dir = HOST_PLUGIN_MARKETPLACE_DIR / name
                 command += [
                     "-v",
@@ -452,6 +610,36 @@ class ContainerRunBackend:
             f"git tag {_BASE_COMMIT_TAG}"
         )
         self._exec(container_id, command, SETUP_TIMEOUT_SECONDS, "make base commit")
+
+    def _write_given_spec(self, container_id: str, given_spec: str) -> None:
+        """Write the frozen given-spec into the container BEFORE the workflow runs.
+
+        A2/A3 hand in a ready-made spec instead of authoring one. The spec is
+        written at :data:`GIVEN_SPEC_CONTAINER_RELPATH` (under ``docs/specs/``,
+        where ``spec-creator`` would have written), so it is captured into the
+        bundle's ``specArtifacts`` and EXCLUDED from the scored code diff exactly
+        like an authored spec, and so dropping ``spec-creator`` is transparent to
+        ``spec-planner``. Committed onto the base so the spec file does not show
+        up in the candidate patch (it is an input, not the arm's code change).
+        """
+        rel = GIVEN_SPEC_CONTAINER_RELPATH
+        parent = rel.rsplit("/", 1)[0]
+        # Write the spec via a heredoc on stdin (no shell-escaping of the body),
+        # then fold it into the base commit so it is an INPUT, not a diff change.
+        command = (
+            f"set -e; cd {IMAGE_WORKDIR}; "
+            f"mkdir -p {_shell_quote(parent)}; "
+            f"cat > {_shell_quote(rel)} <<'BENCHMARK_GIVEN_SPEC_EOF'\n"
+            f"{given_spec}\n"
+            f"BENCHMARK_GIVEN_SPEC_EOF\n"
+            f"git add -A; "
+            f"git -c user.email={_GIT_USER_EMAIL} -c user.name={_GIT_USER_NAME} "
+            f"commit -q -m given_spec --allow-empty; "
+            # Re-point the base tag so the diff anchor INCLUDES the given spec —
+            # the handed-in spec is part of the starting point, not the change.
+            f"git tag -f {_BASE_COMMIT_TAG}"
+        )
+        self._exec(container_id, command, SETUP_TIMEOUT_SECONDS, "write given spec")
 
     def _auth_probe(self, container_id: str) -> None:
         """Trivial ``claude -p`` with a $1 cap; raise clearly if auth fails."""
@@ -508,25 +696,28 @@ class ContainerRunBackend:
             raise ContainerRunError(f"claude result JSON was not an object: {parsed!r}")
         return parsed
 
-    def _run_a1_workflow(self, container_id: str, prompt: str) -> dict[str, object]:
-        """Drive the A1 full pipeline to completion; return the parsed result JSON.
+    def _run_workflow(
+        self, container_id: str, prompt: str, config: _WorkflowArmConfig
+    ) -> dict[str, object]:
+        """Drive a ``spec-*`` workflow arm (A1/A2/A3) to completion; return the JSON.
 
-        A1 loads the ``spec-*`` plugins for the session with a ``--plugin-dir`` per
-        mounted plugin, runs on the A1 model behind the HARD ``--max-budget-usd``
-        cap, and is bounded by :data:`A1_RUN_TIMEOUT_SECONDS`. A non-zero exit OR a
+        Loads the arm's ``spec-*`` plugins for the session with a ``--plugin-dir``
+        per mounted plugin, runs on the arm's model behind its HARD
+        ``--max-budget-usd`` cap, and is bounded by :data:`A1_RUN_TIMEOUT_SECONDS`
+        (shared — A2/A3 are no longer-running than A1). A non-zero exit OR a
         timeout is an HONEST outcome the caller surfaces with partial evidence —
         the recursive workflow may legitimately hit the cap before finishing.
         """
         plugin_flags = " ".join(
             f"--plugin-dir {A1_CONTAINER_PLUGIN_ROOT}/{name}"
-            for name in A1_PLUGIN_DIR_NAMES
+            for name in config.plugin_dir_names
         )
         command = (
             f"cd {IMAGE_WORKDIR}; "
             f"claude -p {_shell_quote(prompt)} "
             f"{plugin_flags} "
-            f"--model {A1_MODEL} --permission-mode bypassPermissions "
-            f"--max-budget-usd {A1_MAX_BUDGET_USD} --output-format json"
+            f"--model {config.model} --permission-mode bypassPermissions "
+            f"--max-budget-usd {config.max_budget_usd} --output-format json"
         )
         result = subprocess.run(
             ["docker", "exec", container_id, "sh", "-c", command],
@@ -536,7 +727,7 @@ class ContainerRunBackend:
         )
         if result.returncode != _CLAUDE_EXIT_OK:
             raise ContainerRunError(
-                f"A1 workflow run failed (exit {result.returncode}).\n"
+                f"workflow run failed (exit {result.returncode}).\n"
                 f"stdout: {result.stdout}\nstderr: {result.stderr}"
             )
         try:
