@@ -108,10 +108,27 @@ GATE_KINDS: tuple[str, ...] = ("semi-formal-review", "validate-done-certificate"
 GATE_VERDICTS: tuple[str, ...] = ("PASS", "FAIL", "PARTIAL", "UNVERIFIED")
 
 #: Suite kinds.
-SUITE_KINDS: tuple[str, ...] = ("issue-fixing", "greenfield")
+SUITE_KINDS: tuple[str, ...] = ("issue-fixing", "greenfield", "local-fixture")
 
 #: Suite oracle conventions.
-ORACLE_CONVENTIONS: tuple[str, ...] = ("swe-bench-pro", "greenfield-hidden-tests")
+ORACLE_CONVENTIONS: tuple[str, ...] = (
+    "swe-bench-pro",
+    "greenfield-hidden-tests",
+    "local",
+)
+
+#: Campaign run/scoring backends; ``container`` is the production default.
+BACKENDS: tuple[str, ...] = ("container", "local")
+
+#: Default Campaign backend applied when the field is omitted.
+DEFAULT_BACKEND = "container"
+
+#: Campaign solvers; ``agent`` is the default, ``fixture`` runs the scripted
+#: solver that emits the instance goldPatch for deterministic verification.
+SOLVERS: tuple[str, ...] = ("agent", "fixture")
+
+#: Default Campaign solver applied when the field is omitted.
+DEFAULT_SOLVER = "agent"
 
 #: Contamination tiers for a TaskInstance.
 CONTAMINATION_TIERS: tuple[str, ...] = ("public", "held-out", "authored-private")
@@ -318,6 +335,8 @@ class Campaign(Record):
     arms: list[str]
     suites: list[str]
     trialsPerInstance: int
+    backend: str = DEFAULT_BACKEND
+    solver: str = DEFAULT_SOLVER
 
 
 @dataclass(frozen=True)

@@ -360,6 +360,82 @@ def test_error_message_is_clear() -> None:
     assert re.search(r"verdict", message)
 
 
+# --- local-backend members (2026-05-27 local_backends change spec) ---------
+
+
+def test_local_fixture_suite_constructs_and_validates() -> None:
+    """A local-fixture suite with the local oracle convention validates."""
+    suite = Suite(
+        slug="local-fixture",
+        kind="local-fixture",
+        oracleConvention="local",
+    )
+    assert suite.kind == "local-fixture"
+    assert suite.oracleConvention == "local"
+    assert "local-fixture" in domain.SUITE_KINDS
+    assert "local" in domain.ORACLE_CONVENTIONS
+
+
+def test_local_campaign_constructs_and_validates() -> None:
+    """A campaign on the local backend with the fixture solver validates."""
+    campaign = Campaign(
+        id=_CAMPAIGN_ID,
+        createdAt=_TIMESTAMP,
+        model="claude-opus-4-7",
+        arms=list(ARM_SLUGS),
+        suites=["local-fixture"],
+        trialsPerInstance=1,
+        backend="local",
+        solver="fixture",
+    )
+    payload = campaign.to_dict()
+    assert payload["backend"] == "local"
+    assert payload["solver"] == "fixture"
+    assert Campaign.from_dict(payload) == campaign
+
+
+def test_campaign_backend_solver_default_to_container_agent() -> None:
+    """Omitting backend/solver yields the container/agent defaults and validates."""
+    omitted = {
+        "id": _CAMPAIGN_ID,
+        "createdAt": _TIMESTAMP,
+        "model": "claude-opus-4-7",
+        "arms": list(ARM_SLUGS),
+        "suites": ["swe-bench-pro-public"],
+        "trialsPerInstance": 3,
+    }
+    campaign = Campaign.from_dict(omitted)
+    assert campaign.backend == domain.DEFAULT_BACKEND == "container"
+    assert campaign.solver == domain.DEFAULT_SOLVER == "agent"
+
+
+def test_out_of_enum_backend_rejected() -> None:
+    """A Campaign backend outside the enum is rejected with a clear error."""
+    bad = _campaign().to_dict()
+    bad["backend"] = "kubernetes"
+    with pytest.raises(DomainValidationError) as exc:
+        Campaign.from_dict(bad)
+    assert "backend" in str(exc.value)
+
+
+def test_out_of_enum_solver_rejected() -> None:
+    """A Campaign solver outside the enum is rejected with a clear error."""
+    bad = _campaign().to_dict()
+    bad["solver"] = "human"
+    with pytest.raises(DomainValidationError) as exc:
+        Campaign.from_dict(bad)
+    assert "solver" in str(exc.value)
+
+
+def test_unknown_suite_kind_rejected() -> None:
+    """A Suite kind outside the enum is rejected with a clear error."""
+    bad = _suite().to_dict()
+    bad["kind"] = "made-up-kind"
+    with pytest.raises(DomainValidationError) as exc:
+        Suite.from_dict(bad)
+    assert "kind" in str(exc.value)
+
+
 def test_canonical_schema_file_is_the_authority(tmp_path: Path) -> None:
     """The module validates against the on-disk canonical schema, unmodified."""
     on_disk = json.loads(domain.CANONICAL_SCHEMA_PATH.read_text(encoding="utf-8"))

@@ -1,6 +1,6 @@
 # Task 18 — Local-backend domain and schema extensions
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/18-local_backend_domain.md](certificates/18-local_backend_domain.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/18-local_backend_domain.md](certificates/18-local_backend_domain.md)
 
 **Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`01-domain-model.md` → Suite, Campaign), §Type changes
 **Depends on:** 02
@@ -9,10 +9,10 @@
 
 ## Steps
 
-- [ ] Extend `Suite.kind` with `local-fixture` and `Suite.oracleConvention` with `local`.
-- [ ] Add `Campaign.backend` (`container` default | `local`) and `Campaign.solver` (`agent` default | `fixture`).
-- [ ] Apply the change spec's `Type changes` fragment to `canonical-types.schema.json` (the modified `Suite` and `Campaign` `$defs`).
-- [ ] Add negative-space tests: an out-of-enum `backend` and an unknown `kind` are rejected; omitted `backend`/`solver` default to `container`/`agent`.
+- [x] Extend `Suite.kind` with `local-fixture` and `Suite.oracleConvention` with `local`.
+- [x] Add `Campaign.backend` (`container` default | `local`) and `Campaign.solver` (`agent` default | `fixture`).
+- [x] Apply the change spec's `Type changes` fragment to `canonical-types.schema.json` (the modified `Suite` and `Campaign` `$defs`).
+- [x] Add negative-space tests: an out-of-enum `backend` and an unknown `kind` are rejected; omitted `backend`/`solver` default to `container`/`agent`.
 
 ## Definition of done
 
