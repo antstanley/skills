@@ -2,7 +2,9 @@
 
 Asserts the Docker-free skeleton named in ``05-harness-architecture.md``
 §Implementation layout (plus the backend seam from the local-backends change
-spec) is importable, without pulling in BenchFlow.
+spec) is importable. As of Task 01 the BenchFlow substrate (§Substrate) is now
+wired, so this also asserts ``benchflow`` is installed (the detailed substrate
+finding lives in ``benchmark.harness.substrate`` / ``test_substrate.py``).
 """
 
 import importlib
@@ -39,7 +41,7 @@ def test_suites_package_imports() -> None:
     assert suites is not None
 
 
-def test_no_benchflow_dependency() -> None:
-    """BenchFlow is deferred to task 01 and must not be installed here."""
+def test_benchflow_substrate_installed() -> None:
+    """The BenchFlow substrate (Task 01, §Substrate) is installed and locked."""
     spec = importlib.util.find_spec("benchflow")
-    assert spec is None, "BenchFlow must not be a dependency of the skeleton"
+    assert spec is not None, "BenchFlow must be wired as of Task 01"
