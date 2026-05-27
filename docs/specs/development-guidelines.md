@@ -20,8 +20,11 @@ The tools actually in use. Each is wired into the repo today; planned-but-unwire
 | pytest | latest (`>=8.0`) | test runner; `testpaths = ["benchmark/tests"]` |
 | pyright | latest (`>=1.1.409`) | type checker, standard mode (`[tool.pyright]`); checks library code, excludes the test suite and the bundled fixture repo |
 | jujutsu (`jj`) | latest | version-control front end (see [Version control](#version-control)) |
+| Docker | peer dependency (≥ 25) | runtime for the benchmark's `container` backend (run/scoring on the SWE-bench Pro and greenfield suites); **not** required for local development, the test suite, or the Docker-free `local` backend / M0 pipeline |
 
 Pervasive coding style: **Clean Code** (below). The format / lint / type-check / test gate is run by a pre-push hook and by CI (see [Repository hygiene](#repository-hygiene)).
+
+Docker is a **peer dependency**, not part of the locked Python toolchain: it is installed and managed at the OS level (`dnf install docker` on Amazon Linux 2023), and only the `container` backend needs it. Everything in this guideline — format, lint, type-check, tests, and the M0 local pipeline — runs without it.
 
 ---
 
