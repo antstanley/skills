@@ -160,6 +160,7 @@ This repo is jj-managed (`.jj/` present; a `.git/` backend also exists, but `jj`
 - **Local, untracked operator data** lives in a gitignored directory; never commit environment-specific config or secrets.
 - **A pre-push hook** (`.githooks/pre-push`, enabled per clone with `git config core.hooksPath .githooks`) runs `scripts/check.sh` — `uv sync --frozen`, format-check, lint, type-check, and the test suite — before a push. **CI** (`.github/workflows/ci.yml`) re-runs the same `scripts/check.sh` on every push and pull request and is the authoritative gate. `jj git push` pushes through jj and bypasses git hooks, so when pushing with jj run `scripts/check.sh` locally first; CI catches it regardless. Clean Code leans on the test suite as its safety net — keep it fast and green.
 - **One check script, two callers.** `scripts/check.sh` is the single source of truth for the gate; the hook and CI both invoke it, so local and CI runs are identical.
+- **GitHub Actions are pinned to a full commit SHA**, never a floating tag, with the version tag in a trailing comment — `uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2`. A tag like `@v6` can be repointed at different (or compromised) code; the 40-character commit SHA is immutable, so CI runs exactly the audited code. This applies to *every* action a workflow pulls in, including first-party `actions/*`. Bump deliberately: resolve the new tag to its commit SHA (`gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`) and update the SHA and the comment together, preferring the current Node-24 action majors.
 - **The canonical schema is hand-authored authority**, not generated: `canonical-types.schema.json` is the source of truth that the domain types validate against, and a test asserts the in-memory schema equals the on-disk file.
 
 ---
@@ -176,6 +177,7 @@ This repo is jj-managed (`.jj/` present; a `.git/` backend also exists, but `jj`
 8. **Errors are raised with context, never swallowed.** Every `except` handles or re-raises with more information.
 9. **Use `uv run …`**, never the system `python3`; the locked toolchain is the only supported one.
 10. **Do not run destructive version-control operations without explicit confirmation, and do not skip hooks.** If a check fails, fix the underlying issue.
+11. **Pin every GitHub Action to a full commit SHA** (`uses: …@<sha> # vX.Y.Z`); never add or leave a floating `@vN` tag in a workflow.
 
 ---
 
@@ -209,6 +211,7 @@ A change is done when:
 - *jj is the version-control front end.* **`.jj/` over the `.git/` backend.** Both directories exist; describing the git workflow would tell contributors to run `git commit` against a jj working copy, the mismatch these rules exist to prevent.
 - *pyright in standard mode, not strict.* **Standard mode over the library code.** The JSON-Schema validation dependency (`jsonschema`) ships no complete type stubs, so strict mode flags its untyped surface; standard mode checks the repo's own code cleanly without scattering suppressions around a third-party boundary. The test suite and the bundled fixture repo are excluded (tests use duck-typed fakes and protected access by design; the fixture repo is sample data checked out at runtime).
 - *One check script behind the hook and CI.* **`scripts/check.sh` is the single gate, run by both.** Keeping local and CI checks identical avoids drift; CI is authoritative because `jj git push` bypasses git hooks.
+- *GitHub Actions pinned to commit SHAs.* **`uses: …@<40-char-sha> # vX.Y.Z`.** A tag is mutable and a moved or compromised tag would silently change what CI executes; pinning to the immutable commit SHA fixes the running code, while the trailing version comment keeps it auditable and bumpable.
 
 **Open questions**
 
