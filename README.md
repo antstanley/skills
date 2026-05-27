@@ -49,9 +49,10 @@ Register the marketplace, then install plugins individually:
 │   │   └── README.md
 │   └── spec-builder/
 │       ├── .claude-plugin/plugin.json
-│       ├── skills/spec-builder/
-│       ├── skills/semi-formal-review/
-│       ├── skills/validate-done-certificate/
+│       ├── skills/spec-builder/                 # orchestrator
+│       │   └── references/                       # orchestration, workspaces (jj+git), subagent-brief, build-loop
+│       ├── skills/semi-formal-review/           # gate 1 — correctness
+│       ├── skills/validate-done-certificate/    # gate 2 — completeness
 │       └── README.md
 └── docs/specs/spec.md                  # marketplace design spec
 ```
