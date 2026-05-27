@@ -1,6 +1,6 @@
 # Task 23 — Local pipeline demonstration
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/23-local_pipeline_demo.md](certificates/23-local_pipeline_demo.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/23-local_pipeline_demo.md](certificates/23-local_pipeline_demo.md)
 
 **Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Component shape (backend-neutral driver); [06-scoring-and-statistics.md](../../benchmark/specs/06-scoring-and-statistics.md) §Repetition and Pass@k (over the fixture); [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) (end to end)
 **Depends on:** 07, 20, 21, 22
@@ -9,10 +9,10 @@
 
 ## Steps
 
-- [ ] Assemble a local `Campaign`: `backend: local`, `solver: fixture`, the `local-fixture` suite, a small `trialsPerInstance`.
-- [ ] Run it through the driver (task 07) using the local `RunBackend` (22) and local `ScoringBackend` (20).
-- [ ] Assert the fixture trial resolves deterministically across repeated runs (same verdict every time).
-- [ ] Compute and print %Resolved over the fixture trials; confirm `1.0` with the fixture solver and `0.0` with a no-op solver variant.
+- [x] Assemble a local `Campaign`: `backend: local`, `solver: fixture`, the `local-fixture` suite, a small `trialsPerInstance`.
+- [x] Run it through the driver (task 07) using the local `RunBackend` (22) and local `ScoringBackend` (20).
+- [x] Assert the fixture trial resolves deterministically across repeated runs (same verdict every time).
+- [x] Compute and print %Resolved over the fixture trials; confirm `1.0` with the fixture solver and `0.0` with a no-op solver variant.
 
 ## Definition of done
 
