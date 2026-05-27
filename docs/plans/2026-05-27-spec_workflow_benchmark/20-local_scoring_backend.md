@@ -1,6 +1,6 @@
 # Task 20 — Local ScoringBackend
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/20-local_scoring_backend.md](certificates/20-local_scoring_backend.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/20-local_scoring_backend.md](certificates/20-local_scoring_backend.md)
 
 **Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`06-scoring-and-statistics.md` → The test oracle: `local`; `05-harness-architecture.md` → Scoring isolation: `local`)
 **Depends on:** 18, 19
@@ -9,10 +9,10 @@
 
 ## Steps
 
-- [ ] Implement `score()`: make a fresh temp checkout at `baseCommit` in a directory distinct from any run directory, apply the `candidatePatch`, inject the hidden `failToPass`/`passToPass`, run `pytest` as a subprocess.
-- [ ] Derive `resolved` (all `failToPass` pass and `passToPass` hold) and `regressed` using the shared resolution rule; return a `ScoreReport`.
-- [ ] Exercise it in tests with an inline throwaway repo+tests (not the shipped fixture): a gold patch resolves, a no-op does not.
-- [ ] Assert the scoring temp dir is separate from the run dir and the hidden tests are introduced only on the scoring side.
+- [x] Implement `score()`: make a fresh temp checkout at `baseCommit` in a directory distinct from any run directory, apply the `candidatePatch`, inject the hidden `failToPass`/`passToPass`, run `pytest` as a subprocess.
+- [x] Derive `resolved` (all `failToPass` pass and `passToPass` hold) and `regressed` using the shared resolution rule; return a `ScoreReport`.
+- [x] Exercise it in tests with an inline throwaway repo+tests (not the shipped fixture): a gold patch resolves, a no-op does not.
+- [x] Assert the scoring temp dir is separate from the run dir and the hidden tests are introduced only on the scoring side.
 
 ## Definition of done
 
