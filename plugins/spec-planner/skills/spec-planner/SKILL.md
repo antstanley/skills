@@ -28,7 +28,7 @@ The boundaries between the companions:
 
 - **spec-creator** writes the spec (what exists / what will change). **spec-planner** plans how to build it.
 - **development-guidelines** writes the rules of the road, including the `Definition of done` section. spec-planner *reads* that section to derive each task's DoD; it does not write guidelines.
-- **spec-reviewer** checks specs against code. spec-planner may invoke it in Phase 1 (R2 / R3) to learn what is already built, so the plan does not re-plan finished work.
+- **spec-reviewer** checks specs against code. spec-planner may invoke it in Phase 1 (R2 / R3) to learn what is already built, so the plan does not re-plan finished work. It ships in the **spec-creator** plugin and is an *optional* companion, not a hard dependency: when spec-creator is not installed, the Phase 1 code read covers the same ground (it is the fallback, not a skipped step).
 - **done-certificates** turns a task's `Definition of done` into a task-specific semi-formal reasoning certificate — a verification protocol that a *separate* validating agent later runs to decide whether the task is done. spec-planner writes the DoD; done-certificates writes the protocol that proves it; a validator runs it. spec-planner may delegate to done-certificates after Phase 4 to author one certificate per task (see *Adding done certificates* below); it does not author certificates itself, and neither skill runs the validation.
 
 ## When to apply this skill
@@ -51,7 +51,7 @@ Five phases, sequential. The value of a plan comes from understanding the spec a
 
 1. **Read the source specification end to end.** For a canonical spec set, read `docs/README.md` then every page in scope and the schema sidecar. For a change spec, read it and the canonical pages it targets. For an external spec, read the whole document and note its structure.
 2. **Establish the definition-of-done baseline.** Find the repo's development guidelines — `docs/specs/development-guidelines.md` (the page the `development-guidelines` skill produces) is the first choice; its `Definition of done` and `Limits and bounds` sections set the per-task bar. If absent, fall back to repo signals (`CONTRIBUTING.md`, CI config, test setup) and, failing that, **ask the user** what "done" means for a task here. Record the source in the plan's header note.
-3. **Learn what already exists.** A plan must not re-plan finished work. Walk the code the spec describes; where the spec set has drifted from the code, delegate to **spec-reviewer** (R2 for a canonical spec, R3 for a change spec) to enumerate what is already implemented. Built work becomes a precondition in the plan, not a task.
+3. **Learn what already exists.** A plan must not re-plan finished work. Walk the code the spec describes; where the spec set has drifted from the code, delegate to **spec-reviewer** (R2 for a canonical spec, R3 for a change spec) to enumerate what is already implemented. spec-reviewer ships with the **spec-creator** plugin — when it is not installed, do the equivalent code read by hand (it is the same enumeration, not an optional step). Built work becomes a precondition in the plan, not a task.
 4. **Surface ambiguity early.** Anything the spec leaves undecided that blocks sequencing (an unspecified auth model when half the features are gated) is flagged to the user now and captured for the Open questions block.
 
 ### Phase 2 — Decompose into task packages

@@ -27,6 +27,14 @@ The method stays in natural language rather than a proof language: no automated
 checker, far less translation overhead, and the structure still bars skipped cases and
 unsupported claims.
 
+> **Vendored copy — keep in sync.** This is the *validate/review* side of the method, used by
+> both `semi-formal-review` and `validate-done-certificate` in this plugin. The *author* side is
+> a sibling vendored copy at `spec-planner/skills/done-certificates/references/semiformal-method.md`.
+> The two ends of the handoff must agree on the **5-step function-resolution sequence** and the
+> verdict rubrics; if you edit either here, mirror it in that copy (and ideally upstream in the
+> `reasoning-semiformally` plugin), or a certificate authored against one will be discharged
+> against a different method.
+
 ---
 
 ## Compact checkpoints (Sonnet / Opus class)

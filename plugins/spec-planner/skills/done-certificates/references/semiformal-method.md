@@ -4,6 +4,13 @@ A done certificate is a **semi-formal reasoning certificate**: a structured evid
 
 (The method is the one introduced for code analysis as "semi-formal reasoning" — structured prompting templates that act as certificates. It stays in natural language rather than a proof language like Lean or Coq: no automated proof checker, but far less translation overhead, and the structure still bars skipped cases and unsupported claims.)
 
+> **Vendored copy — keep in sync.** This is the *author* side of the method, vendored from the
+> `reasoning-semiformally` plugin. The *validate/review* side is a sibling vendored copy at
+> `spec-builder/skills/semi-formal-review/references/method.md`. The certificate author and the
+> certificate validator must agree on the **5-step function-resolution sequence** and the
+> **NOT_DONE / PARTIAL / DONE verdict rubric** below; if you edit either here, mirror it in that
+> copy (and ideally upstream), or the two ends of the handoff will silently diverge.
+
 ---
 
 ## The certificate shape
