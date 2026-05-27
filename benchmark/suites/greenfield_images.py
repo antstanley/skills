@@ -40,6 +40,11 @@ from benchmark.suites.greenfield import (
 #: Base image for both the run and scoring images (small, Python 3.13).
 BASE_IMAGE = "python:3.13-slim"
 
+#: Pinned ``pytest`` baked into the SCORING image so each per-score run needs
+#: NO network (deterministic scoring). The RUN image stays pytest-free — the
+#: hidden oracle never executes on the run side.
+PYTEST_VERSION = "8.4.2"
+
 #: Pinned ``jj`` (jujutsu) release installed into the run image. spec-builder
 #: selects its workspace backend itself (jj preferred), so the run image ships
 #: the real jj binary from the official GitHub release (not a PyPI lookalike).
@@ -96,6 +101,9 @@ FROM {BASE_IMAGE}
 RUN apt-get update \\
  && apt-get install -y --no-install-recommends git \\
  && rm -rf /var/lib/apt/lists/*
+# Bake pytest into the SCORING image so per-score runs need NO network and are
+# deterministic. The RUN image deliberately stays pytest-free.
+RUN pip install --no-cache-dir pytest=={PYTEST_VERSION}
 WORKDIR {IMAGE_WORKDIR}
 COPY {REPO_BASE_SUBDIR}/ {IMAGE_WORKDIR}/
 # Scoring side ONLY: overlay the withheld acceptance suite at hidden/.

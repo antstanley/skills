@@ -1,6 +1,6 @@
 # Task 04 — Scoring oracle
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/04-scoring_oracle.md](certificates/04-scoring_oracle.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/04-scoring_oracle.md](certificates/04-scoring_oracle.md)
 
 **Implements:** [06-scoring-and-statistics.md](../../benchmark/specs/06-scoring-and-statistics.md) §The test oracle, [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Scoring isolation — the integrity rule
 **Depends on:** 02, 12, 19
