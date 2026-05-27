@@ -74,6 +74,31 @@ RUN_IMAGE_TAG_TEMPLATE = "greenfield-{slug}:run"
 #: Tag template for the SCORING image (hidden tests INCLUDED).
 SCORING_IMAGE_TAG_TEMPLATE = "greenfield-{slug}:scoring"
 
+#: Tag template for the AGENT RUN image — the RUN image PLUS Node + the
+#: ``@anthropic-ai/claude-code`` CLI, so the ``container`` RunBackend can run an
+#: agent arm in it. It derives FROM the clean run image, so it inherits the same
+#: integrity guarantee (the run-visible ``base/`` tree only, NO hidden tests),
+#: and is kept under a separate tag so the clean run/scoring images are never
+#: contaminated with the agent toolchain.
+AGENT_RUN_IMAGE_TAG_TEMPLATE = "greenfield-{slug}:agent"
+
+#: Pinned ``@anthropic-ai/claude-code`` CLI version baked into the agent run
+#: image (matches the host CLI the run side authenticates with).
+CLAUDE_CODE_CLI_VERSION = "2.1.152"
+
+#: Node major installed into the agent run image (Claude Code needs Node >= 18).
+NODE_MAJOR = "24"
+
+#: Non-root user the agent runs as inside the container. ``claude
+#: --permission-mode bypassPermissions`` (a.k.a. ``--dangerously-skip-permissions``)
+#: REFUSES to run as root, so the agent image creates this unprivileged user and
+#: the container runs the agent (and writes the workspace) as it. The container
+#: backend mounts the writable creds copy at this user's ``~/.claude``.
+AGENT_USER = "agent"
+
+#: Home directory of :data:`AGENT_USER` (where its ``.claude`` creds live).
+AGENT_HOME = f"/home/{AGENT_USER}"
+
 #: Build the run image: copy the base skeleton, install jj+git, no hidden tests.
 _RUN_DOCKERFILE = f"""\
 FROM {BASE_IMAGE}
@@ -111,6 +136,29 @@ COPY {REPO_HIDDEN_SUBDIR}/ {IMAGE_WORKDIR}/{REPO_HIDDEN_SUBDIR}/
 """
 
 
+#: Build the AGENT RUN image: derive FROM the clean run image (already carrying
+#: the run-visible ``base/`` tree + jj/git, NO hidden tests) and add Node + the
+#: pinned ``@anthropic-ai/claude-code`` CLI. ``{run_tag}`` is substituted at
+#: build time with the instance's clean run image tag. Nothing copies ``hidden/``
+#: here, so the integrity guarantee carries through.
+_AGENT_RUN_DOCKERFILE_TEMPLATE = f"""\
+FROM {{run_tag}}
+RUN set -eux; \\
+    curl -fsSL https://deb.nodesource.com/setup_{NODE_MAJOR}.x | bash -; \\
+    apt-get install -y --no-install-recommends nodejs; \\
+    rm -rf /var/lib/apt/lists/*; \\
+    npm install -g @anthropic-ai/claude-code@{CLAUDE_CODE_CLI_VERSION}; \\
+    claude --version
+# claude --permission-mode bypassPermissions refuses to run as root, so create
+# an unprivileged user and hand it the workspace. The container backend runs the
+# agent (and mounts the writable creds copy at ~/.claude) as this user.
+RUN useradd --create-home --home-dir {AGENT_HOME} {AGENT_USER} \\
+ && chown -R {AGENT_USER}:{AGENT_USER} {IMAGE_WORKDIR} {AGENT_HOME}
+USER {AGENT_USER}
+WORKDIR {IMAGE_WORKDIR}
+"""
+
+
 def run_image_tag(slug: str) -> str:
     """Return the RUN image tag for instance ``slug`` (its ``dockerImage``)."""
     return RUN_IMAGE_TAG_TEMPLATE.format(slug=slug)
@@ -119,6 +167,11 @@ def run_image_tag(slug: str) -> str:
 def scoring_image_tag(slug: str) -> str:
     """Return the SCORING image tag for instance ``slug``."""
     return SCORING_IMAGE_TAG_TEMPLATE.format(slug=slug)
+
+
+def agent_run_image_tag(slug: str) -> str:
+    """Return the AGENT RUN image tag for instance ``slug``."""
+    return AGENT_RUN_IMAGE_TAG_TEMPLATE.format(slug=slug)
 
 
 def docker_available() -> bool:
@@ -162,6 +215,23 @@ def build_run_image(spec: GreenfieldInstanceSpec) -> str:
     """
     tag = run_image_tag(spec.slug)
     _docker_build(_RUN_DOCKERFILE, spec.repo_source_dir, tag)
+    return tag
+
+
+def build_agent_run_image(spec: GreenfieldInstanceSpec) -> str:
+    """Build the AGENT RUN image for ``spec``; return its tag.
+
+    Ensures the clean RUN image exists (building it on demand), then layers Node
+    and the pinned ``@anthropic-ai/claude-code`` CLI on top. The agent image
+    derives FROM the clean run image and copies NO ``hidden/`` content, so the
+    integrity guarantee (no hidden tests on the run side) carries through. The
+    build context is the instance ``repo/`` dir purely to satisfy ``docker
+    build``; the Dockerfile copies nothing from it.
+    """
+    run_tag = build_run_image(spec)
+    tag = agent_run_image_tag(spec.slug)
+    dockerfile = _AGENT_RUN_DOCKERFILE_TEMPLATE.format(run_tag=run_tag)
+    _docker_build(dockerfile, spec.repo_source_dir, tag)
     return tag
 
 

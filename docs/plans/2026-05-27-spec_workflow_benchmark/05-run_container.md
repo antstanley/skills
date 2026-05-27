@@ -1,6 +1,6 @@
 # Task 05 — Run container
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/05-run_container.md](certificates/05-run_container.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/05-run_container.md](certificates/05-run_container.md)
 
 **Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Run container, [02-arms.md](../../benchmark/specs/02-arms.md) §A0 — Baseline (provisioning)
 **Depends on:** 01, 02, 12, 19

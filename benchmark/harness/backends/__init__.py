@@ -6,6 +6,12 @@ and statistics are agnostic to how a Trial is run and scored.
 
 from __future__ import annotations
 
+from benchmark.harness.backends.container import (
+    AGENT_SOLVER,
+    ContainerAuthError,
+    ContainerRunBackend,
+    ContainerRunError,
+)
 from benchmark.harness.backends.interfaces import (
     HIDDEN_TEST_FIELDS,
     ArmOrSolver,
@@ -22,12 +28,16 @@ from benchmark.harness.backends.local import (
 )
 
 __all__ = [
+    "AGENT_SOLVER",
     "FIXTURE_SOLVER",
     "HIDDEN_TEST_FIELDS",
     "RUN_DIR_PREFIX",
     "RUN_TEMP_BASE",
     "ArmOrSolver",
     "CandidatePatch",
+    "ContainerAuthError",
+    "ContainerRunBackend",
+    "ContainerRunError",
     "LocalRunBackend",
     "LocalRunError",
     "RunBackend",
