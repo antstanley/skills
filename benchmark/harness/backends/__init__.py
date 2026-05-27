@@ -13,11 +13,23 @@ from benchmark.harness.backends.interfaces import (
     RunBackend,
     ScoringBackend,
 )
+from benchmark.harness.backends.local import (
+    FIXTURE_SOLVER,
+    RUN_DIR_PREFIX,
+    RUN_TEMP_BASE,
+    LocalRunBackend,
+    LocalRunError,
+)
 
 __all__ = [
+    "FIXTURE_SOLVER",
     "HIDDEN_TEST_FIELDS",
+    "RUN_DIR_PREFIX",
+    "RUN_TEMP_BASE",
     "ArmOrSolver",
     "CandidatePatch",
+    "LocalRunBackend",
+    "LocalRunError",
     "RunBackend",
     "ScoringBackend",
 ]

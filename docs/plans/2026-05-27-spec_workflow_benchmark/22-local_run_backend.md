@@ -1,6 +1,6 @@
 # Task 22 — Local RunBackend and fixture solver
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/22-local_run_backend.md](certificates/22-local_run_backend.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/22-local_run_backend.md](certificates/22-local_run_backend.md)
 
 **Implements:** [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Proposed changes (`05-harness-architecture.md` → Run container: `local`, Backends — the `fixture` solver)
 **Depends on:** 18, 19, 21
@@ -9,10 +9,10 @@
 
 ## Steps
 
-- [ ] Implement `run()`: make a temp working directory checked out at `baseCommit`, distinct from any scoring directory.
-- [ ] Implement the `fixture` solver mode: emit the instance `goldPatch` as the `candidatePatch` (deterministic, no LLM/API).
-- [ ] Produce an `ArtifactBundle` with a minimal `Telemetry` record (at least `wallClockSeconds`; token/cost zero for the fixture solver).
-- [ ] Add a test that the local backend with `solver=fixture` on the fixture instance emits the gold patch and a populated bundle, and that the run dir carries no hidden tests.
+- [x] Implement `run()`: make a temp working directory checked out at `baseCommit`, distinct from any scoring directory.
+- [x] Implement the `fixture` solver mode: emit the instance `goldPatch` as the `candidatePatch` (deterministic, no LLM/API).
+- [x] Produce an `ArtifactBundle` with a minimal `Telemetry` record (at least `wallClockSeconds`; token/cost zero for the fixture solver).
+- [x] Add a test that the local backend with `solver=fixture` on the fixture instance emits the gold patch and a populated bundle, and that the run dir carries no hidden tests.
 
 ## Definition of done
 
