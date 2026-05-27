@@ -1,6 +1,6 @@
 # Task 07 — Driver scheduler
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/07-driver_scheduler.md](certificates/07-driver_scheduler.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/07-driver_scheduler.md](certificates/07-driver_scheduler.md)
 
 **Implements:** [01-domain-model.md](../../benchmark/specs/01-domain-model.md) §Lifecycle / state machine, [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Component shape, §Concurrency and reproducibility; [changes/2026-05-27-local_backends.md](../../benchmark/specs/changes/2026-05-27-local_backends.md) §Backends (backend-neutral driver)
 **Depends on:** 19
@@ -9,11 +9,11 @@
 
 ## Steps
 
-- [ ] Expand a `Campaign` into `Trial`s over (arm × instance × seed).
-- [ ] Drive each trial through `queued → provisioning → running → captured → scored → aggregated`, calling the campaign's `RunBackend` then its `ScoringBackend` through the task 19 interface — not a hardcoded backend.
-- [ ] Run independent trials concurrently up to a configured pool size (a named constant).
-- [ ] Treat an infra fault as `failed` (excluded from metrics, re-queueable), distinct from a legitimate `resolved: false`.
-- [ ] Add a test that a small campaign (driven through a backend test-double) produces a `ScoreReport` per trial and that a forced infra fault lands in `failed`, not `scored`.
+- [x] Expand a `Campaign` into `Trial`s over (arm × instance × seed).
+- [x] Drive each trial through `queued → provisioning → running → captured → scored → aggregated`, calling the campaign's `RunBackend` then its `ScoringBackend` through the task 19 interface — not a hardcoded backend.
+- [x] Run independent trials concurrently up to a configured pool size (a named constant).
+- [x] Treat an infra fault as `failed` (excluded from metrics, re-queueable), distinct from a legitimate `resolved: false`.
+- [x] Add a test that a small campaign (driven through a backend test-double) produces a `ScoreReport` per trial and that a forced infra fault lands in `failed`, not `scored`.
 
 ## Definition of done
 
