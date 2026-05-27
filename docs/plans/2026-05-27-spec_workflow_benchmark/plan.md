@@ -143,6 +143,18 @@ After M0 lands, merge the change spec [`changes/2026-05-27-local_backends.md`](.
 
 ---
 
+## Build status (spec-builder run, 2026-05-27)
+
+**M0 — DONE and pushed.** All nine M0 tasks (17, 02, 18, 19, 07, 20, 21, 22, 23) were built each in an isolated jj workspace, gated by a separate agent through semi-formal-review (**CORRECT**) and validate-done-certificate (**DONE**), then merged — one commit per task — onto the `spec-workflow-benchmark` bookmark (pushed to origin, tip `82999933`). Final state on the integration tip: **66 tests pass**, `ruff check` + `ruff format --check` clean, and `uv run python -m benchmark.harness.run_local_demo` runs the full run→score→aggregate pipeline deterministically (%Resolved 1.0 fixture / 0.0 no-op, no Docker/BenchFlow/API). Every M0 certificate under `certificates/` is discharged `Validated 2026-05-27`.
+
+**M1–M4 — NOT STARTED (blocked on environment).** Tasks 01, 03, 04, 05, 06, 08–16 require infrastructure absent from the build environment and were deliberately **not** built rather than shipped unverified: **Docker** (no daemon/binary — needed by the container backends 04/05/12 and BenchFlow sandboxing), the **SWE-bench Pro dataset** (task 03), and an **API budget + the `spec-*` plugins running non-interactively in sandboxes** (the arm tasks 08/10/11/13). Per the spec-builder rule that a task reaches Done only when a separate gate proves it correct *and* complete, these cannot be honestly gated here. They remain `Todo`; resume the gated build in an environment with Docker + dataset + API access. (Decision recorded with the user, 2026-05-27.)
+
+**Pending (deferred, the user's to run):**
+- Merge the change spec `changes/2026-05-27-local_backends.md` into the canonical pages (spec-creator merge step) now that the backend seam has shipped in M0.
+- A spec-conformance pass (spec-reviewer R2/R3) over the integrated M0 code vs. the source spec — outside the per-task gates.
+
+---
+
 ## Assumptions and open questions
 
 **Assumptions**
