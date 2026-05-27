@@ -40,6 +40,7 @@ include = ["benchmark"]
 exclude = [
     "benchmark/tests",
     "benchmark/suites/local-fixture/repo",
+    "benchmark/suites/greenfield-features/*/repo",
     "benchmark/suites/benchflow-probe",
     "**/__pycache__",
 ]

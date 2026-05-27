@@ -1,6 +1,6 @@
 # Task 12 — Greenfield suite
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/12-greenfield_suite.md](certificates/12-greenfield_suite.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/12-greenfield_suite.md](certificates/12-greenfield_suite.md)
 
 **Implements:** [03-task-suites.md](../../benchmark/specs/03-task-suites.md) §Suite: `greenfield-features`, §Instance selection and fairness; [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Run container (greenfield image build)
 **Depends on:** 02
@@ -9,11 +9,11 @@
 
 ## Steps
 
-- [ ] Define the two-image build: a run image from the skeleton repo with hidden tests **excluded**, and a scoring image from the same base with hidden tests **included**.
-- [ ] Author a seed set of multi-component greenfield instances — a prose spec seed, a skeleton repo at a fixed commit, a hidden acceptance suite (`failToPass`), skeleton smoke tests (`passToPass`), `goldPatch: null`, `contaminationTier: authored-private`.
-- [ ] Populate `testTags` mapping hidden tests to spec sections/components, to enable per-task escape attribution (task 14).
-- [ ] Ship a **private reference solution** for at least one instance (a self-test instance) in the suite directory — *not* in the arms-visible `goldPatch` field — so the container scorer (task 04) can prove a known-good patch resolves and a no-op does not.
-- [ ] Add a test that the run image contains no hidden test files while the scoring image does, and that every instance row validates against the canonical schema (task 02).
+- [x] Define the two-image build: a run image from the skeleton repo with hidden tests **excluded**, and a scoring image from the same base with hidden tests **included**. *(`benchmark/suites/greenfield_images.py`: per-Dockerfile build context — run copies `repo/base/` only; scoring overlays `repo/hidden/`.)*
+- [x] Author a seed set of multi-component greenfield instances — a prose spec seed, a skeleton repo at a fixed commit, a hidden acceptance suite (`failToPass`), skeleton smoke tests (`passToPass`), `goldPatch: null`, `contaminationTier: authored-private`. *(Two 4-component instances: `text_toolkit`, `task_scheduler`.)*
+- [x] Populate `testTags` mapping hidden tests to spec sections/components, to enable per-task escape attribution (task 14). *(`set(testTags) == set(failToPass)`, mapped to components.)*
+- [x] Ship a **private reference solution** for at least one instance (a self-test instance) in the suite directory — *not* in the arms-visible `goldPatch` field — so the container scorer (task 04) can prove a known-good patch resolves and a no-op does not. *(`text_toolkit/reference/solution.patch` via `load_reference_solution()`; verified resolves locally + in the scoring image, no-op does not.)*
+- [x] Add a test that the run image contains no hidden test files while the scoring image does, and that every instance row validates against the canonical schema (task 02). *(Docker-gated tests; skip cleanly when the daemon is absent.)*
 
 ## Definition of done
 

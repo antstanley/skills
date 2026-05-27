@@ -1,6 +1,6 @@
 # Task 01 — BenchFlow scaffold
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/01-benchflow_scaffold.md](certificates/01-benchflow_scaffold.md)
+**Plan:** [plan.md](plan.md) · **Status:** Done · **Certificate:** [certificates/01-benchflow_scaffold.md](certificates/01-benchflow_scaffold.md)
 
 **Implements:** [05-harness-architecture.md](../../benchmark/specs/05-harness-architecture.md) §Substrate — BenchFlow, §Implementation layout
 **Depends on:** 17
@@ -9,11 +9,11 @@
 
 ## Steps
 
-- [ ] Add the BenchFlow `bench` SDK as a uv-managed dependency and lock it.
-- [ ] Create the `benchmark/` package skeleton — `harness/` (driver, arms, scoring, telemetry, stats) and `suites/` — as empty, importable modules matching the spec's layout.
-- [ ] Wire `pytest` and `ruff` (lint + format) with config in `pyproject.toml`.
-- [ ] Add one trivial throwaway BenchFlow task and confirm `bench tasks init` / `bench tasks check` succeed against it.
-- [ ] Confirm the BenchFlow SDK can express a custom task schema and a two-step (run, then score) eval; record any limitation that blocks the two-container split as an Open question.
+- [x] Add the BenchFlow `bench` SDK as a uv-managed dependency and lock it.
+- [x] Create the `benchmark/` package skeleton — `harness/` (driver, arms, scoring, telemetry, stats) and `suites/` — as empty, importable modules matching the spec's layout. *(already built in M0 / task 17; reused.)*
+- [x] Wire `pytest` and `ruff` (lint + format) with config in `pyproject.toml`. *(already wired in M0; reused.)*
+- [x] Add one trivial throwaway BenchFlow task and confirm `bench tasks init` / `bench tasks check` succeed against it. *(`benchmark/suites/benchflow-probe/trivial-probe` — `bench tasks check` → ✓ valid.)*
+- [x] Confirm the BenchFlow SDK can express a custom task schema and a two-step (run, then score) eval; record any limitation that blocks the two-container split as an Open question. *(Recorded: benchflow's eval is a single sandbox — no native two-container split; custom schema + split stay on the benchmark's own backend seam. `substrate.py` + plan Open-question answer.)*
 
 ## Definition of done
 
