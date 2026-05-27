@@ -1,0 +1,11 @@
+{
+  "certificate_artifact_count": 4,
+  "cost_usd": 0.9589789000000001,
+  "fault": null,
+  "plan_artifact_count": 6,
+  "regressed": false,
+  "resolved": false,
+  "spec_artifact_count": 4,
+  "trial_status": "aggregated",
+  "wall_clock_seconds": 425.1725494780003
+}

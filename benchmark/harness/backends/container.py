@@ -38,10 +38,19 @@ container is a DISTINCT environment from the scoring container.
 
 Arm/solver selection
 --------------------
-``arm_or_solver`` is either the ``agent`` solver-mode slug (``DEFAULT_SOLVER``)
-or a full A0 :class:`~benchmark.harness.domain.Arm` record. Both select the
-plain A0 agent path here. The ``fixture`` solver is the ``local`` backend's job;
-it is out of scope here and raises :class:`NotImplementedError`.
+``arm_or_solver`` selects the path:
+
+- the ``agent`` solver-mode slug (``DEFAULT_SOLVER``) or the A0 ``Arm`` record →
+  the PLAIN A0 agent path (no plugins, single ``claude -p``);
+- an ``Arm`` with a non-empty ``pluginsEnabled`` (e.g. A1) → the A1 FULL-PIPELINE
+  path: the ``spec-*`` plugins are read-only mounted and loaded with
+  ``--plugin-dir``, and one orchestrating ``claude -p`` drives
+  ``spec-creator → spec-planner → spec-builder`` to an integration tip. The
+  candidate patch EXCLUDES the workflow artifacts (``docs/``); the
+  spec/plan/certificate files are captured into the ``ArtifactBundle`` instead.
+
+The ``fixture`` solver is the ``local`` backend's job; it is out of scope here
+and raises :class:`NotImplementedError`.
 """
 
 from __future__ import annotations
@@ -60,10 +69,23 @@ from benchmark.harness.arms.a0 import (
     AUTH_PROBE_MAX_BUDGET_USD,
     a0_prompt,
 )
+from benchmark.harness.arms.a1 import (
+    A1_ARTIFACT_DIR,
+    A1_CERTIFICATE_DIR_NAME,
+    A1_CONTAINER_PLUGIN_ROOT,
+    A1_MAX_BUDGET_USD,
+    A1_MODEL,
+    A1_PLAN_SUBDIR,
+    A1_PLUGIN_DIR_NAMES,
+    A1_SPEC_SUBDIR,
+    HOST_PLUGIN_MARKETPLACE_DIR,
+    a1_prompt,
+)
 from benchmark.harness.backends.interfaces import CandidatePatch
 from benchmark.harness.domain import (
     ARTIFACT_BUNDLE_ID_PREFIX,
     DEFAULT_SOLVER,
+    Arm,
     ArtifactBundle,
     TaskInstance,
     new_record_id,
@@ -125,6 +147,41 @@ _BASE_GITIGNORE_PATTERNS = ("__pycache__/", "*.pyc")
 #: ``claude`` exit code meaning the headless run completed.
 _CLAUDE_EXIT_OK = 0
 
+#: Wall-clock ceiling (seconds) for the full A1 workflow invocation inside the
+#: container. A1 is a RECURSIVE workflow (the orchestrator spawns spec-builder
+#: sub-agents that walk the plan DAG), so this is a HARD bound (~20 min) against a
+#: hung/runaway run — paired with the ``--max-budget-usd`` cap. An honest cap: if
+#: the workflow cannot finish within it, the run reports that with partial
+#: evidence rather than spinning forever.
+A1_RUN_TIMEOUT_SECONDS = 1200
+
+#: Wall-clock ceiling (seconds) for the cheap A1 FEASIBILITY PROBE — confirm the
+#: plugins load and a spec file starts being produced, before the full run.
+A1_FEASIBILITY_PROBE_TIMEOUT_SECONDS = 360
+
+#: Git tag placed on the base commit so the A1 candidate patch can be diffed
+#: against it regardless of which branch/worktree spec-builder leaves checked out
+#: (it accumulates merged tasks on its own ``spec-builder/integration`` branch).
+_BASE_COMMIT_TAG = "benchmark-base"
+
+#: Branch spec-builder accumulates completed, gated tasks onto on the GIT backend
+#: (its tip IS the integration point — see the spec-builder ``workspaces.md``
+#: reference). The A1 extractor prefers this ref as the integration tip to diff.
+_SPEC_BUILDER_INTEGRATION_BRANCH = "spec-builder/integration"
+
+#: ``git pathspec`` magic that EXCLUDES the workflow-artifact subtree from the
+#: candidate-patch diff, so the spec/plan/certificate files written under
+#: ``docs/`` never enter the scored CODE diff (they are captured into the bundle
+#: instead). Built from :data:`A1_ARTIFACT_DIR` so the exclusion and the capture
+#: agree on one directory name.
+_ARTIFACT_EXCLUDE_PATHSPEC = f":(exclude){A1_ARTIFACT_DIR}/"
+
+#: Sentinel printed by the artifact-listing command between the file path and its
+#: contents, and between files, so a single ``docs/`` walk yields path+content
+#: pairs without a second ``docs exec`` per file. Chosen to not occur in markdown.
+_ARTIFACT_FIELD_SEP = "\x1f"  # ASCII unit separator
+_ARTIFACT_RECORD_SEP = "\x1e"  # ASCII record separator
+
 
 class ContainerRunError(RuntimeError):
     """Raised when the container run environment cannot be prepared/driven."""
@@ -163,28 +220,26 @@ class ContainerRunBackend:
     ) -> tuple[ArtifactBundle, CandidatePatch]:
         """Run ``arm_or_solver`` against ``instance``; return ``(bundle, patch)``.
 
-        Provisions a fresh container from the agent run image, makes the base
-        commit, probes auth, runs the plain A0 agent, and returns the
-        ``candidatePatch`` (the diff against the base commit) with a populated
+        Dispatches by arm: the plain A0 agent path (``_selects_agent``) or the A1
+        full-pipeline path (``_selects_a1`` — an ``Arm`` with a non-empty
+        ``pluginsEnabled``). Both provision a fresh agent run container, make the
+        base commit, probe auth, run to completion, and return the
+        ``candidatePatch`` (diff against the base commit) with a populated
         ``ArtifactBundle``. Carries NO hidden test content across to the caller.
         """
-        if not self._selects_agent(arm_or_solver):
-            raise NotImplementedError(
-                "ContainerRunBackend only runs the agent solver "
-                f"({AGENT_SOLVER!r}) or the A0 arm; got {arm_or_solver!r}. The "
-                "fixture solver is the local backend's job."
-            )
-        if not docker_available():
-            raise ContainerRunError(
-                "Docker daemon not reachable (docker info failed); the "
-                "container RunBackend requires Docker"
-            )
-        if not HOST_CREDENTIALS_PATH.is_file():
-            raise ContainerAuthError(
-                f"host credentials {HOST_CREDENTIALS_PATH} not found; the "
-                "in-container claude CLI cannot authenticate without them"
-            )
+        if self._selects_a1(arm_or_solver):
+            return self._run_a1(instance)
+        if self._selects_agent(arm_or_solver):
+            return self._run_a0(instance)
+        raise NotImplementedError(
+            "ContainerRunBackend runs the agent solver "
+            f"({AGENT_SOLVER!r}), the A0 arm, or an A1-style plugin arm; got "
+            f"{arm_or_solver!r}. The fixture solver is the local backend's job."
+        )
 
+    def _run_a0(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
+        """Run the plain A0 agent path (no plugins) and capture the result."""
+        self._require_docker_and_creds()
         image = self._resolve_image(instance)
         prompt = a0_prompt(instance.problemStatement)
 
@@ -213,12 +268,91 @@ class ContainerRunBackend:
         )
         return bundle, candidate_patch
 
+    def _run_a1(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
+        """Run the A1 full-pipeline path: mount the ``spec-*`` plugins, drive
+        ``spec-creator → spec-planner → spec-builder`` to an integration tip, and
+        extract the CODE-only candidate patch (workflow artifacts EXCLUDED) plus a
+        bundle carrying the captured spec/plan/certificate artifacts.
+        """
+        self._require_docker_and_creds()
+        self._require_plugins()
+        image = self._resolve_image(instance)
+        prompt = a1_prompt(instance.problemStatement)
+
+        creds_dir = Path(tempfile.mkdtemp(prefix="benchmark-creds-"))
+        container_id: str | None = None
+        started = time.monotonic()
+        try:
+            self._stage_credentials(creds_dir)
+            container_id = self._start_container(image, creds_dir, with_plugins=True)
+            self._make_base_commit(container_id)
+            self._auth_probe(container_id)
+            result_json = self._run_a1_workflow(container_id, prompt)
+            candidate_patch = self._extract_patch(container_id, exclude_artifacts=True)
+            spec_files, plan_files, cert_files = self._capture_artifacts(container_id)
+        finally:
+            if container_id is not None:
+                self._remove_container(container_id)
+            shutil.rmtree(creds_dir, ignore_errors=True)
+
+        wall_clock_seconds = time.monotonic() - started
+        telemetry = telemetry_from_agent_result(result_json, wall_clock_seconds)
+        bundle = ArtifactBundle(
+            id=new_record_id(ARTIFACT_BUNDLE_ID_PREFIX),
+            trial=self._trial_id,
+            telemetry=telemetry,
+            specArtifacts=spec_files,
+            planArtifacts=plan_files,
+            certificateArtifacts=cert_files,
+            transcript=json.dumps(result_json, sort_keys=True),
+        )
+        return bundle, candidate_patch
+
     # --- internals ---------------------------------------------------------
+
+    @staticmethod
+    def _require_docker_and_creds() -> None:
+        """Fail fast if Docker is unreachable or the host creds are absent."""
+        if not docker_available():
+            raise ContainerRunError(
+                "Docker daemon not reachable (docker info failed); the "
+                "container RunBackend requires Docker"
+            )
+        if not HOST_CREDENTIALS_PATH.is_file():
+            raise ContainerAuthError(
+                f"host credentials {HOST_CREDENTIALS_PATH} not found; the "
+                "in-container claude CLI cannot authenticate without them"
+            )
+
+    @staticmethod
+    def _require_plugins() -> None:
+        """Fail fast if the host ``spec-*`` plugin sources are not present."""
+        for name in A1_PLUGIN_DIR_NAMES:
+            manifest = (
+                HOST_PLUGIN_MARKETPLACE_DIR / name / ".claude-plugin" / "plugin.json"
+            )
+            if not manifest.is_file():
+                raise ContainerRunError(
+                    f"spec-* plugin {name!r} not found at "
+                    f"{HOST_PLUGIN_MARKETPLACE_DIR / name}; A1 needs the spec-* "
+                    "plugins available on the host to mount into the container"
+                )
 
     @staticmethod
     def _selects_agent(arm_or_solver: object) -> bool:
         """Whether ``arm_or_solver`` selects the agent / A0 path."""
         return arm_or_solver == AGENT_SOLVER or arm_or_solver == A0
+
+    @staticmethod
+    def _selects_a1(arm_or_solver: object) -> bool:
+        """Whether ``arm_or_solver`` selects the A1 full-pipeline path.
+
+        An A1-style arm is an ``Arm`` record with a NON-EMPTY ``pluginsEnabled``
+        (the workflow arms install plugins; A0 has none). This keeps the dispatch
+        configuration-driven per ``02-arms.md`` §Implementation layout (arms are
+        records the driver reads, not code branches).
+        """
+        return isinstance(arm_or_solver, Arm) and bool(arm_or_solver.pluginsEnabled)
 
     def _resolve_image(self, instance: TaskInstance) -> str:
         """Return the AGENT RUN image tag for ``instance``, building if needed."""
@@ -253,27 +387,40 @@ class ContainerRunBackend:
         creds_dir.chmod(0o777)
         (creds_dir / ".credentials.json").chmod(0o666)
 
-    def _start_container(self, image: str, creds_dir: Path) -> str:
+    def _start_container(
+        self, image: str, creds_dir: Path, *, with_plugins: bool = False
+    ) -> str:
         """Start a detached container; return its id.
 
         Bind-mounts the writable creds copy at :data:`CONTAINER_CLAUDE_DIR`,
         keeps network (default bridge has outbound), workdir ``/workspace``, and
         keeps the container alive with ``sleep`` so we can ``docker exec`` into
-        it for setup, the agent run, and patch extraction.
+        it for setup, the agent run, and patch extraction. When ``with_plugins``
+        is set (the A1 path), it ALSO read-only bind-mounts each host ``spec-*``
+        plugin source under :data:`A1_CONTAINER_PLUGIN_ROOT` so the in-container
+        ``claude -p --plugin-dir ...`` resolves the workflow skills.
         """
+        alive = AGENT_RUN_TIMEOUT_SECONDS + AUTH_PROBE_TIMEOUT_SECONDS + 300
+        command = [
+            "docker",
+            "run",
+            "-d",
+            "--workdir",
+            IMAGE_WORKDIR,
+            "-v",
+            f"{creds_dir}:{CONTAINER_CLAUDE_DIR}",
+        ]
+        if with_plugins:
+            alive = A1_RUN_TIMEOUT_SECONDS + AUTH_PROBE_TIMEOUT_SECONDS + 300
+            for name in A1_PLUGIN_DIR_NAMES:
+                host_dir = HOST_PLUGIN_MARKETPLACE_DIR / name
+                command += [
+                    "-v",
+                    f"{host_dir}:{A1_CONTAINER_PLUGIN_ROOT}/{name}:ro",
+                ]
+        command += [image, "sleep", str(alive)]
         result = subprocess.run(
-            [
-                "docker",
-                "run",
-                "-d",
-                "--workdir",
-                IMAGE_WORKDIR,
-                "-v",
-                f"{creds_dir}:{CONTAINER_CLAUDE_DIR}",
-                image,
-                "sleep",
-                str(AGENT_RUN_TIMEOUT_SECONDS + AUTH_PROBE_TIMEOUT_SECONDS + 300),
-            ],
+            command,
             capture_output=True,
             text=True,
             timeout=SETUP_TIMEOUT_SECONDS,
@@ -297,7 +444,12 @@ class ContainerRunBackend:
             f"git init -q; "
             f"git add -A; "
             f"git -c user.email={_GIT_USER_EMAIL} -c user.name={_GIT_USER_NAME} "
-            f"commit -q -m base"
+            f"commit -q -m base; "
+            # Tag the base commit so the A1 patch can be diffed against it even
+            # after spec-builder switches the working tree onto its own
+            # `spec-builder/integration` branch (the integration tip lives in
+            # commits on a branch, not necessarily the working-tree state).
+            f"git tag {_BASE_COMMIT_TAG}"
         )
         self._exec(container_id, command, SETUP_TIMEOUT_SECONDS, "make base commit")
 
@@ -356,14 +508,87 @@ class ContainerRunBackend:
             raise ContainerRunError(f"claude result JSON was not an object: {parsed!r}")
         return parsed
 
-    def _extract_patch(self, container_id: str) -> CandidatePatch:
-        """Return the unified diff of the working state vs the base commit.
+    def _run_a1_workflow(self, container_id: str, prompt: str) -> dict[str, object]:
+        """Drive the A1 full pipeline to completion; return the parsed result JSON.
 
-        ``git add -A && git diff --cached`` against the base commit yields the
-        candidate patch. An empty diff means the agent changed nothing -> a no-op
-        patch (``None``).
+        A1 loads the ``spec-*`` plugins for the session with a ``--plugin-dir`` per
+        mounted plugin, runs on the A1 model behind the HARD ``--max-budget-usd``
+        cap, and is bounded by :data:`A1_RUN_TIMEOUT_SECONDS`. A non-zero exit OR a
+        timeout is an HONEST outcome the caller surfaces with partial evidence —
+        the recursive workflow may legitimately hit the cap before finishing.
         """
-        command = f"set -e; cd {IMAGE_WORKDIR}; git add -A; git diff --cached"
+        plugin_flags = " ".join(
+            f"--plugin-dir {A1_CONTAINER_PLUGIN_ROOT}/{name}"
+            for name in A1_PLUGIN_DIR_NAMES
+        )
+        command = (
+            f"cd {IMAGE_WORKDIR}; "
+            f"claude -p {_shell_quote(prompt)} "
+            f"{plugin_flags} "
+            f"--model {A1_MODEL} --permission-mode bypassPermissions "
+            f"--max-budget-usd {A1_MAX_BUDGET_USD} --output-format json"
+        )
+        result = subprocess.run(
+            ["docker", "exec", container_id, "sh", "-c", command],
+            capture_output=True,
+            text=True,
+            timeout=A1_RUN_TIMEOUT_SECONDS,
+        )
+        if result.returncode != _CLAUDE_EXIT_OK:
+            raise ContainerRunError(
+                f"A1 workflow run failed (exit {result.returncode}).\n"
+                f"stdout: {result.stdout}\nstderr: {result.stderr}"
+            )
+        try:
+            parsed = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise ContainerRunError(
+                f"could not parse claude --output-format json result:\n{result.stdout}"
+            ) from exc
+        if not isinstance(parsed, dict):
+            raise ContainerRunError(f"claude result JSON was not an object: {parsed!r}")
+        return parsed
+
+    def _extract_patch(
+        self, container_id: str, *, exclude_artifacts: bool = False
+    ) -> CandidatePatch:
+        """Return the candidate patch (unified diff against the base commit).
+
+        A0 path: ``git add -A && git diff --cached`` — the working-tree change vs
+        the base commit. An empty diff -> a no-op patch (``None``).
+
+        A1 path (``exclude_artifacts``): the integration tip is the merged result
+        spec-builder accumulates on its ``spec-builder/integration`` branch (its
+        tip IS the integration point), NOT necessarily the working tree. So the A1
+        patch is the diff of THAT TIP against the base commit tag, staging any
+        uncommitted working-tree changes first so a working-tree-only result is
+        still captured. Either way the diff EXCLUDES the workflow-artifact subtree
+        (``docs/``) via a git exclude pathspec, so the spec/plan/certificate files
+        never enter the scored CODE diff — they are captured into the bundle.
+        """
+        pathspec = (
+            f" -- . {_shell_quote(_ARTIFACT_EXCLUDE_PATHSPEC)}"
+            if exclude_artifacts
+            else ""
+        )
+        if exclude_artifacts:
+            tip = self._resolve_integration_tip(container_id)
+            # Stage any uncommitted work, snapshot it as a transient commit on the
+            # current tip, then diff the base commit tag against that snapshot — so
+            # both spec-builder's MERGED commits and any unmerged working-tree edits
+            # are captured. The snapshot commit is throwaway (the container is
+            # discarded right after).
+            command = (
+                f"set -e; cd {IMAGE_WORKDIR}; "
+                f"git add -A; "
+                f"git -c user.email={_GIT_USER_EMAIL} -c user.name={_GIT_USER_NAME} "
+                f"commit -q -m _a1_snapshot --allow-empty >/dev/null 2>&1 || true; "
+                f"git diff {_BASE_COMMIT_TAG} {tip}{pathspec}"
+            )
+        else:
+            command = (
+                f"set -e; cd {IMAGE_WORKDIR}; git add -A; git diff --cached{pathspec}"
+            )
         result = subprocess.run(
             ["docker", "exec", container_id, "sh", "-c", command],
             capture_output=True,
@@ -376,6 +601,105 @@ class ContainerRunBackend:
             )
         diff = result.stdout
         return diff if diff.strip() else None
+
+    def _resolve_integration_tip(self, container_id: str) -> str:
+        """Resolve the A1 integration tip ref to diff against the base.
+
+        Prefers spec-builder's ``spec-builder/integration`` branch (its tip IS the
+        integration point on the git backend). If that branch is absent (an
+        early-exit run that never reached the first merge), falls back to the
+        most-recently-committed ``spec-builder/*`` branch — typically a built task
+        branch whose work has not yet merged — so a PARTIAL run still yields the
+        code it produced. Failing all of those, falls back to ``HEAD``.
+        """
+        command = (
+            f"cd {IMAGE_WORKDIR}; "
+            f"if git rev-parse --verify -q {_SPEC_BUILDER_INTEGRATION_BRANCH} "
+            f">/dev/null; then printf '%s' {_SPEC_BUILDER_INTEGRATION_BRANCH}; "
+            f"else "
+            # Newest spec-builder/* branch by commit date, if any; else HEAD.
+            f"b=$(git for-each-ref --sort=-committerdate --count=1 "
+            f"--format='%(refname:short)' 'refs/heads/spec-builder/*'); "
+            f'if [ -n "$b" ]; then printf \'%s\' "$b"; else printf HEAD; fi; '
+            f"fi"
+        )
+        result = subprocess.run(
+            ["docker", "exec", container_id, "sh", "-c", command],
+            capture_output=True,
+            text=True,
+            timeout=SETUP_TIMEOUT_SECONDS,
+        )
+        tip = result.stdout.strip()
+        return tip or "HEAD"
+
+    def _capture_artifacts(
+        self, container_id: str
+    ) -> tuple[list[str], list[str], list[str]]:
+        """Read the workflow artifacts under ``docs/`` into spec/plan/cert lists.
+
+        Walks the ``docs/`` subtree ONCE, emitting ``<path><FS><contents>``
+        records separated by a record separator, then classifies each file by its
+        path: ``docs/specs/...`` -> spec, ``docs/plans/.../certificates/...`` ->
+        certificate, other ``docs/plans/...`` -> plan. Each captured entry is a
+        ``"<relpath>\\n<contents>"`` string so a reviewer can inspect both the
+        path and the content from the bundle without re-running A1. Returns
+        ``(specArtifacts, planArtifacts, certificateArtifacts)``; empty lists when
+        the workflow produced none (an honest partial outcome).
+        """
+        artifact_dir = f"{IMAGE_WORKDIR}/{A1_ARTIFACT_DIR}"
+        # find every file under docs/, print "<relpath><FS><contents><RS>".
+        command = (
+            f"cd {IMAGE_WORKDIR}; "
+            f"if [ -d {A1_ARTIFACT_DIR} ]; then "
+            f"find {A1_ARTIFACT_DIR} -type f | sort | while IFS= read -r f; do "
+            f"printf '%s{_ARTIFACT_FIELD_SEP}' \"$f\"; "
+            f'cat "$f"; '
+            f"printf '{_ARTIFACT_RECORD_SEP}'; "
+            f"done; fi"
+        )
+        result = subprocess.run(
+            ["docker", "exec", container_id, "sh", "-c", command],
+            capture_output=True,
+            text=True,
+            timeout=SETUP_TIMEOUT_SECONDS,
+        )
+        if result.returncode != 0:
+            raise ContainerRunError(
+                f"failed to capture A1 artifacts from {artifact_dir}:\n{result.stderr}"
+            )
+        return self._classify_artifacts(result.stdout)
+
+    @staticmethod
+    def _classify_artifacts(
+        raw: str,
+    ) -> tuple[list[str], list[str], list[str]]:
+        """Sort ``find``-walk records into (spec, plan, certificate) buckets."""
+        specs: list[str] = []
+        plans: list[str] = []
+        certs: list[str] = []
+        spec_prefix = f"{A1_ARTIFACT_DIR}/{A1_SPEC_SUBDIR}/"
+        plan_prefix = f"{A1_ARTIFACT_DIR}/{A1_PLAN_SUBDIR}/"
+        cert_marker = f"/{A1_CERTIFICATE_DIR_NAME}/"
+        for record in raw.split(_ARTIFACT_RECORD_SEP):
+            if _ARTIFACT_FIELD_SEP not in record:
+                continue
+            relpath, _, contents = record.partition(_ARTIFACT_FIELD_SEP)
+            relpath = relpath.strip()
+            if not relpath:
+                continue
+            entry = f"{relpath}\n{contents}"
+            if relpath.startswith(plan_prefix) and cert_marker in relpath:
+                certs.append(entry)
+            elif relpath.startswith(plan_prefix):
+                plans.append(entry)
+            elif relpath.startswith(spec_prefix):
+                specs.append(entry)
+            else:
+                # Other docs/ files (e.g. docs/README.md) count as plan-adjacent
+                # workflow output; keep them with the plan bucket so nothing the
+                # workflow wrote under docs/ is silently dropped from the bundle.
+                plans.append(entry)
+        return specs, plans, certs
 
     @staticmethod
     def _exec(
