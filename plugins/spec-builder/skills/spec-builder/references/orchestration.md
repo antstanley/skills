@@ -145,9 +145,11 @@ user can read progress from the files alone:
 - **Task file `Status`:** `Todo → In progress` on dispatch; check off `- [ ]` step items as
   the sub-agent reports them; `→ Done` only when both gates pass and the work is merged.
   On a failed gate it stays `In progress` (with a note), never silently `Done`.
-- **`plan.md` `Status`:** `Accepted → In progress` when the first task is dispatched;
-  `→ Done` only when **every** task file is `Done`. Leave it `In progress` if any task is
-  parked.
+- **`plan.md` `Status`:** spec-planner hands the plan over as `Draft`; spec-builder owns the
+  `Draft → Accepted` promotion — confirm the decomposition with the user, then set `Accepted`
+  before the first dispatch. From there: `Accepted → In progress` when the first task is
+  dispatched; `→ Done` only when **every** task file is `Done`. Leave it `In progress` if any
+  task is parked. A plan already `In progress` is resumed, not re-promoted.
 - **Certificate `State`** (when one exists): the validator sets it to `Validated
   YYYY-MM-DD` with the derived verdict — that is validate-done-certificate's write, not
   the orchestrator's.

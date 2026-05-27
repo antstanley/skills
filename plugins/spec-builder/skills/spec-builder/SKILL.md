@@ -74,6 +74,16 @@ Skip or redirect when:
   done. Building it directly is faster than spinning up a workspace and two gates; say so.
 - The request is to *write or change the spec* (spec-creator) or to *plan* it (spec-planner).
 
+**Expect manual sign-off on visually-reviewable tasks.** Every task's definition of done ends
+in a `Reviewable:` line, and its certificate makes that the final obligation — the validator
+must *exercise* the action and *observe* the result. When the reviewable surface is visual (a
+running UI, a screen that renders), a headless validator cannot produce that evidence: the
+obligation is `UNVERIFIED`, the completeness gate returns `PARTIAL`, and the build loop surfaces
+the task for the user to verify by hand (see [`references/build-loop.md`](references/build-loop.md)
+→ *Handling a failed gate*, the `UNVERIFIED`-not-`UNSATISFIED` case). This is correct behaviour,
+not a failure — but it means a UI-heavy plan is **not** built hands-off: spec-builder will pause
+for manual review on those tasks. Say so up front so the user knows where the build will stop.
+
 ## Workflow
 
 Five phases. The mechanics live in the three references — read them before the phase they back.
@@ -83,6 +93,11 @@ Five phases. The mechanics live in the three references — read them before the
 1. Locate the plan folder; detect the VCS backend and pick it — jj if present (preferred,
    even in a colocated repo), else git ([`references/workspaces.md`](references/workspaces.md));
    announce the choice. Read `plan.md`, every `NN-<task>.md`, and `certificates/` if present.
+   **Check `plan.md` `Status` before building:** a `Draft` plan has not been agreed — confirm
+   the decomposition and order with the user and promote it to `Accepted` before dispatching
+   any task. `Accepted` proceeds. `In progress` resumes from the task statuses. `Done` is
+   already built — say so rather than rebuilding. (spec-planner emits `Draft`; spec-builder
+   owns the `Draft → Accepted` promotion at this handoff.)
 2. Resolve `execution_mode` and `max_parallel_agents` (defaults: parallel, 4) from any
    `.claude/spec-builder.local.md` and the invocation; echo the resolved settings back.
 3. Build the schedule from the **dependency table** (the source of truth, not the Mermaid
@@ -122,6 +137,16 @@ holds the whole build and the suite is green on it, and report the build summary
 built, the review and validation verdict per task, any parked tasks and why, and where the
 integrated work sits. Shipping it — a jj bookmark, or merging the git integration branch
 into the target — is the user's call; offer it, but do not push or land without being asked.
+
+**Close the loop back to the spec.** The two gates prove each task is correct and complete
+against its *own* definition of done — they do **not** re-check the integrated code against
+the source spec. Whether the spec is faithfully implemented rests on the plan's coverage
+(spec-planner's Phase 5 maps every in-scope spec section to a task) plus each DoD encoding
+that section's intent. A silently under-covered spec is invisible to this build. So at
+finish, **offer a spec-conformance pass** over the integrated result — `spec-reviewer` R2
+(canonical spec) or R3 (change spec) when the spec-creator plugin is available, else a manual
+read of the spec against the merged code. Note in the summary that this reconciliation is the
+user's to run; it is outside the per-task gates.
 
 ## What NOT to do
 
