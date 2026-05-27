@@ -1,0 +1,48 @@
+{
+  "n": 5,
+  "exact_bucket_agreement": 0.8,
+  "cohens_kappa": 0.6428571428571429,
+  "items": [
+    {
+      "name": "empty-stub",
+      "human_label": 0.0,
+      "human_band": "low",
+      "judge_score": 0.0,
+      "judge_band": "low",
+      "human_rationale": "No component implemented \u2014 every function still raises NotImplementedError; ignores the spec entirely (low)."
+    },
+    {
+      "name": "a1-tokenizer-only",
+      "human_label": 0.4,
+      "human_band": "partial",
+      "judge_score": 0.2,
+      "judge_band": "low",
+      "human_rationale": "Implements only the tokenizer faithfully; normalizer, frequency, and pipeline are absent from the patch \u2014 core started but most of the four-component spec is unmet (partial)."
+    },
+    {
+      "name": "a2-full",
+      "human_label": 0.95,
+      "human_band": "high",
+      "judge_score": 0.97,
+      "judge_band": "high",
+      "human_rationale": "All four components implemented; composition, stop-word set, count-desc/term-asc ordering, and the summarize envelope all match the spec's contracts and examples (high)."
+    },
+    {
+      "name": "a3-full",
+      "human_label": 0.95,
+      "human_band": "high",
+      "judge_score": 0.88,
+      "judge_band": "high",
+      "human_rationale": "Full four-component implementation with the STOP_WORDS frozenset, ordered top_terms, and the correct summarize shape \u2014 faithful to the spec throughout (high)."
+    },
+    {
+      "name": "a4-full",
+      "human_label": 0.9,
+      "human_band": "high",
+      "judge_score": 0.97,
+      "judge_band": "high",
+      "human_rationale": "All four components present and behaviourally faithful; uses a local stop-word set rather than the spec's named STOP_WORDS constant, a minor API divergence that keeps it just inside the high band."
+    }
+  ],
+  "meets_threshold": true
+}
