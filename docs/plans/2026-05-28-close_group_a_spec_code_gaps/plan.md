@@ -1,6 +1,6 @@
 # Plan: close the Group A spec-vs-code gaps
 
-**Status:** Draft · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Source spec:** [docs/benchmark/specs/](../../benchmark/specs/) (Group A findings from the R2 conformance review)
+**Status:** Accepted · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Source spec:** [docs/benchmark/specs/](../../benchmark/specs/) (Group A findings from the R2 conformance review)
 
 Close the five Group A divergences my R2 spec-conformance review surfaced — cases where the existing canonical benchmark spec asserts a feature the integrated code under `benchmark/` does not honor. Each gap is small in isolation; together they form a focused tidy-up on the scoring and stats layer, with one independent task on the conformance judge. The reviewability spine builds the foundation first (populate the `ScoreReport.gateEscape` field the spec promises; capture intra-trial timing so parallel speedup means what the spec says it means), then layers the universal `MetricResult` emission and the cost-matched paired delta on top of those clean inputs, while the spec-reviewer-backed conformance-judge alternative runs on its own track and can land any time.
 
