@@ -50,6 +50,7 @@ import os
 import shutil
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 
 from benchmark.harness.arms.a0 import A0
 from benchmark.harness.backends.interfaces import HIDDEN_TEST_FIELDS
@@ -92,11 +93,21 @@ RUN_IMAGE_WORKDIR = "/workspace"
 #: overlay the scoring image — and only the scoring image — carries.
 HIDDEN_TREE_PREFIX = "hidden/"
 
-#: Minimum length of a hidden-test body line to treat as a distinctive content
-#: fingerprint when scanning the RUN image. Short/blank lines (imports, ``pass``,
-#: braces) are too generic to be evidence of leaked hidden tests, so the content
-#: check keys on the substantive assertion lines only.
+#: Minimum length of a hidden-test body line to consider as a content fingerprint
+#: when scanning the RUN image. The length filter ALONE is not sufficient — long
+#: boilerplate such as ``from __future__ import annotations`` (33 chars) clears it
+#: — so fingerprints are additionally filtered to lines NOT present in the
+#: run-visible base skeleton (see :func:`hidden_test_fingerprints` and
+#: :data:`RUN_BASE_SUBDIR`).
 MIN_FINGERPRINT_LENGTH = 24
+
+#: The run-visible base-skeleton subdir under ``instance.repo`` (mirrors the
+#: suite's ``base/`` tree; re-stated locally so this module imports without the
+#: Docker-bound suite package, like :data:`RUN_IMAGE_WORKDIR`). Lines present in
+#: this tree are legitimately run-visible, so they are subtracted from the hidden
+#: fingerprints — generic boilerplate shared by base and hidden (imports, the
+#: ``from __future__`` line, public-API ``import`` lines) is NOT evidence of a leak.
+RUN_BASE_SUBDIR = "base"
 
 #: Field/record separators for the single ``find | while read`` walk that returns
 #: ``<relpath><FS><contents><RS>`` records from the RUN image — one ``docker run``
@@ -237,37 +248,64 @@ def evaluate_skip(env: Mapping[str, str] | None = None) -> SkipDecision:
 
 
 def hidden_test_fingerprints(instance: TaskInstance) -> tuple[str, ...]:
-    """Distinctive hidden-test body lines that MUST NOT appear in the RUN image.
+    """Hidden-test body lines UNIQUE to the hidden suite, for the content check.
 
     Reads, on the SCORING side (the host ``hidden/`` tree), the source of every
     hidden test the instance selects across :data:`HIDDEN_TEST_FIELDS`
-    (``failToPass`` + ``passToPass``), and returns the substantive lines (those at
-    least :data:`MIN_FINGERPRINT_LENGTH` long) as content fingerprints. The
-    integrity check asserts none of these appear in the provisioned RUN image, so
-    a leak is caught by OBSERVED content, not merely a missing path. Returns a
-    de-duplicated, stably-ordered tuple; reading the host source is a scoring-side
-    act and never touches the run container.
+    (``failToPass`` + ``passToPass``), keeps the substantive lines (those at least
+    :data:`MIN_FINGERPRINT_LENGTH` long), then SUBTRACTS every line that also
+    appears in the run-visible base skeleton (``instance.repo`` /
+    :data:`RUN_BASE_SUBDIR`). A line present in base is legitimately run-visible,
+    so leaving it in would make boilerplate shared by both trees — e.g. ``from
+    __future__ import annotations`` or a public-API ``import`` line — a false
+    positive for a leak. The integrity check asserts none of the REMAINING
+    hidden-only lines appear in the provisioned RUN image, so a real content leak
+    is caught while shared boilerplate is not. Returns a de-duplicated,
+    stably-ordered tuple; reading the host source is a scoring-side act and never
+    touches the run container.
     """
-    from pathlib import Path
-
     from benchmark.suites.greenfield import REPO_HIDDEN_SUBDIR
 
-    selectors = _hidden_selectors(instance)
     # ``instance.repo`` is already ``.../<slug>/repo`` (``repo_source_dir``), so the
-    # hidden tree is ``.../<slug>/repo/hidden`` — append only REPO_HIDDEN_SUBDIR.
-    hidden_root = Path(instance.repo) / REPO_HIDDEN_SUBDIR
+    # hidden tree is ``.../<slug>/repo/hidden`` and the base tree ``.../repo/base``.
+    repo_root = Path(instance.repo)
+    base_lines = _substantive_lines(repo_root / RUN_BASE_SUBDIR)
+    hidden_root = repo_root / REPO_HIDDEN_SUBDIR
     fingerprints: list[str] = []
     seen: set[str] = set()
-    for relpath in _selector_files(selectors):
+    for relpath in _selector_files(_hidden_selectors(instance)):
         source = hidden_root / relpath
         if not source.is_file():
             continue
         for line in source.read_text(encoding="utf-8").splitlines():
             stripped = line.strip()
-            if len(stripped) >= MIN_FINGERPRINT_LENGTH and stripped not in seen:
+            if (
+                len(stripped) >= MIN_FINGERPRINT_LENGTH
+                and stripped not in seen
+                and stripped not in base_lines
+            ):
                 seen.add(stripped)
                 fingerprints.append(stripped)
     return tuple(fingerprints)
+
+
+def _substantive_lines(root: Path) -> frozenset[str]:
+    """Stripped lines >= :data:`MIN_FINGERPRINT_LENGTH` across ``*.py`` under ``root``.
+
+    The run-visible content whose lines are legitimately allowed in the RUN image;
+    subtracted from the hidden fingerprints in :func:`hidden_test_fingerprints` so
+    boilerplate shared with the base skeleton is not mistaken for leaked
+    hidden-test content. A missing ``root`` yields the empty set (a no-op subtraction).
+    """
+    if not root.is_dir():
+        return frozenset()
+    lines: set[str] = set()
+    for source in sorted(root.rglob("*.py")):
+        for line in source.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if len(stripped) >= MIN_FINGERPRINT_LENGTH:
+                lines.add(stripped)
+    return frozenset(lines)
 
 
 def _hidden_selectors(instance: TaskInstance) -> tuple[str, ...]:
