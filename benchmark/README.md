@@ -129,6 +129,24 @@ BENCHMARK_RUN_A2_A3_LIVE=1 uv run pytest -s -v benchmark/tests/test_a2_a3_arms.p
 
 The saved evidence directories carry the patch, score report, telemetry, transcript, and any per-arm side data (GateEvents for A1/A2, merge conflicts for A4). They are durable artifacts — a reviewer reads them instead of re-spending budget.
 
+#### The `BENCHMARK_RUN_CONTAINER_LIVE=1` live container witness
+
+One more opt-in stitches the per-arm live paths into a single end-to-end runtime witness of the two-container split. With `BENCHMARK_RUN_CONTAINER_LIVE=1` set, `benchmark/tests/test_live_container.py::test_live_container_round_trip` calls `run_container_check()`, which on real Docker:
+
+- runs the **A0 container round-trip** (provision the run container, run A0, score the captured patch in a *separate* scoring container) and asserts **resolved-parity** between the `container` and `local` scoring backends at both poles — the private reference solution (known-GOOD, resolves) and the no-op `None` patch (known-FALSE, does not resolve);
+- asserts **run-image integrity** observed at runtime — the provisioned RUN image carries no `hidden/` path and none of the instance's hidden-test bodies (the hidden suite is scoring-side only);
+- asserts **A2/A3 gate emission** — A2 surfaces ≥ 1 `GateEvent` and A3 zero, at both the backend (`last_gate_events`) and the driver-threaded (`TrialResult.gate_events`) layers;
+- runs the **live `claude -p` gate probe** and asserts the review gate catches an injected off-by-one defect.
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+BENCHMARK_RUN_CONTAINER_LIVE=1 uv run pytest -s -v benchmark/tests/test_live_container.py -k live
+```
+
+Prerequisites (all three, or the test SKIPs cleanly): **Docker ≥ 25** with a reachable daemon, an **authenticated `claude` CLI on `PATH`** (the A0 run side and the live gate probe both invoke it), and a **small real budget** (it spends the recursive-workflow + probe API cost — a few dollars, bounded by the existing per-probe caps). Unset / not `1`, or Docker/CLI missing, and the test reports SKIPPED — `scripts/check.sh` and CI stay green, never touching Docker.
+
+**Evidence refresh is conditional and operator-run.** A green live run MAY regenerate the `benchmark/tests/_a*_live_evidence/` bundles, but that is an explicit operator action, not a CI step — whether to promote a fresh witness to the committed evidence is an open question (auto-vs-manual promotion; see [plan.md](../docs/plans/2026-05-28-add_live_container_verification/plan.md)).
+
 ### 4 · Rendering the ablation report
 
 Once you have a `CampaignRun` (live or replayed from saved score reports), build the full ablation table:
