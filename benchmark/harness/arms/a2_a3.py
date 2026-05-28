@@ -176,6 +176,31 @@ A2_A3_MAX_BUDGET_USD = A1_MAX_BUDGET_USD
 
 # --- orchestrating prompts --------------------------------------------------
 
+#: Per-task timing directive appended to A1/A2/A3 orchestrating prompts so the
+#: workflow records intra-trial wall-clocks the benchmark can read back from
+#: the captured certificates. spec-builder is told to write ONE line of the
+#: form ``Elapsed: <seconds>s`` into each task's certificate before the gates
+#: discharge it (so the line survives the merged-certificate capture path,
+#: keyed by the same certificate stem ``extract_gate_events`` keys gate events
+#: by). The shape and key are matched by
+#: :func:`extract_task_wall_clocks`; the parser silently skips certificates
+#: that do not carry the line, so bundles produced before this directive
+#: shipped still validate and merely fall back to the old sum/max parallel-
+#: speedup estimate.
+TIMING_DIRECTIVE = (
+    "Per-task timing — REQUIRED for the benchmark. For each plan task, "
+    "measure the WALL-CLOCK seconds the task's implementation took from when "
+    "spec-builder dispatches its implementer sub-agent to when the task is "
+    "merged, and BEFORE the gates discharge the task's done-certificate "
+    "write ONE line of the form ``Elapsed: <seconds>s`` into the certificate "
+    "(e.g. ``Elapsed: 92.3s``). The number is a non-negative decimal; one "
+    "line per certificate; no rounding to integer required. This is read back "
+    "by the benchmark from the captured certificates and drives the parallel-"
+    "speedup metric — omitting it makes the metric fall back to a coarser "
+    "estimate, so do not omit it."
+)
+
+
 #: Shared preamble: the batch-run framing identical to A1's, minus the
 #: spec-creator stage (the spec is already on disk).
 _A2_A3_PREAMBLE = (
@@ -239,14 +264,28 @@ def a2_prompt(problem_statement: str) -> str:
     """Return the A2 orchestrating prompt (gates ON; spec already on disk).
 
     The ``problem_statement`` is appended as context, but the authoritative
-    contract is the given-spec file already written into the container.
+    contract is the given-spec file already written into the container. The
+    :data:`TIMING_DIRECTIVE` is appended so spec-builder writes a per-task
+    ``Elapsed:`` line into each certificate.
     """
-    return f"{A2_INSTRUCTION}\n\nFor context, the feature is:\n\n{problem_statement}"
+    return (
+        f"{A2_INSTRUCTION}\n\n{TIMING_DIRECTIVE}\n\n"
+        f"For context, the feature is:\n\n{problem_statement}"
+    )
 
 
 def a3_prompt(problem_statement: str) -> str:
-    """Return the A3 orchestrating prompt (gates OFF; spec already on disk)."""
-    return f"{A3_INSTRUCTION}\n\nFor context, the feature is:\n\n{problem_statement}"
+    """Return the A3 orchestrating prompt (gates OFF; spec already on disk).
+
+    The :data:`TIMING_DIRECTIVE` is appended so spec-builder writes a per-task
+    ``Elapsed:`` line into each certificate even on the gates-off path (the
+    certificates are written and captured regardless of whether the gates
+    discharge them).
+    """
+    return (
+        f"{A3_INSTRUCTION}\n\n{TIMING_DIRECTIVE}\n\n"
+        f"For context, the feature is:\n\n{problem_statement}"
+    )
 
 
 # --- gate-event extraction from captured certificates -----------------------
@@ -275,6 +314,17 @@ _VALIDATE_VERDICT_RE = re.compile(
 #: semi-formal-review gate.
 _REVIEW_VERDICT_RE = re.compile(
     r"\bVERDICT:\s*(CORRECT|LIKELY_CORRECT|CONCERNS|BUGGY)\b", re.IGNORECASE
+)
+
+#: Per-task wall-clock line written by spec-builder into each certificate when
+#: the orchestrating prompt requested it (added by Task 02 — capture intra-
+#: trial workflow timing). Format: ``Elapsed: <seconds>s`` (or ``Elapsed:
+#: <seconds> seconds``), on its own line. The number must be a non-negative
+#: integer or decimal; a missing or unparseable line yields no per-task entry
+#: (the consumer falls back to the old sum/max estimate).
+_ELAPSED_LINE_RE = re.compile(
+    r"^\s*Elapsed:\s*([0-9]+(?:\.[0-9]+)?)\s*(?:s|seconds)\b",
+    re.IGNORECASE | re.MULTILINE,
 )
 
 #: Map each validate-done certificate verdict onto the closed ``GATE_VERDICTS``
@@ -360,6 +410,45 @@ def extract_gate_events(
                 )
             )
     return events
+
+
+def extract_task_wall_clocks(
+    certificate_entries: Iterable[str],
+) -> dict[str, float]:
+    """Parse per-task wall-clock seconds from captured done-certificates.
+
+    ``certificate_entries`` are the bundle's ``certificateArtifacts`` — each a
+    ``"<relpath>\\n<contents>"`` string (the shape
+    ``container._classify_artifacts`` produces). For each certificate that
+    carries an ``Elapsed: <seconds>s`` line (written by spec-builder when the
+    orchestrating prompt asks it to — see :data:`A1_TIMING_DIRECTIVE` and the
+    A2/A3 preamble), emit ``{certificate stem: seconds}``. Certificates without
+    an Elapsed line are silently skipped — the consumer falls back to the
+    intra-campaign ``sum / max`` estimate on bundles whose certificates do not
+    carry timing.
+
+    The reused parser pattern (and the certificate stem ``task`` key) mirrors
+    :func:`extract_gate_events` so both timing and gate-event extraction share
+    one captured-certificate convention. Returns ``{}`` on an empty input or
+    when no certificate carries an Elapsed line.
+    """
+    timings: dict[str, float] = {}
+    for entry in certificate_entries:
+        relpath, body = _split_capture_entry(entry)
+        if not relpath:
+            continue
+        match = _ELAPSED_LINE_RE.search(body)
+        if match is None:
+            continue
+        try:
+            seconds = float(match.group(1))
+        except ValueError:  # pragma: no cover — the regex already matches a number
+            continue
+        if seconds < 0:  # pragma: no cover — the regex's prefix forbids a minus sign
+            continue
+        task = _certificate_task_id(relpath)
+        timings[task] = seconds
+    return timings
 
 
 def _certificate_task_id(relpath: str) -> str:

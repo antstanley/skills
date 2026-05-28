@@ -128,7 +128,12 @@
         "planArtifacts": { "type": "array", "items": { "type": "string" } },
         "certificateArtifacts": { "type": "array", "items": { "type": "string" } },
         "transcript": { "type": ["string", "null"] },
-        "telemetry": { "$ref": "#/$defs/Telemetry" }
+        "telemetry": { "$ref": "#/$defs/Telemetry" },
+        "taskWallClocks": {
+          "description": "Per-task wall-clock seconds for a workflow arm's intra-trial work, keyed by the plan task id the certificate stem identifies (e.g. '01-tokenizer'). Populated by the workflow backend from each captured certificate's 'Elapsed: <seconds>s' line; absent on bundles produced before per-task timing was captured.",
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        }
       }
     },
     "GateEvent": {

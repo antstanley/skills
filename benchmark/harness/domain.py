@@ -372,7 +372,13 @@ class Telemetry(Record):
 class ArtifactBundle(Record):
     schema_def: ClassVar[str] = "ArtifactBundle"
     optional_fields: ClassVar[frozenset[str]] = frozenset(
-        {"specArtifacts", "planArtifacts", "certificateArtifacts", "transcript"}
+        {
+            "specArtifacts",
+            "planArtifacts",
+            "certificateArtifacts",
+            "transcript",
+            "taskWallClocks",
+        }
     )
 
     id: str
@@ -382,6 +388,13 @@ class ArtifactBundle(Record):
     planArtifacts: list[str] = _UNSET
     certificateArtifacts: list[str] = _UNSET
     transcript: str | None = _UNSET
+    #: Per-task wall-clock seconds for a workflow arm's intra-trial work,
+    #: keyed by the plan task id (the certificate stem, e.g. ``01-tokenizer``).
+    #: Populated by the container backend from each captured certificate's
+    #: ``Elapsed: <seconds>s`` line. Absent on bundles produced before per-task
+    #: timing was captured (the parallel-speedup metric falls back to the old
+    #: sum/max estimate on those — see ``parallel_speedup_for_arm``).
+    taskWallClocks: dict[str, float] | None = _UNSET
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> ArtifactBundle:

@@ -128,6 +128,7 @@ A1_INSTRUCTION = (
     "AND the validate-done-certificate completeness gate before merging it. "
     "Merge every completed task into the /workspace working tree — that working "
     "tree is the integration tip whose CODE will be scored.\n\n"
+    "{timing_directive}\n\n"
     "When you finish, the package stubs under /workspace must be fully "
     "implemented and the spec/plan/certificate artifacts must exist under "
     "docs/. The feature to build:\n\n"
@@ -136,5 +137,19 @@ A1_INSTRUCTION = (
 
 
 def a1_prompt(problem_statement: str) -> str:
-    """Return the full A1 orchestrating prompt for ``problem_statement``."""
-    return A1_INSTRUCTION.format(problem_statement=problem_statement)
+    """Return the full A1 orchestrating prompt for ``problem_statement``.
+
+    The shared per-task :data:`~benchmark.harness.arms.a2_a3.TIMING_DIRECTIVE`
+    is interpolated so spec-builder writes a per-task ``Elapsed:`` line into
+    each certificate — the benchmark reads those back to populate
+    ``ArtifactBundle.taskWallClocks`` and to compute the parallel-speedup
+    metric the spec defines.
+    """
+    # Imported inside to avoid a module-level cycle (a2_a3 imports A1 constants
+    # for the shared mount set and budget cap).
+    from benchmark.harness.arms.a2_a3 import TIMING_DIRECTIVE
+
+    return A1_INSTRUCTION.format(
+        problem_statement=problem_statement,
+        timing_directive=TIMING_DIRECTIVE,
+    )

@@ -4,6 +4,15 @@ Implements ``docs/benchmark/specs/04-metrics.md`` §Bucket 2 (cost-matched
 %Resolved, parallel speedup) and §Bucket 4 — Robustness (merge-conflict rate,
 manual-pause rate, gate-retry depth, regression rate).
 
+Logging
+-------
+This module logs to the ``benchmark.harness.stats.cost_robustness`` logger
+when ``parallel_speedup_for_arm`` falls back to the legacy ``sum / max``
+estimate because the per-trial bundle does not carry
+:attr:`ArtifactBundle.taskWallClocks`. The fallback keeps older saved
+evidence scoring (it just no longer matches the spec definition); the warning
+makes the fallback visible to reviewers reading the live logs.
+
 Every quantity is emitted as a :class:`benchmark.harness.domain.MetricResult`
 per (arm, suite), with a 95% Wilson interval where the quantity is a binomial
 proportion. For non-proportion quantities (mean gate-retry depth, the
@@ -51,25 +60,26 @@ The denominator is the arm's total scored trials, NOT the count within budget
 — answering "of the trials I ran, how many resolved within budget ``B``", which
 is comparable across arms even when one arm has fewer affordable trials.
 
-Parallel-speedup definition (DOCUMENTED HONESTLY)
--------------------------------------------------
-The spec wants "A1's wall-clock vs the same plan run sequentially". Our captured
-runs do NOT carry intra-trial per-task timing, only ONE ``wallClockSeconds`` per
-trial. The honest estimate we CAN compute from ``CampaignRun`` is the
-INTRA-CAMPAIGN speedup: how much the scheduler's pool saved over running this
-arm's trials one after another.
+Parallel-speedup definition
+---------------------------
+The spec wants "A1's wall-clock vs the same plan run sequentially": speedup
+= sum-of-per-task-wall-clocks / orchestrator-wall-clock per trial, averaged
+across the arm's scored trials. Task 02 — capture intra-trial workflow
+timing — wired the captured-certificate parser to surface a per-task series
+on ``ArtifactBundle.taskWallClocks``, so this module now computes the
+spec-defined quantity on bundles that carry the series.
 
-    sequential_estimate(arm) = sum of wallClockSeconds across arm's trials
-    observed_parallel_wall(arm) = max wallClockSeconds across arm's trials
-    speedup(arm) = sequential_estimate / observed_parallel_wall
+    speedup(trial) = sum(taskWallClocks.values()) / wallClockSeconds
+    speedup(arm)   = mean(speedup(trial) for trial in arm)
 
-With one trial the ratio is 1.0 (no parallelism observable). The result also
-carries the task-graph WIDTH (from :func:`dag_validity` over the arm's
-plan artifacts when present) so a reviewer can read the "wide graphs help"
-correlation directly. We document that this is an inter-trial estimate, not
-intra-trial; the bigger comparison the spec ideally wants (A1's observed
-wall-clock vs the SAME plan re-run task-by-task without parallel agents) is
-NOT computable from a single captured bundle and so is not invented here.
+With one task the per-trial ratio is 1.0 by construction (sum == its own one
+member). When EVERY scored bundle is missing ``taskWallClocks`` (older saved
+evidence, or a workflow run whose model ignored the timing directive) we
+fall back to the prior intra-campaign estimate — ``sum / max`` over the
+arm's per-trial wall-clocks — and emit a warning. The result also carries
+the task-graph WIDTH (from :func:`dag_validity` over the arm's plan
+artifacts when present) so a reviewer can read the "wide graphs help"
+correlation directly.
 
 Real-data zeros (SAMPLE LIMITATION)
 -----------------------------------
@@ -90,6 +100,7 @@ answers.
 
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import dataclass
 from enum import StrEnum
@@ -110,8 +121,14 @@ from benchmark.harness.stats.outcome import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
 
-    from benchmark.harness.domain import GateEvent
+    from benchmark.harness.domain import ArtifactBundle, GateEvent
     from benchmark.harness.driver import CampaignRun, TrialResult
+
+#: Module logger — see the module docstring's "Logging" block. The warning is
+#: emitted by :func:`parallel_speedup_for_arm` when it falls back to the
+#: legacy ``sum / max`` estimate because no bundle in the arm carries
+#: per-task timing.
+_LOG = logging.getLogger(__name__)
 
 # --- named limits / constants ----------------------------------------------
 
@@ -288,14 +305,23 @@ def cost_matched_resolved_for_arm(
 
 @dataclass(frozen=True)
 class ParallelSpeedup:
-    """Intra-campaign parallel-speedup estimate for one arm.
+    """Parallel-speedup result for one arm.
 
-    ``sequential_estimate`` is the sum of per-trial wall-clock across the arm's
-    scored trials; ``observed_parallel_wall`` is the max per-trial wall-clock
-    (the bound a perfect scheduler would reach if every trial ran in parallel);
-    ``speedup`` is the ratio. ``graph_width`` is the task-graph width of the
-    arm's plan when one was captured (None otherwise) — supplied so a reviewer
-    can read the "wide graphs help" correlation directly.
+    The spec-defined quantity (when every scored bundle carries
+    ``ArtifactBundle.taskWallClocks``):
+
+        speedup(trial) = sum(taskWallClocks.values()) / wallClockSeconds
+        speedup(arm)   = mean(speedup(trial) for trial in arm)
+
+    ``sequential_estimate_seconds`` is the sum of the per-trial sequential
+    estimates (each trial's sum of per-task wall-clocks); ``observed_parallel_
+    wall_seconds`` is the sum of the per-trial orchestrator wall-clocks;
+    ``speedup`` is the per-trial-mean ratio described above. ``graph_width``
+    is the task-graph width of the arm's plan when one was captured (None
+    otherwise) — supplied so a reviewer can read the "wide graphs help"
+    correlation directly. ``used_per_task_timing`` is ``True`` when the
+    spec-defined ratio was computed; ``False`` when the function fell back to
+    the legacy intra-campaign ``sum / max`` estimate (logged by the caller).
     """
 
     arm: str
@@ -304,6 +330,7 @@ class ParallelSpeedup:
     observed_parallel_wall_seconds: float
     speedup: float
     graph_width: int | None
+    used_per_task_timing: bool = False
 
 
 def parallel_speedup_for_arm(
@@ -311,20 +338,33 @@ def parallel_speedup_for_arm(
     arm_results: Sequence[TrialResult],
     graph_width: int | None = None,
 ) -> ParallelSpeedup:
-    """Intra-campaign parallel-speedup for one arm, with an optional graph width.
+    """Parallel-speedup for one arm, on the spec definition where available.
 
-    See the module docstring for the "honest estimate" framing. With zero
-    scored trials we report speedup 1.0 and a zero baseline (defensible "no
-    parallelism observable"); with one trial the speedup is exactly 1.0 by
-    construction (sum == max). With every trial wall-clock 0 we also report
-    1.0 — the ratio is undefined and 1.0 means "no benefit observable".
+    For each scored trial whose ``ArtifactBundle.taskWallClocks`` is
+    populated (Task 02 — capture intra-trial workflow timing) we compute the
+    spec-defined per-trial ratio ``sum(taskWallClocks.values()) /
+    wallClockSeconds``; the arm's ``speedup`` is the MEAN of those per-trial
+    ratios. ``sequential_estimate_seconds`` and ``observed_parallel_wall_
+    seconds`` are the SUMS of the per-trial sums and orchestrator wall-clocks
+    so a reviewer can sanity-check the ratio.
+
+    When NO scored bundle in the arm carries per-task timing (older saved
+    evidence, or a workflow whose model ignored the timing directive) we
+    fall back to the legacy intra-campaign estimate — ``sum / max`` over the
+    arm's per-trial wall-clocks — and log a warning naming the arm. This
+    preserves behaviour on bundles produced before this task shipped, just
+    not against the spec definition.
+
+    With zero scored trials we report speedup 1.0 and a zero baseline (no
+    parallelism observable); with one scored trial whose bundle carries
+    per-task timing the per-trial ratio is computed honestly (a one-task
+    plan yields exactly 1.0 — the negative-space case the task spec calls
+    out). A trial whose ``wallClockSeconds`` is 0 contributes no per-trial
+    ratio (the ratio is undefined); the arm's speedup is computed over the
+    remaining trials, and is 1.0 when no trial contributes a defined ratio.
     """
-    walls: list[float] = []
-    for result in arm_results:
-        if result.bundle is None:
-            continue
-        walls.append(float(result.bundle.telemetry.wallClockSeconds))
-    n = len(walls)
+    bundles = [r.bundle for r in arm_results if r.bundle is not None]
+    n = len(bundles)
     if n == 0:
         return ParallelSpeedup(
             arm=arm,
@@ -333,7 +373,49 @@ def parallel_speedup_for_arm(
             observed_parallel_wall_seconds=0.0,
             speedup=_DEFAULT_SPEEDUP_NO_OBSERVATION,
             graph_width=graph_width,
+            used_per_task_timing=False,
         )
+
+    timed_bundles = [b for b in bundles if _has_task_wall_clocks(b)]
+    if timed_bundles:
+        per_trial_ratios: list[float] = []
+        sum_of_task_walls = 0.0
+        sum_of_orchestrator_walls = 0.0
+        for bundle in timed_bundles:
+            # The field is guaranteed populated by _has_task_wall_clocks; the
+            # ``or {}`` keeps the type narrowing simple for the type checker.
+            tasks = bundle.taskWallClocks or {}
+            trial_seq = math.fsum(tasks.values())
+            trial_parallel = float(bundle.telemetry.wallClockSeconds)
+            sum_of_task_walls += trial_seq
+            sum_of_orchestrator_walls += trial_parallel
+            if trial_parallel > 0.0:
+                per_trial_ratios.append(trial_seq / trial_parallel)
+        if per_trial_ratios:
+            speedup = math.fsum(per_trial_ratios) / len(per_trial_ratios)
+        else:
+            speedup = _DEFAULT_SPEEDUP_NO_OBSERVATION
+        return ParallelSpeedup(
+            arm=arm,
+            n_trials=n,
+            sequential_estimate_seconds=sum_of_task_walls,
+            observed_parallel_wall_seconds=sum_of_orchestrator_walls,
+            speedup=speedup,
+            graph_width=graph_width,
+            used_per_task_timing=True,
+        )
+
+    # Legacy fallback: no bundle carries per-task timing. Compute the prior
+    # intra-campaign sum/max estimate and log the fallback (the consumer
+    # decides what to do with the warning).
+    _LOG.warning(
+        "parallel_speedup_for_arm(%r): no bundle carries ArtifactBundle."
+        "taskWallClocks; falling back to the intra-campaign sum/max estimate. "
+        "Run the workflow under the updated orchestrating prompts (the "
+        "timing directive) to score this arm against the spec definition.",
+        arm,
+    )
+    walls = [float(b.telemetry.wallClockSeconds) for b in bundles]
     sequential = math.fsum(walls)
     parallel = max(walls)
     if n == 1:
@@ -349,7 +431,21 @@ def parallel_speedup_for_arm(
         observed_parallel_wall_seconds=parallel,
         speedup=speedup,
         graph_width=graph_width,
+        used_per_task_timing=False,
     )
+
+
+def _has_task_wall_clocks(bundle: ArtifactBundle) -> bool:
+    """Whether ``bundle`` carries a populated per-task wall-clock series.
+
+    The schema lets ``taskWallClocks`` be absent (the field is optional) or a
+    mapping. We treat the field as populated when it is a non-empty mapping;
+    an empty mapping, an unset sentinel, or ``None`` are treated the same as
+    absent (no series to read). Duck-checking ``isinstance(..., dict)`` lets
+    this helper work without importing the domain layer's ``_UNSET`` sentinel.
+    """
+    series = getattr(bundle, "taskWallClocks", None)
+    return isinstance(series, dict) and bool(series)
 
 
 # --- robustness columns -----------------------------------------------------

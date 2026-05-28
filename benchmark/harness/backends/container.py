@@ -106,6 +106,7 @@ from benchmark.harness.arms.a2_a3 import (
     a2_prompt,
     a3_prompt,
     extract_gate_events,
+    extract_task_wall_clocks,
 )
 from benchmark.harness.arms.a4 import (
     A4_MODEL,
@@ -694,6 +695,27 @@ class ContainerRunBackend:
         model; this backend stashes them on :attr:`last_gate_events` for the
         driver/test to read (``run`` returns ``(bundle, patch)`` per the
         ``RunBackend`` protocol, so the events ride alongside the backend).
+
+        Per-task wall-clocks (Task 02 — intra-trial workflow timing)
+        ------------------------------------------------------------
+        Per-task wall-clock seconds come from the captured certificates. The
+        orchestrating prompts (A1/A2/A3) instruct spec-builder to write one
+        ``Elapsed: <seconds>s`` line into each task's certificate; the
+        certificate-walking parser
+        :func:`~benchmark.harness.arms.a2_a3.extract_task_wall_clocks` reads
+        each line and returns ``{certificate stem: seconds}``. The chosen
+        approach is "extend the prompt + reuse the certificate parser" — the
+        smaller of the two probes the task spec offers, because today's
+        certificates carry no Elapsed line so a parser-only probe would find
+        nothing, and a sibling JSONL log would require a new capture path. The
+        resulting series rides on the returned :class:`ArtifactBundle` as the
+        typed :attr:`ArtifactBundle.taskWallClocks` sidecar, where
+        :func:`~benchmark.harness.stats.cost_robustness.parallel_speedup_for_arm`
+        reads it to compute the spec-defined ``sum / wallClockSeconds`` quantity.
+        On bundles whose certificates do not carry the line (older runs, or a
+        model that ignored the directive) the series is left absent and the
+        consumer falls back to the prior intra-campaign ``sum / max`` estimate
+        with a logged warning.
         """
         self._require_docker_and_creds()
         self._require_plugins(config.plugin_dir_names)
@@ -725,6 +747,13 @@ class ContainerRunBackend:
 
         wall_clock_seconds = time.monotonic() - started
         telemetry = telemetry_from_agent_result(result_json, wall_clock_seconds)
+        # Per-task wall-clocks from the captured certificates' Elapsed: lines
+        # (see the per-task-timing block in this method's docstring). When the
+        # workflow honoured the prompt's timing directive we surface the
+        # series on the bundle; when no certificate carried the line we leave
+        # the field absent so the consumer falls back to the old sum/max
+        # estimate rather than fabricating zeros.
+        task_wall_clocks = extract_task_wall_clocks(cert_files)
         bundle = ArtifactBundle(
             id=new_record_id(ARTIFACT_BUNDLE_ID_PREFIX),
             trial=self._trial_id,
@@ -733,6 +762,7 @@ class ContainerRunBackend:
             planArtifacts=plan_files,
             certificateArtifacts=cert_files,
             transcript=json.dumps(result_json, sort_keys=True),
+            **({"taskWallClocks": task_wall_clocks} if task_wall_clocks else {}),
         )
         # REAL GateEvent extraction from the captured certificates (see a2_a3).
         # A gates-on arm (A1/A2) yields >= 1 event; a gates-off arm (A3) none.
