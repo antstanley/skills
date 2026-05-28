@@ -96,6 +96,25 @@ def derive_gate_escape(report: ScoreReport) -> bool:
     return not report.resolved
 
 
+def _with_gate_escape(report: ScoreReport, value: bool | None) -> ScoreReport:
+    """Return a new ``ScoreReport`` equal to ``report`` but with ``gateEscape``.
+
+    The canonical write site for ``ScoreReport.gateEscape``. The field is the
+    gated-arm escape signal (``06-scoring-and-statistics.md`` §The test oracle):
+    populated on GATED arms (A1, A2 — :data:`GATED_ARMS`) and LEFT UNSET on
+    non-gated arms (A0, A4, and A3 whose gates are disabled), so a future reader
+    is not tempted to populate the field on a non-gated arm. The driver enforces
+    that gating; this helper only writes the value the caller computed.
+
+    Rebuilds from ``to_dict`` (preserving any already-set optional fields) so the
+    result re-validates against the canonical schema — mirrors
+    :func:`benchmark.harness.scoring.conformance.judge._with_conformance`.
+    """
+    payload = report.to_dict()
+    payload["gateEscape"] = value
+    return ScoreReport.from_dict(payload)
+
+
 def _failing_selectors(report: ScoreReport) -> tuple[str, ...]:
     """The hidden ``failToPass`` selectors this report records as NOT passing."""
     results = report.failToPassResults

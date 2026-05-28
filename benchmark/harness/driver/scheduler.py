@@ -40,6 +40,11 @@ from benchmark.harness.domain import (
     Trial,
     new_record_id,
 )
+from benchmark.harness.scoring.probes.escape import (
+    GATED_ARMS,
+    _with_gate_escape,
+    derive_gate_escape,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
@@ -259,6 +264,12 @@ def _drive_trial(
             gate_events=gate_events,
         )
     report = _rebind_report_trial(report, current.id)
+    # On GATED arms (A1, A2) populate ``ScoreReport.gateEscape`` here at the
+    # post-score site so the field is written by the driver pipeline rather
+    # than reconstructed downstream. Non-gated arms (A0, A4 — and A3 with its
+    # gates disabled) leave the field unset, never carrying a stale value
+    # across trials (``06-scoring-and-statistics.md`` §The test oracle).
+    report = _populate_gate_escape(report, current.arm)
     current = replace(current, status=STATUS_SCORED, scoreReport=report.id)
 
     # aggregated: the ScoreReport has been folded into the campaign results.
@@ -266,6 +277,20 @@ def _drive_trial(
     return TrialResult(
         trial=current, bundle=bundle, report=report, gate_events=gate_events
     )
+
+
+def _populate_gate_escape(report: ScoreReport, arm_slug: str) -> ScoreReport:
+    """Write ``gateEscape`` on a GATED arm's report; leave it unset otherwise.
+
+    Per ``06-scoring-and-statistics.md`` §The test oracle, ``gateEscape`` is the
+    false-``Done`` signal for arms with gates (``GATED_ARMS`` = A1, A2). On A0,
+    A3, A4 the field stays unset — never populated, never propagated from a
+    prior trial — so the gate-efficacy metric sees a present ``true``/``false``
+    only on the arms that have gates to escape.
+    """
+    if arm_slug not in GATED_ARMS:
+        return report
+    return _with_gate_escape(report, derive_gate_escape(report))
 
 
 def _rebind_bundle_trial(bundle: ArtifactBundle, trial_id: str) -> ArtifactBundle:
