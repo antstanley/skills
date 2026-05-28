@@ -56,7 +56,12 @@ import math
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from benchmark.harness.domain import ARM_SLUGS
+from benchmark.harness.domain import (
+    ARM_SLUGS,
+    METRIC_RESULT_ID_PREFIX,
+    MetricResult,
+    new_record_id,
+)
 from benchmark.harness.stats.artifact_metrics import (
     DagValidity,
     PlanCoverage,
@@ -70,6 +75,7 @@ from benchmark.harness.stats.cost_robustness import (
     GateRetryDepth,
     ParallelSpeedup,
     cost_matched_resolved_for_arm,
+    cost_robustness_metric_results,
     equal_budget_for_arms,
     gate_retry_depth_for_arm,
     manual_pause_rate,
@@ -92,7 +98,7 @@ from benchmark.harness.stats.outcome import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
     from benchmark.harness.domain import ScoreReport
     from benchmark.harness.driver import CampaignRun, TrialResult
@@ -199,6 +205,29 @@ METRIC_COLUMNS: tuple[str, ...] = (
     METRIC_MERGE_CONFLICT_RATE,
     METRIC_MANUAL_PAUSE_RATE,
     METRIC_GATE_RETRY_DEPTH,
+)
+
+#: The ten metric names that :func:`ablation_metric_results` emits IN ADDITION
+#: to the six emitted by :func:`cost_robustness_metric_results` — the outcome
+#: columns (Pass@1, Pass@k), the cost/efficiency means, conformance, and the
+#: plan + gate artifact metrics. The universe of ablation-table metrics is
+#: exactly
+#: ``COST_ROBUSTNESS_METRIC_NAMES + OUTCOME_AND_ARTIFACT_METRIC_NAMES``,
+#: which equals (as a set) :data:`METRIC_COLUMNS` — asserted in tests so the
+#: two paths cannot drift. The split mirrors the file layout: the
+#: cost-robustness metrics live in :mod:`benchmark.harness.stats.cost_robustness`
+#: and the rest are derived here from the :class:`ArmRow` the renderer reads.
+OUTCOME_AND_ARTIFACT_METRIC_NAMES: tuple[str, ...] = (
+    METRIC_PASS_AT_1,
+    METRIC_PASS_AT_K,
+    METRIC_MEAN_TOKENS,
+    METRIC_MEAN_COST_USD,
+    METRIC_MEAN_WALL_CLOCK,
+    METRIC_CONFORMANCE,
+    METRIC_PLAN_COVERAGE,
+    METRIC_DAG_VALIDITY,
+    METRIC_GATE_CATCH_RATE,
+    METRIC_GATE_ESCAPE_RATE,
 )
 
 
@@ -709,6 +738,439 @@ def build_ablation_report(
     )
 
 
+# --- MetricResult emission for every ablation column -----------------------
+#
+# ``cost_robustness_metric_results`` already emits a MetricResult per (arm, suite)
+# for the six metrics in :data:`COST_ROBUSTNESS_METRIC_NAMES`. The remaining ten
+# ablation-table columns (:data:`OUTCOME_AND_ARTIFACT_METRIC_NAMES`) need
+# emitters too so the metric stream covers every column the renderer prints.
+#
+# The implementation rule (from ``04-metrics.md`` §Implementation layout and
+# this task's spec): the :class:`ArmRow` value/CI is the SOURCE OF TRUTH, and
+# the MetricResult is its serialised form. Each emitter therefore takes an
+# already-built ``ArmRow`` and reads the column off it — no re-derivation of
+# Wilson / normal-CI math, no second pass over the scored results. That keeps
+# the metric stream and the rendered table exactly in agreement column-for-
+# column, which is the agreement the spec calls for.
+#
+# Applicability is respected: when a metric does not apply to an arm (the
+# corresponding ``ArmRow`` field is ``None`` per :data:`APPLICABILITY`) the
+# emitter returns ``None`` and the top-level emitter drops the row from the
+# stream. A non-applicable cell stays absent — never a zero with a wide CI.
+
+
+def _metric_result(
+    *,
+    campaign: str,
+    arm: str,
+    suite: str,
+    metric_name: str,
+    value: float,
+    ci_low: float,
+    ci_high: float,
+    n_trials: int,
+) -> MetricResult:
+    """Build one MetricResult with a fresh id, validated by the schema.
+
+    Mirrors :func:`benchmark.harness.stats.cost_robustness._metric_result` —
+    duplicated here (not imported) because the cost-robustness helper is
+    module-private and this module already owns the ``ArmRow``-side emission.
+    """
+    return MetricResult(
+        id=new_record_id(METRIC_RESULT_ID_PREFIX),
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metricName=metric_name,
+        value=value,
+        ciLow=ci_low,
+        ciHigh=ci_high,
+        nTrials=n_trials,
+    )
+
+
+def _emit_ci(
+    *,
+    campaign: str,
+    arm: str,
+    suite: str,
+    metric_name: str,
+    ci: ConfidenceInterval | None,
+    n_trials: int,
+) -> MetricResult | None:
+    """Emit one MetricResult from a :class:`ConfidenceInterval`-bearing field.
+
+    Returns ``None`` when the field is ``None`` — the field-is-None encoding
+    of "metric does not apply to this arm" (per :data:`APPLICABILITY`); the
+    top-level emitter then drops the row from the stream so the non-
+    applicable cell stays absent rather than emitted as zero.
+    """
+    if ci is None:
+        return None
+    return _metric_result(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=metric_name,
+        value=ci.point,
+        ci_low=ci.low,
+        ci_high=ci.high,
+        n_trials=n_trials,
+    )
+
+
+def _emit_scalar(
+    *,
+    campaign: str,
+    arm: str,
+    suite: str,
+    metric_name: str,
+    value: float | None,
+    n_trials: int,
+) -> MetricResult | None:
+    """Emit one MetricResult for a scalar (no closed-form interval) column.
+
+    Used for Pass@k (a fraction over instances, not a proportion of trials),
+    the mean tokens / cost / wall-clock per trial, and DAG validity (encoded
+    1.0 if valid, 0.0 if invalid). The point value is repeated in both
+    ``ciLow`` / ``ciHigh`` — same convention the speedup emitter in
+    :mod:`benchmark.harness.stats.cost_robustness` uses for the ratio:
+    the schema requires the fields, and we report the point value in both
+    bounds rather than fabricate a CI we do not have.
+    """
+    if value is None:
+        return None
+    return _metric_result(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=metric_name,
+        value=value,
+        ci_low=value,
+        ci_high=value,
+        n_trials=n_trials,
+    )
+
+
+def pass_at_1_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``pass_at_1`` from an :class:`ArmRow` — the headline Pass@1 + Wilson CI."""
+    return _emit_ci(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_PASS_AT_1,
+        ci=row.pass_at_1,
+        n_trials=row.n_trials,
+    )
+
+
+def pass_at_k_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``pass_at_k`` — fraction of instances resolved by ≥1 of ``k`` trials.
+
+    Pass@k is a fraction over INSTANCES, not a proportion of trials, so the
+    Wilson interval over n_trials does not apply; the point value is reported
+    in both CI bounds (the source of truth is :attr:`ArmRow.pass_at_k`).
+    """
+    return _emit_scalar(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_PASS_AT_K,
+        value=row.pass_at_k,
+        n_trials=row.n_trials,
+    )
+
+
+def mean_tokens_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``mean_tokens`` — mean ``inputTokens + outputTokens`` per trial."""
+    return _emit_scalar(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_MEAN_TOKENS,
+        value=row.mean_input_output_tokens,
+        n_trials=row.n_trials,
+    )
+
+
+def mean_cost_usd_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``mean_cost_usd`` — mean ``costUsd`` per trial."""
+    return _emit_scalar(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_MEAN_COST_USD,
+        value=row.mean_cost_usd,
+        n_trials=row.n_trials,
+    )
+
+
+def mean_wall_clock_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``mean_wall_clock_seconds`` — mean orchestrator wall-clock per trial."""
+    return _emit_scalar(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_MEAN_WALL_CLOCK,
+        value=row.mean_wall_clock_seconds,
+        n_trials=row.n_trials,
+    )
+
+
+def conformance_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``conformance`` — mean ``conformanceScore`` over the arm's reports."""
+    return _emit_ci(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_CONFORMANCE,
+        ci=row.conformance,
+        n_trials=row.n_trials,
+    )
+
+
+def plan_coverage_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``plan_coverage`` — fraction of in-scope sections covered by ≥1 task.
+
+    Applicability: returns ``None`` for non-plan-producing arms (A0, A4) per
+    :data:`APPLICABILITY`. Plan coverage is the fraction
+    ``len(covered) / len(in_scope)``; the schema requires ``ciLow`` /
+    ``ciHigh``, and we report the point value in both bounds (no closed-form
+    interval for a fraction over a fixed-cardinality denominator).
+    """
+    pc = row.plan_coverage
+    if pc is None:
+        return None
+    return _emit_scalar(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_PLAN_COVERAGE,
+        value=pc.fraction,
+        n_trials=row.n_trials,
+    )
+
+
+def dag_validity_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``dag_validity`` — 1.0 if the plan DAG is valid, 0.0 otherwise.
+
+    Applicability: returns ``None`` for non-plan-producing arms (A0, A4) per
+    :data:`APPLICABILITY`. The boolean is encoded as 1.0/0.0 in ``value`` and
+    both CI bounds (a bool has no interval).
+    """
+    dv = row.dag_validity
+    if dv is None:
+        return None
+    return _emit_scalar(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_DAG_VALIDITY,
+        value=1.0 if dv.valid else 0.0,
+        n_trials=row.n_trials,
+    )
+
+
+def gate_catch_rate_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``gate_catch_rate`` — Wilson interval over ``caught / total`` defects.
+
+    Applicability: returns ``None`` for non-gated arms (A0, A3, A4) per
+    :data:`APPLICABILITY`, AND when a gated arm has no catch counts supplied
+    (the same encoding the :class:`ArmRow` uses — the field is ``None``).
+    """
+    return _emit_ci(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_GATE_CATCH_RATE,
+        ci=row.gate_catch_rate,
+        n_trials=row.n_trials,
+    )
+
+
+def gate_escape_rate_metric_result(
+    *, campaign: str, arm: str, suite: str, row: ArmRow
+) -> MetricResult | None:
+    """Emit ``gate_escape_rate`` — Wilson interval over false-``Done`` escapes.
+
+    Applicability: returns ``None`` for non-gated arms (A0, A3, A4); same
+    rule as :func:`gate_catch_rate_metric_result`.
+    """
+    return _emit_ci(
+        campaign=campaign,
+        arm=arm,
+        suite=suite,
+        metric_name=METRIC_GATE_ESCAPE_RATE,
+        ci=row.gate_escape_rate,
+        n_trials=row.n_trials,
+    )
+
+
+#: The ten ArmRow-derived emitters, keyed by their metric name. Iterated in
+#: :data:`OUTCOME_AND_ARTIFACT_METRIC_NAMES` order by
+#: :func:`ablation_metric_results` so the emission order is deterministic.
+_OUTCOME_AND_ARTIFACT_EMITTERS: dict[
+    str,
+    Callable[..., MetricResult | None],
+] = {
+    METRIC_PASS_AT_1: pass_at_1_metric_result,
+    METRIC_PASS_AT_K: pass_at_k_metric_result,
+    METRIC_MEAN_TOKENS: mean_tokens_metric_result,
+    METRIC_MEAN_COST_USD: mean_cost_usd_metric_result,
+    METRIC_MEAN_WALL_CLOCK: mean_wall_clock_metric_result,
+    METRIC_CONFORMANCE: conformance_metric_result,
+    METRIC_PLAN_COVERAGE: plan_coverage_metric_result,
+    METRIC_DAG_VALIDITY: dag_validity_metric_result,
+    METRIC_GATE_CATCH_RATE: gate_catch_rate_metric_result,
+    METRIC_GATE_ESCAPE_RATE: gate_escape_rate_metric_result,
+}
+
+
+def ablation_metric_results(
+    run: CampaignRun,
+    *,
+    suite: str,
+    arms: Sequence[str] | None = None,
+    cost_basis: CostBasis = DEFAULT_COST_BASIS,
+    budget: float | None = None,
+    spec_artifacts: Mapping[str, Sequence[str]] | None = None,
+    plan_artifacts: Mapping[str, Sequence[str]] | None = None,
+    plan_graph_widths: Mapping[str, int] | None = None,
+    gate_catch_counts: Mapping[str, tuple[int, int]] | None = None,
+    gate_escape_counts: Mapping[str, tuple[int, int]] | None = None,
+    merge_conflict_counts: Mapping[str, int] | None = None,
+) -> list[MetricResult]:
+    """Emit ONE MetricResult per applicable (arm, suite, metric) in the table.
+
+    The canonical surface for the universal claim that every column in
+    :data:`METRIC_COLUMNS` is a serialisable :class:`MetricResult`. Composes
+    two paths:
+
+    * :func:`cost_robustness_metric_results` — the six metrics in
+      :data:`COST_ROBUSTNESS_METRIC_NAMES` (cost-matched %Resolved, parallel
+      speedup, merge-conflict rate, manual-pause rate, gate-retry depth,
+      regression rate). The stable lower-level entry point; preserved as-is.
+    * The ten emitters in :data:`OUTCOME_AND_ARTIFACT_METRIC_NAMES`, each
+      reading its value/CI off the same :class:`ArmRow` the renderer
+      consumes — so the metric stream and the rendered table agree column-
+      for-column.
+
+    Applicability (:data:`APPLICABILITY`) is respected on both paths: gate
+    metrics on A0/A3/A4 and plan-coverage/DAG-validity on A0/A4 are absent
+    from the stream rather than emitted as zero.
+
+    Negative-space: an arm with zero scored trials yields NO rows for any
+    metric. The renderer's "no trials" path is the right home for those
+    cells (they appear as empty rows in the table), not the metric stream.
+
+    Parameters
+    ----------
+    run:
+        The CampaignRun whose scored results to read.
+    suite:
+        The suite slug the metrics are reported for; the caller passes the
+        (arm × suite) slice it owns.
+    arms:
+        Arms to emit metrics for; defaults to :data:`ABLATION_ARMS` (the
+        closed five-arm set the ablation table reports on).
+    cost_basis:
+        Cost basis for the cost-matched %Resolved (DOLLARS by default).
+    budget:
+        Equal-budget cap on ``cost_basis``; derived via
+        :func:`equal_budget_for_arms` over the requested arms when ``None``.
+    spec_artifacts, plan_artifacts, plan_graph_widths, gate_catch_counts,
+    gate_escape_counts, merge_conflict_counts:
+        Optional per-arm inputs threaded to :func:`build_arm_row` —
+        see its docstring for the shape of each. Without the gate counts the
+        gate catch/escape cells stay absent (the same rule
+        :func:`build_arm_row` uses).
+
+    Returns
+    -------
+    list[MetricResult]
+        The concatenated metric stream: the six cost+robustness rows per
+        scored arm, then the ten outcome+artifact rows per scored arm,
+        with non-applicable (arm, metric) pairs absent. Every row is
+        schema-valid (the :class:`MetricResult` constructor validates).
+    """
+    selected_arms: tuple[str, ...] = tuple(arms) if arms is not None else ABLATION_ARMS
+
+    # Same derivation rule cost_robustness_metric_results uses, computed here
+    # so the per-arm ArmRow builds and the cost-robustness emitter share a
+    # single budget value. _budget_for_run handles empty/no-bundle arms.
+    if budget is None:
+        budget = _budget_for_run(run, selected_arms, cost_basis)
+
+    # Build one ArmRow per scored arm — the source of truth the ten ArmRow-
+    # derived emitters read off. Arms with zero scored trials are SKIPPED so
+    # the metric stream is empty for them (the documented negative-space).
+    arm_rows: dict[str, ArmRow] = {}
+    for arm_slug in selected_arms:
+        if not _arm_scored_results(run, arm_slug):
+            continue
+        arm_rows[arm_slug] = build_arm_row(
+            run,
+            arm_slug,
+            cost_basis=cost_basis,
+            budget=budget,
+            spec_artifacts=spec_artifacts,
+            plan_artifacts=plan_artifacts,
+            plan_graph_widths=plan_graph_widths,
+            gate_catch_counts=gate_catch_counts,
+            gate_escape_counts=gate_escape_counts,
+            merge_conflict_counts=merge_conflict_counts,
+        )
+
+    out: list[MetricResult] = []
+
+    # Path 1: cost+robustness — the existing six emitters, restricted to the
+    # arms that have scored trials (cost_robustness_metric_results applies the
+    # same restriction by default; passing the arms list explicitly keeps the
+    # two paths' arm sets aligned).
+    if arm_rows:
+        out.extend(
+            cost_robustness_metric_results(
+                run,
+                suite=suite,
+                arms=tuple(arm_rows),
+                basis=cost_basis,
+                budget=budget,
+                merge_conflict_counts=merge_conflict_counts,
+                plan_graph_widths=plan_graph_widths,
+            )
+        )
+
+    # Path 2: the ten ArmRow-derived emitters, in
+    # OUTCOME_AND_ARTIFACT_METRIC_NAMES order per arm.
+    campaign_id = run.campaign.id
+    for arm_slug, row in arm_rows.items():
+        for metric_name in OUTCOME_AND_ARTIFACT_METRIC_NAMES:
+            emitter = _OUTCOME_AND_ARTIFACT_EMITTERS[metric_name]
+            emitted = emitter(campaign=campaign_id, arm=arm_slug, suite=suite, row=row)
+            if emitted is not None:
+                out.append(emitted)
+
+    return out
+
+
 # --- rendering --------------------------------------------------------------
 
 
@@ -912,15 +1374,27 @@ __all__ = [
     "METRIC_PLAN_COVERAGE",
     "METRIC_REGRESSION_RATE",
     "NA_RENDER_TOKEN",
+    "OUTCOME_AND_ARTIFACT_METRIC_NAMES",
     "PAIRWISE_DELTAS",
     "PLAN_PRODUCING_ARMS",
     "AblationReport",
     "ArmRow",
     "DeltaRow",
+    "ablation_metric_results",
     "apply_holm_bonferroni",
     "build_ablation_report",
     "build_arm_row",
+    "conformance_metric_result",
+    "dag_validity_metric_result",
+    "gate_catch_rate_metric_result",
+    "gate_escape_rate_metric_result",
     "holm_bonferroni_adjusted_pvalues",
+    "mean_cost_usd_metric_result",
+    "mean_tokens_metric_result",
+    "mean_wall_clock_metric_result",
     "metric_applies",
+    "pass_at_1_metric_result",
+    "pass_at_k_metric_result",
+    "plan_coverage_metric_result",
     "render_ablation_report",
 ]
