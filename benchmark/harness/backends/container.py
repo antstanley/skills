@@ -59,6 +59,16 @@ branches):
   ``GateEvent``s (A1/A2 discharge them; A3 leaves none). Routing by SLUG — not
   by "any Arm with plugins" — is what keeps A2/A3 (plugin arms too) out of the
   plain-A0 branch.
+- the A5 ``Arm`` record (``A5_SLUG``) → the LIGHTER PRE-CANNED (non-recursive)
+  path (``_run_a5``): a SINGLE bounded ``claude -p`` call (NO plugins, NO
+  ``spec-*`` mount, NO sub-agent recursion) with a FIXED prompt that implements
+  the feature AND writes one done-certificate carrying a real ``VERDICT:`` line.
+  Like the workflow arms, A5's candidate patch EXCLUDES ``docs/`` and the captured
+  certificate is parsed into a ``GateEvent`` (so ``last_gate_events`` is
+  populated), but A5 runs ONE scripted call under a SMALL budget cap + a SHORT
+  timeout instead of a recursive build — it is the fast, bounded gate-emission
+  witness the recursive arms cannot reliably be. A5 is matched dispatch-FIRST over
+  the A0 path because A5, like A4/A0, is a no-plugin/no-spec ``Arm``.
 
 The ``fixture`` solver is the ``local`` backend's job; it is out of scope here
 and raises :class:`NotImplementedError`.
@@ -114,6 +124,13 @@ from benchmark.harness.arms.a4 import (
     A4_PER_AGENT_MAX_BUDGET_USD,
     A4_SLUG,
     a4_slice_prompt,
+)
+from benchmark.harness.arms.a5 import (
+    A5_MAX_BUDGET_USD,
+    A5_MODEL,
+    A5_RUN_TIMEOUT_SECONDS,
+    A5_SLUG,
+    a5_prompt,
 )
 from benchmark.harness.backends.interfaces import CandidatePatch
 from benchmark.harness.domain import (
@@ -378,26 +395,36 @@ class ContainerRunBackend:
         - a WORKFLOW arm (A1, A2, or A3 — :data:`_WORKFLOW_ARM_SLUGS`) -> the
           parameterized ``spec-*`` workflow path (``_run_workflow_arm``), which
           reads the arm's :class:`_WorkflowArmConfig` (which plugins to mount,
-          whether to hand in a spec, whether the gates run, which prompt).
+          whether to hand in a spec, whether the gates run, which prompt);
+        - the A4 ``Arm`` -> the naive N-way parallel path (``_run_a4``);
+        - the A5 ``Arm`` -> the lighter PRE-CANNED path (``_run_a5``): ONE bounded
+          ``claude -p`` call that implements the feature AND writes one
+          done-certificate (real ``VERDICT:`` line), so it emits a ``GateEvent``
+          WITHOUT a recursive build.
 
         Routing by slug — NOT by "any Arm with plugins" — is what keeps A2/A3
-        (which are plugin arms) from falling into the plain-A0 branch. Every path
-        provisions a fresh container, makes the base commit, probes auth, runs to
-        completion, and returns the ``candidatePatch`` (diff vs the base commit)
-        with a populated ``ArtifactBundle``. Carries NO hidden test content.
+        (which are plugin arms) from falling into the plain-A0 branch, and the
+        A4/A5 slugs (no-plugin/no-spec ``Arm``s like A0) are matched FIRST so they
+        do not fall into the plain-A0 branch either. Every path provisions a fresh
+        container, makes the base commit, probes auth, runs to completion, and
+        returns the ``candidatePatch`` (diff vs the base commit) with a populated
+        ``ArtifactBundle``. Carries NO hidden test content.
         """
         if self._selects_workflow(arm_or_solver):
             assert isinstance(arm_or_solver, Arm)  # narrowed by _selects_workflow
             return self._run_workflow_arm(instance, _workflow_config_for(arm_or_solver))
         if self._selects_a4(arm_or_solver):
             return self._run_a4(instance)
+        if self._selects_a5(arm_or_solver):
+            return self._run_a5(instance)
         if self._selects_agent(arm_or_solver):
             return self._run_a0(instance)
         raise NotImplementedError(
             "ContainerRunBackend runs the agent solver "
             f"({AGENT_SOLVER!r}), the A0 arm, a workflow arm "
-            f"({sorted(_WORKFLOW_ARM_SLUGS)}), or the A4 arm ({A4_SLUG}); got "
-            f"{arm_or_solver!r}. The fixture solver is the local backend's job."
+            f"({sorted(_WORKFLOW_ARM_SLUGS)}), the A4 arm ({A4_SLUG}), or the A5 "
+            f"arm ({A5_SLUG}); got {arm_or_solver!r}. The fixture solver is the "
+            "local backend's job."
         )
 
     def _run_a0(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
@@ -430,6 +457,98 @@ class ContainerRunBackend:
             transcript=json.dumps(result_json, sort_keys=True),
         )
         return bundle, candidate_patch
+
+    def _run_a5(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
+        """Run the A5 LIGHTER PRE-CANNED (non-recursive) path and capture it.
+
+        A single bounded ``claude -p`` call (NO plugins, NO ``spec-*`` mount, NO
+        sub-agent recursion) with the FIXED ``A5_INSTRUCTION``
+        (:mod:`benchmark.harness.arms.a5`) prompt, which implements the feature in
+        place AND writes one done-certificate carrying a real ``VERDICT:`` line under
+        ``docs/plans/.../certificates/``. The run is HARD-BOUNDED by the SMALL
+        :data:`~benchmark.harness.arms.a5.A5_MAX_BUDGET_USD` cap and the SHORT
+        :data:`~benchmark.harness.arms.a5.A5_RUN_TIMEOUT_SECONDS` timeout — A5
+        does not recurse, so it finishes well inside them, which is exactly why
+        it is a reliable gate-emission witness where the recursive arms are not.
+
+        Like the workflow arms, the candidate patch EXCLUDES the ``docs/``
+        artifact subtree (the certificate is captured into the bundle, not scored
+        as code), the captured artifacts are split into spec/plan/certificate
+        buckets, and the certificates are parsed into :class:`GateEvent` records
+        via the SAME :func:`extract_gate_events` path A2 uses — so a successful A5
+        run yields ``>= 1`` GateEvent on :attr:`last_gate_events`. Reuses the
+        existing run/capture helpers; the only A5-specific code is this single
+        scripted invocation.
+        """
+        self._require_docker_and_creds()
+        image = self._resolve_image(instance)
+        prompt = a5_prompt(instance.problemStatement)
+
+        creds_dir = Path(tempfile.mkdtemp(prefix="benchmark-creds-a5-"))
+        container_id: str | None = None
+        started = time.monotonic()
+        try:
+            self._stage_credentials(creds_dir)
+            container_id = self._start_container(image, creds_dir)
+            self._make_base_commit(container_id)
+            self._auth_probe(container_id)
+            result_json = self._run_a5_agent(container_id, prompt)
+            candidate_patch = self._extract_patch(container_id, exclude_artifacts=True)
+            _spec_files, _plan_files, cert_files = self._capture_artifacts(container_id)
+        finally:
+            if container_id is not None:
+                self._remove_container(container_id)
+            shutil.rmtree(creds_dir, ignore_errors=True)
+
+        wall_clock_seconds = time.monotonic() - started
+        telemetry = telemetry_from_agent_result(result_json, wall_clock_seconds)
+        bundle = ArtifactBundle(
+            id=new_record_id(ARTIFACT_BUNDLE_ID_PREFIX),
+            trial=self._trial_id,
+            telemetry=telemetry,
+            certificateArtifacts=cert_files,
+            transcript=json.dumps(result_json, sort_keys=True),
+        )
+        # REAL GateEvent extraction from the captured certificate(s) — the same
+        # structural path A2 uses. A5's pre-canned prompt writes a discharged
+        # VERDICT: line, so this yields >= 1 event.
+        self._last_gate_events = extract_gate_events(
+            cert_files, trial_id=self._trial_id
+        )
+        return bundle, candidate_patch
+
+    def _run_a5_agent(self, container_id: str, prompt: str) -> dict[str, object]:
+        """Run the single pre-canned A5 agent to completion; return the result JSON.
+
+        PLAIN like A0 (NO ``--plugin-dir``, NO ``spec-*``) but under A5's SMALL
+        budget cap and SHORT timeout, with the fixed certificate-writing prompt.
+        """
+        command = (
+            f"cd {IMAGE_WORKDIR}; "
+            f"claude -p {_shell_quote(prompt)} "
+            f"--model {A5_MODEL} --permission-mode bypassPermissions "
+            f"--max-budget-usd {A5_MAX_BUDGET_USD} --output-format json"
+        )
+        result = subprocess.run(
+            ["docker", "exec", container_id, "sh", "-c", command],
+            capture_output=True,
+            text=True,
+            timeout=A5_RUN_TIMEOUT_SECONDS,
+        )
+        if result.returncode != _CLAUDE_EXIT_OK:
+            raise ContainerRunError(
+                f"A5 agent run failed (exit {result.returncode}).\n"
+                f"stdout: {result.stdout}\nstderr: {result.stderr}"
+            )
+        try:
+            parsed = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise ContainerRunError(
+                f"could not parse claude --output-format json result:\n{result.stdout}"
+            ) from exc
+        if not isinstance(parsed, dict):
+            raise ContainerRunError(f"claude result JSON was not an object: {parsed!r}")
+        return parsed
 
     def _run_a4(self, instance: TaskInstance) -> tuple[ArtifactBundle, CandidatePatch]:
         """Run the A4 naive N-way parallel path and NAIVE-merge the N outputs.
@@ -854,6 +973,20 @@ class ContainerRunBackend:
         the single-agent A0 path.
         """
         return isinstance(arm_or_solver, Arm) and arm_or_solver.slug == A4_SLUG
+
+    @staticmethod
+    def _selects_a5(arm_or_solver: object) -> bool:
+        """Whether ``arm_or_solver`` selects the A5 lighter pre-canned path.
+
+        Routes BY SLUG against :data:`A5_SLUG`. A5 is, like A4/A0, a no-plugin /
+        no-spec ``Arm`` record (it differs only in ``gatesEnabled=True``), so it
+        would otherwise match :meth:`_selects_agent` (which accepts the A0
+        record) — dispatching by the A5 slug FIRST is what keeps A5 on its own
+        single pre-canned ``claude -p`` path instead of the plain-A0 path. A5 is
+        NOT a workflow arm (it has no ``spec-*`` plugins and never recurses), so
+        :meth:`_selects_workflow` rejects it.
+        """
+        return isinstance(arm_or_solver, Arm) and arm_or_solver.slug == A5_SLUG
 
     def _resolve_image(self, instance: TaskInstance) -> str:
         """Return the AGENT RUN image tag for ``instance``, building if needed."""

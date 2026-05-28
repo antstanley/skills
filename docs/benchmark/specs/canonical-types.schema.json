@@ -20,9 +20,9 @@
       "format": "date-time"
     },
     "ArmSlug": {
-      "description": "One of the five fixed ablation arms.",
+      "description": "One of the six fixed ablation arms.",
       "type": "string",
-      "enum": ["A0", "A1", "A2", "A3", "A4"]
+      "enum": ["A0", "A1", "A2", "A3", "A4", "A5"]
     },
     "GateKind": {
       "type": "string",

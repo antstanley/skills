@@ -322,7 +322,7 @@ def test_out_of_enum_gate_verdict_rejected() -> None:
 
 
 def test_out_of_enum_arm_slug_rejected() -> None:
-    """An ArmSlug outside the closed five-member set is rejected."""
+    """An ArmSlug outside the closed six-member set (A0–A5) is rejected."""
     with pytest.raises(DomainValidationError):
         Arm(
             slug="A9",

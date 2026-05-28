@@ -106,10 +106,18 @@ if TYPE_CHECKING:
 
 # --- named limits / constants ----------------------------------------------
 
-#: The closed set of arm slugs the ablation table reports on, in column order.
-#: Mirrors ``domain.ARM_SLUGS`` — re-exported here as a named local constant so
-#: the report's column order is obvious at the call site.
-ABLATION_ARMS: tuple[str, ...] = ARM_SLUGS
+#: The set of arm slugs the ablation table reports on, in column order: the
+#: A0–A4 PAIRWISE-DELTA arms (``02-arms.md`` §The pairwise deltas). This is the
+#: closed delta set, NOT every ``domain.ARM_SLUGS`` member: A5 is a lighter
+#: pre-canned variant added for gate-emission verification / a cheaper cost point
+#: and sits OUTSIDE the pairwise-delta chain (``02-arms.md`` §Decisions → *Six
+#: arms*), so it is excluded from the ablation table's delta rows. Derived from
+#: ``ARM_SLUGS`` (minus the non-delta arms) so the two stay in lockstep on the
+#: shared members.
+_NON_DELTA_ARMS: frozenset[str] = frozenset({"A5"})
+ABLATION_ARMS: tuple[str, ...] = tuple(
+    slug for slug in ARM_SLUGS if slug not in _NON_DELTA_ARMS
+)
 
 #: The four planned pairwise comparisons (``02-arms.md`` §The pairwise deltas).
 #: Each entry is ``(treatment, baseline, label, isolates)``. The label is the

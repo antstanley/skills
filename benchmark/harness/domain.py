@@ -98,8 +98,10 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9_-]*[a-z0-9])?$")
 #: Generated record-id pattern (RecordId $def): ``<prefix>_<uuid7>``.
 RECORD_ID_PATTERN = re.compile(r"^[a-z]+_[0-9a-f-]{36}$")
 
-#: The five fixed ablation arm slugs (ArmSlug $def). Closed set, never reused.
-ARM_SLUGS: tuple[str, ...] = ("A0", "A1", "A2", "A3", "A4")
+#: The six fixed ablation arm slugs (ArmSlug $def). Closed set, never reused.
+#: A0–A4 are the pairwise-delta arms; A5 is a lighter pre-canned (non-recursive)
+#: variant added for gate-emission verification + a cheaper cost-curve point.
+ARM_SLUGS: tuple[str, ...] = ("A0", "A1", "A2", "A3", "A4", "A5")
 
 #: Gate kinds (GateKind $def).
 GATE_KINDS: tuple[str, ...] = ("semi-formal-review", "validate-done-certificate")
