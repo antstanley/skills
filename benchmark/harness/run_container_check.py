@@ -1,7 +1,7 @@
 """OPT-IN live runtime verification of the ``container`` two-container split.
 
-Implements ``benchmark/specs/changes/2026-05-28-add_live_container_verification.md``
-→ §Proposed changes → ``05-harness-architecture.md`` §Runtime verification (the
+Implements the merged live-container-verification change spec →
+``05-harness-architecture.md`` §Runtime verification (the
 *provisioning + capture*, *integrity rule observed*, and *two-container scoring*
 bullets; Implementation notes steps 1-3). This is the containerised sibling of
 :mod:`benchmark.harness.run_local_demo`: where the local demo drives the

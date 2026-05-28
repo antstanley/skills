@@ -96,6 +96,22 @@ Without this separation, a workflow arm could discharge its gates against the ve
 
 ---
 
+## Runtime verification
+
+The integrity rule and the two-container split are enforced in code and covered by unit tests with injected backends; a separate **opt-in live self-test** proves they hold against real Docker and a real model, so `Status: Built` is runtime-checkable rather than review-only. It is gated behind `BENCHMARK_RUN_CONTAINER_LIVE=1` (mirroring the gate probe's `BENCHMARK_RUN_GATE_PROBE_LIVE`) and is skipped by default — CI and `check.sh` never pay its Docker or token cost. The entrypoint is `benchmark/harness/run_container_check.py`; the default-skipped pytest wrapper is `benchmark/tests/test_live_container.py`.
+
+When enabled, the self-test runs one greenfield instance end to end on the `container` backends and asserts, with known answers:
+
+- **Provisioning + capture.** The `container` `RunBackend` builds/loads the instance run image, runs a bounded real arm (A0 by default; A1/A2/A3 when a budget is supplied), and returns a `candidatePatch` plus an `ArtifactBundle`.
+- **The integrity rule, observed not assumed.** The run image carries no file from the instance's `hidden/` tree and no `failToPass` / `passToPass` selector content — checked by inspecting the provisioned image, not by trusting the build.
+- **Two-container scoring.** The `container` `ScoringBackend` stands up a *fresh* scoring image (hidden suite overlaid) distinct from the run container and produces a `ScoreReport` whose `resolved` verdict matches the `local` backend's verdict on the same patch — the shared resolution rule, proven identical across backends.
+- **Gate emission.** On A2 the captured certificates yield ≥ 1 `GateEvent` and on A3 zero, threaded onto the `TrialResult` exactly as the metrics consume them.
+- **The live `claude -p` gate probe.** `run_gate_probe` with the real `cli_review_gate` reviewer issues one bounded `claude -p` review of a known-bad diff and maps the returned verdict to `caughtBy` ([06-scoring-and-statistics.md](06-scoring-and-statistics.md) → §Gate-efficacy probes).
+
+A green run refreshes the `benchmark/tests/_a*_live_evidence/` bundles; the captured evidence remains the default, zero-cost regression surface for everything downstream.
+
+---
+
 ## Concurrency and reproducibility
 
 | Concern | Handling |
@@ -104,6 +120,7 @@ Without this separation, a workflow arm could discharge its gates against the ve
 | **Intra-arm parallelism** | A1/A2/A3 run `spec-builder`'s own wave scheduler *inside* the run container; that concurrency is the arm's, not the driver's. |
 | **Determinism** | Each Trial records its `seed`; locked dependencies (BenchFlow `uv.lock`-style) fix the toolchain. Residual agent nondeterminism is handled by repetition and Pass@k ([06-scoring-and-statistics.md](06-scoring-and-statistics.md)). |
 | **Infra failure** | A container that fails to provision or crashes mid-run sets the Trial to `failed` and is excluded from metrics and re-queued — distinct from a legitimate `resolved: false` ([01-domain-model.md](01-domain-model.md)). |
+| **Live verification** | The opt-in container self-test (`BENCHMARK_RUN_CONTAINER_LIVE=1`) runs serially against real Docker, bounded by a per-call budget cap; default-skipped so routine runs stay Docker-free and deterministic. |
 
 ---
 
@@ -121,6 +138,7 @@ benchmark/
     domain.py          # entity records (Campaign, Trial, ScoreReport, …; see 01)
     substrate.py       # the BenchFlow substrate finding (see §Substrate)
     run_local_demo.py  # Docker-free pipeline demo entrypoint
+    run_container_check.py  # opt-in live container + claude -p self-test (BENCHMARK_RUN_CONTAINER_LIVE)
   suites/              # TaskInstance records + greenfield skeletons + local-fixture + benchflow-probe (see 03)
 ```
 
@@ -142,6 +160,6 @@ benchmark/
 
 **Open questions**
 
-- *Greenfield image build.* What is the cleanest way to bake hidden tests into the scoring image while guaranteeing they are absent from the run image — two Dockerfiles from a shared base, or a build arg that gates the test layer?
+- *Greenfield image build.* **Resolved.** The two-image build (`benchmark/suites/greenfield_images.py`) builds a run image that copies only `base/` and a scoring image that overlays `hidden/`; the live runtime verification (§Runtime verification) confirms at runtime that the run image carries no hidden-test content. The build-arg-vs-two-Dockerfiles question is settled in favour of two Dockerfiles from a shared base.
 - *Patch extraction for parallel arms.* Deriving one clean `candidatePatch` from a multi-merge integration tip (shared with [01-domain-model.md](01-domain-model.md)) needs an implementation that survives conflict resolution without smuggling test files into the diff.
 - *Telemetry fidelity for A0.* Whether the plain baseline exposes token/cost counts at the same granularity as the plugin arms is unconfirmed.

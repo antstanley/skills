@@ -1,8 +1,8 @@
 # Change: Add live in-container runtime verification
 
-**Status:** Accepted · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Target:** apps/benchmark
+**Status:** Merged · **Date:** 2026-05-28 · **Merged:** 2026-05-28 · **Owner:** Ant Stanley · **Target:** apps/benchmark
 
-> Planned for build at [`docs/plans/2026-05-28-add_live_container_verification/`](../../../plans/2026-05-28-add_live_container_verification/plan.md).
+> Built at [`docs/plans/2026-05-28-add_live_container_verification/`](../../../../plans/2026-05-28-add_live_container_verification/plan.md) (all tasks Done, both gates passed) and merged into the canonical pages: 00 §Scope summary, 05 new §Runtime verification (+ §Concurrency row, §Implementation layout entry, resolved *Greenfield image build*), and the 06 live-probe cross-reference.
 
 Add an opt-in **live runtime verification** path that exercises the `container` backends end to end against a real Docker image — provisioning a run container, running a bounded real arm, capturing the patch + bundle, then scoring in a *separate* clean container with the hidden tests injected only there — and that drives the live `claude -p` gate probe to confirm its verdict mapping on an actual model call. Today the `container` backend, the two-container scoring split, and the live gate probe are covered only by unit tests with injected fakes and by the captured `benchmark/tests/_a*_live_evidence/` fixtures; nothing in the repo *executes* the Docker path or a real `claude -p` call and asserts the result. The benchmark's `Status: Built` therefore rests on code review plus replayed evidence, not on a runtime check. This change closes that gap with a self-contained, default-skipped verification suite — no change to the domain model, the arms, the metrics, or the scoring rule, only the prose that commits to the check and the harness that performs it.
 
@@ -14,7 +14,7 @@ The R2 spec-vs-code conformance review (2026-05-28) confirmed the implementation
 
 Two specific behaviors are unverified at runtime:
 
-1. **The two-container split on real Docker.** That the `container` `RunBackend` provisions from the instance `dockerImage`, that the run image genuinely carries no hidden test content, that the `container` `ScoringBackend` stands up a *fresh* image with the hidden suite overlaid, and that the shared resolution rule produces the same `resolved` verdict the `local` backend does on the same patch — these are the integrity backbone of the whole benchmark ([05-harness-architecture.md](../05-harness-architecture.md) → §Scoring isolation), and they are exactly what a fake-backed unit test cannot prove.
+1. **The two-container split on real Docker.** That the `container` `RunBackend` provisions from the instance `dockerImage`, that the run image genuinely carries no hidden test content, that the `container` `ScoringBackend` stands up a *fresh* image with the hidden suite overlaid, and that the shared resolution rule produces the same `resolved` verdict the `local` backend does on the same patch — these are the integrity backbone of the whole benchmark ([05-harness-architecture.md](../../05-harness-architecture.md) → §Scoring isolation), and they are exactly what a fake-backed unit test cannot prove.
 2. **The live `claude -p` gate-probe behavior.** `run_gate_probe` with the real `cli_review_gate` reviewer (not an injected callable) actually invoking `claude -p`, emitting a parseable `VERDICT:` line, and mapping a known-bad diff to `caughtBy = "semi-formal-review"`. The unit tests drive the mapping with a stub; the real call path (CLI present, JSON envelope shape, verdict line) is only documented, never run.
 
 A campaign is expensive and Docker-bound, so this verification must be **opt-in and bounded**, mirroring the existing `BENCHMARK_RUN_GATE_PROBE_LIVE` opt-in: skipped by default (CI, `check.sh`), runnable on demand by an operator who has Docker and accepts the cost. The output is a pass/fail self-test plus refreshed evidence, not a new metric.
@@ -25,9 +25,9 @@ A campaign is expensive and Docker-bound, so this verification must be **opt-in 
 
 | Canonical page | Nature of change |
 |---|---|
-| [`00-overview.md`](../00-overview.md) | §Scope summary: note that the built state is backed by an opt-in live runtime verification, and that automated live verification is the remaining gap closed here |
-| [`05-harness-architecture.md`](../05-harness-architecture.md) | Add a **§Runtime verification** subsection describing the opt-in end-to-end container self-test and its env gate; add a row to §Concurrency and reproducibility; add the verification entrypoint to §Implementation layout; resolve the *Greenfield image build* open question now that the two-image build is exercised live |
-| [`06-scoring-and-statistics.md`](../06-scoring-and-statistics.md) | §Gate-efficacy probes: note the live `claude -p` probe is part of the runtime-verification suite and that the live container scoring check reuses the same opt-in discipline |
+| [`00-overview.md`](../../00-overview.md) | §Scope summary: note that the built state is backed by an opt-in live runtime verification, and that automated live verification is the remaining gap closed here |
+| [`05-harness-architecture.md`](../../05-harness-architecture.md) | Add a **§Runtime verification** subsection describing the opt-in end-to-end container self-test and its env gate; add a row to §Concurrency and reproducibility; add the verification entrypoint to §Implementation layout; resolve the *Greenfield image build* open question now that the two-image build is exercised live |
+| [`06-scoring-and-statistics.md`](../../06-scoring-and-statistics.md) | §Gate-efficacy probes: note the live `claude -p` probe is part of the runtime-verification suite and that the live container scoring check reuses the same opt-in discipline |
 
 No new canonical page is added; the schema (`canonical-types.schema.json`) is unchanged — this change introduces no entity, field, or enum.
 

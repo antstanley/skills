@@ -4,7 +4,7 @@
 
 > **Built 2026-05-28.** Gate 1 (semi-formal-review): CORRECT — three CI guard tests (`evaluate_skip`/`main` skip cleanly) pass, the live test skips by default, README opt-in subsection complete. Gate 2 (validate-done-certificate): DONE — `pytest benchmark/tests` green (332 passed, 7 skipped).
 
-**Implements:** [changes/2026-05-28-add_live_container_verification.md](../../benchmark/specs/changes/2026-05-28-add_live_container_verification.md) → §Proposed changes → `05-harness-architecture.md` §Runtime verification (the default-skipped test surface) and §Implementation layout (the `run_container_check.py` entrypoint row); Implementation notes steps 6–7.
+**Implements:** [changes/2026-05-28-add_live_container_verification.md](../../benchmark/specs/changes/merged/2026-05-28-add_live_container_verification.md) → §Proposed changes → `05-harness-architecture.md` §Runtime verification (the default-skipped test surface) and §Implementation layout (the `run_container_check.py` entrypoint row); Implementation notes steps 6–7.
 **Depends on:** 01, 02
 **Produces:** `uv run pytest benchmark/tests/test_live_container.py` SKIPs cleanly without `BENCHMARK_RUN_CONTAINER_LIVE=1`; `benchmark/README.md` documents the opt-in and its Docker + `claude`-CLI + budget prerequisites.
 **Pointers:** skip pattern `@pytest.mark.skipif(os.environ.get(...) != "1", ...)` (`benchmark/tests/test_gate_probes.py:391`); the `run_container_check.py` functions from tasks 01–02; `benchmark/README.md` "how to run a campaign" section; `_a*_live_evidence/` bundle dirs under `benchmark/tests/`.

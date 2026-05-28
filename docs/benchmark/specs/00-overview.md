@@ -94,7 +94,7 @@ A **Campaign** fixes a model and runs every **Arm** over every **Suite** for a s
 | Oracle | Hidden `fail-to-pass` / `pass-to-pass`, plus a conformance judge | [06-scoring-and-statistics.md](06-scoring-and-statistics.md). The workflow's gates never see it. |
 | Substrate | BenchFlow `bench` SDK; Docker per trial | [05-harness-architecture.md](05-harness-architecture.md). jj and git both available in-container. |
 | Model | Fixed per campaign | A campaign variable, not a benchmark axis. |
-| Implementation | Built and tested | The whole pipeline ships under `benchmark/`; live arms verified end to end on the greenfield seed (`benchmark/tests/_a*_live_evidence/`). See [`benchmark/README.md`](../../../benchmark/README.md) for how to run a campaign. |
+| Implementation | Built and tested; live runtime verification opt-in | The whole pipeline ships under `benchmark/`; live arms verified end to end on the greenfield seed (`benchmark/tests/_a*_live_evidence/`). An opt-in self-test (`BENCHMARK_RUN_CONTAINER_LIVE=1`) executes the `container` backends and the live `claude -p` gate probe against real Docker on demand ([05-harness-architecture.md](05-harness-architecture.md) → §Runtime verification). See [`benchmark/README.md`](../../../benchmark/README.md) for how to run a campaign. |
 
 ---
 
