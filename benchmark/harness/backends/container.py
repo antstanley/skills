@@ -186,11 +186,16 @@ _CLAUDE_EXIT_OK = 0
 
 #: Wall-clock ceiling (seconds) for the full A1 workflow invocation inside the
 #: container. A1 is a RECURSIVE workflow (the orchestrator spawns spec-builder
-#: sub-agents that walk the plan DAG), so this is a HARD bound (~20 min) against a
+#: sub-agents that walk the plan DAG), so this is a HARD bound (~60 min) against a
 #: hung/runaway run — paired with the ``--max-budget-usd`` cap. An honest cap: if
 #: the workflow cannot finish within it, the run reports that with partial
-#: evidence rather than spinning forever.
-A1_RUN_TIMEOUT_SECONDS = 1200
+#: evidence rather than spinning forever. Raised from 20 min after a live
+#: container witness's gate-emission step ran a full recursive
+#: ``spec-planner``+``spec-builder`` workflow (arm A2) and was SIGKILLed at the
+#: prior 1200 s bound before the build could finish; this constant governs the
+#: A1/A2/A3 recursive-workflow run (``_run_workflow``) ONLY — the plain-agent
+#: (A0) and naive-parallel (A4) paths keep :data:`AGENT_RUN_TIMEOUT_SECONDS`.
+A1_RUN_TIMEOUT_SECONDS = 3600
 
 #: Wall-clock ceiling (seconds) for the cheap A1 FEASIBILITY PROBE — confirm the
 #: plugins load and a spec file starts being produced, before the full run.

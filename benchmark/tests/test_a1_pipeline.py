@@ -56,6 +56,9 @@ from benchmark.harness.backends import (
 from benchmark.harness.backends import container as container_mod
 from benchmark.harness.backends.container import (
     _ARTIFACT_EXCLUDE_PATHSPEC,
+    A1_RUN_TIMEOUT_SECONDS,
+    A4_AGENT_RUN_TIMEOUT_SECONDS,
+    AGENT_RUN_TIMEOUT_SECONDS,
     HOST_CREDENTIALS_PATH,
 )
 from benchmark.harness.domain import Arm, ArtifactBundle, Campaign, Telemetry
@@ -109,6 +112,42 @@ def test_a1_arm_is_the_full_pipeline_arm() -> None:
 
 def test_a1_arm_round_trips_through_the_schema() -> None:
     assert Arm.from_dict(A1.to_dict()) == A1
+
+
+def test_recursive_workflow_run_timeout_is_sixty_minutes() -> None:
+    """The A1/A2/A3 recursive-workflow run timeout is the raised 60-min bound.
+
+    A live container witness's gate-emission step ran a full recursive
+    spec-planner+spec-builder workflow (arm A2) and was SIGKILLed at the prior
+    1200 s (20-min) bound before the build could finish. The recursive-workflow
+    run timeout was raised to 3600 s (60 min) so a real recursive build has room.
+    """
+    assert A1_RUN_TIMEOUT_SECONDS == 3600
+
+
+def test_plain_agent_and_a4_timeouts_are_not_inflated_by_the_workflow_raise() -> None:
+    """Regression: only the recursive-workflow run timeout was raised.
+
+    The plain-agent (A0) bound and the A4 naive-parallel per-agent bound are a
+    DISTINCT constant from the recursive-workflow run timeout; raising the latter
+    must not move the former. A0/A4 agents are plain ``claude -p`` runs, not
+    recursive workflows, so they keep the 20-min plain-agent ceiling.
+    """
+    assert AGENT_RUN_TIMEOUT_SECONDS == 1200
+    assert A4_AGENT_RUN_TIMEOUT_SECONDS == AGENT_RUN_TIMEOUT_SECONDS
+    # The workflow timeout is strictly larger — it was raised, the plain one was not.
+    assert A1_RUN_TIMEOUT_SECONDS > AGENT_RUN_TIMEOUT_SECONDS
+
+
+def test_a1_max_budget_matches_the_3x_timeout_raise() -> None:
+    """A1's per-run budget cap was raised 3x to match the 3x timeout increase.
+
+    The recursive-workflow run timeout went 1200 s -> 3600 s (3x the wall-clock),
+    so the per-run dollar cap went 20.0 -> 60.0 (3x the budget). A2/A3 reuse this
+    cap and A4's total budget derives from it (see ``test_a4_arm`` for the A4
+    split), so this is the single source the whole recursive-arm budget tracks.
+    """
+    assert A1_MAX_BUDGET_USD == 60.0
 
 
 def test_a1_prompt_carries_the_problem_statement_and_the_three_stages() -> None:

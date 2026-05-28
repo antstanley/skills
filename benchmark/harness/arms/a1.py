@@ -85,7 +85,13 @@ A1_MODEL = "sonnet"
 #: a RECURSIVE workflow (the orchestrator spawns spec-builder sub-agents), so this
 #: cap is the named safety rail against an open-ended spend. Conservative on
 #: purpose; the live run reports honestly if it hits the cap before completing.
-A1_MAX_BUDGET_USD = 20.0
+#: Raised from 20.0 to match the 3× increase of the recursive-workflow run
+#: timeout (1200 s -> 3600 s; see ``A1_RUN_TIMEOUT_SECONDS`` in
+#: ``benchmark/harness/backends/container.py``): 3x the wall-clock budget warrants
+#: 3x the dollar budget. A2/A3 (``A2_A3_MAX_BUDGET_USD``) and A4
+#: (``A4_TOTAL_MAX_BUDGET_USD``) derive from this constant, so they track the new
+#: value; A4's per-agent cap recomputes as ``A4_TOTAL_MAX_BUDGET_USD / A4_N``.
+A1_MAX_BUDGET_USD = 60.0
 
 #: Cheap budget ceiling (USD) for the FEASIBILITY PROBE — a short, capped A1 run
 #: that confirms the plugins load and a spec file starts being produced, BEFORE

@@ -113,6 +113,10 @@ def test_a4_budget_is_matched_to_a1_total_and_split_per_agent() -> None:
     assert A4_PER_AGENT_MAX_BUDGET_USD == A4_TOTAL_MAX_BUDGET_USD / A4_N
     # The sum of the N per-agent caps can never exceed A1's cap.
     assert A4_PER_AGENT_MAX_BUDGET_USD * A4_N == A4_TOTAL_MAX_BUDGET_USD
+    # After A1's cap was raised 60.0 (3x, matching the recursive-workflow timeout
+    # raise), the derived per-agent cap recomputes to 60 / 4 = 15.0.
+    assert A4_TOTAL_MAX_BUDGET_USD == 60.0
+    assert A4_PER_AGENT_MAX_BUDGET_USD == 15.0
 
 
 def test_a4_slice_prompt_is_coordination_free_and_carries_the_problem() -> None:
