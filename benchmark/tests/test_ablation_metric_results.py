@@ -52,6 +52,7 @@ from benchmark.harness.driver import (
 from benchmark.harness.stats import (
     ABLATION_ARMS,
     APPLICABILITY,
+    COST_MATCHED_DELTA_METRIC_PREFIX,
     COST_ROBUSTNESS_METRIC_NAMES,
     METRIC_COLUMNS,
     OUTCOME_AND_ARTIFACT_METRIC_NAMES,
@@ -216,15 +217,25 @@ def test_every_applicable_arm_metric_pair_emitted_exactly_once() -> None:
         gate_escape_counts={"A1": (0, 5), "A2": (1, 5)},
     )
 
-    # The stream's universe of metric names is EXACTLY METRIC_COLUMNS (no
+    # The cost-matched delta rows are pairwise (one per PAIRWISE_DELTAS, named
+    # cost_matched_delta__<label>), not column rows — they are NOT in
+    # METRIC_COLUMNS. Filter them out of the column-universe assertions; the
+    # delta rows have their own test below.
+    column_results = [
+        r
+        for r in results
+        if not r.metricName.startswith(COST_MATCHED_DELTA_METRIC_PREFIX)
+    ]
+
+    # The stream's universe of column-metric names is EXACTLY METRIC_COLUMNS (no
     # unknown names, no missing names that apply somewhere).
-    emitted_names = {row.metricName for row in results}
+    emitted_names = {row.metricName for row in column_results}
     assert emitted_names == set(METRIC_COLUMNS)
 
     # Per metric, the set of arms that emitted EQUALS the applicable arm set.
     by_metric: dict[str, set[str]] = {m: set() for m in METRIC_COLUMNS}
     counts: dict[tuple[str, str], int] = {}
-    for row in results:
+    for row in column_results:
         by_metric[row.metricName].add(row.arm)
         counts[(row.arm, row.metricName)] = counts.get((row.arm, row.metricName), 0) + 1
 
@@ -280,7 +291,13 @@ def test_every_record_is_schema_valid() -> None:
         assert row.campaign == run.campaign.id
         assert row.suite == _SUITE
         assert row.arm in ABLATION_ARMS
-        assert row.metricName in METRIC_COLUMNS
+        # Column metrics are in METRIC_COLUMNS; pairwise cost-matched deltas
+        # are named cost_matched_delta__<label> (not a column, but still a
+        # schema-valid MetricResult).
+        if row.metricName.startswith(COST_MATCHED_DELTA_METRIC_PREFIX):
+            assert len(row.metricName) > len(COST_MATCHED_DELTA_METRIC_PREFIX)
+        else:
+            assert row.metricName in METRIC_COLUMNS
         assert row.nTrials >= 0
         assert row.ciLow <= row.value + _CI_TOL
         assert row.value <= row.ciHigh + _CI_TOL

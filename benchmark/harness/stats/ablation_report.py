@@ -333,20 +333,52 @@ class DeltaRow:
 
 
 @dataclass(frozen=True)
+class CostMatchedDeltaRow:
+    """One pairwise cost-matched delta row.
+
+    Same shape as :class:`DeltaRow` (label / arm pair / McNemar result + Holm-
+    Bonferroni adjustment) PLUS the per-comparison equal-budget cap ``budget``
+    on ``basis`` that defined "within budget" for both arms' instance bools.
+
+    Cost-matched deltas are adjusted as a SEPARATE Holm-Bonferroni family from
+    the raw deltas — see :func:`apply_holm_bonferroni_per_family` for the why.
+    """
+
+    label: str
+    treatment: str
+    baseline: str
+    isolates: str
+    mcnemar: McNemarResult
+    adjusted_p: float
+    significant_at_alpha: bool
+    budget: float
+    basis: CostBasis
+    alpha: float = HOLM_BONFERRONI_ALPHA
+    confidence_level: float = CONFIDENCE_LEVEL
+
+
+@dataclass(frozen=True)
 class AblationReport:
     """The full five-arm ablation table.
 
     ``arms`` carries one :class:`ArmRow` per arm in :data:`ABLATION_ARMS` order;
     ``deltas`` carries the four :class:`DeltaRow` rows in :data:`PAIRWISE_DELTAS`
-    order with their Holm-Bonferroni-adjusted p-values; ``cost_basis`` is the
-    basis the cost-matched %Resolved is computed against (DOLLARS by default).
-    ``budget`` is the equal-budget cap derived from the arms' costs.
+    order with their Holm-Bonferroni-adjusted p-values;
+    ``cost_matched_deltas`` carries the four :class:`CostMatchedDeltaRow` rows
+    in the same order, each with its per-comparison equal budget;
+    ``cost_basis`` is the basis the cost-matched %Resolved is computed against
+    (DOLLARS by default). ``budget`` is the equal-budget cap derived from
+    *all five arms*' costs — distinct from the per-comparison budgets on
+    each :class:`CostMatchedDeltaRow` (which are derived from the two arms in
+    that comparison only, per the spec's "equalising the budget across the two
+    arms" reading).
     """
 
     arms: tuple[ArmRow, ...]
     deltas: tuple[DeltaRow, ...]
     cost_basis: CostBasis
     budget: float
+    cost_matched_deltas: tuple[CostMatchedDeltaRow, ...] = ()
     alpha: float = HOLM_BONFERRONI_ALPHA
     metric_columns: tuple[str, ...] = field(default=METRIC_COLUMNS)
 
@@ -428,6 +460,41 @@ def apply_holm_bonferroni(
             raw_deltas, adjusted, strict=True
         )
     )
+
+
+def apply_holm_bonferroni_per_family(
+    raw_p_values: Sequence[float],
+    cost_matched_p_values: Sequence[float],
+    alpha: float = HOLM_BONFERRONI_ALPHA,
+) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    """Adjust two pairwise-delta families SEPARATELY via Holm-Bonferroni.
+
+    Two families: the raw paired-McNemar deltas (one per comparison) and the
+    cost-matched paired-McNemar deltas (one per comparison). They answer two
+    distinct questions about the same arm pair:
+
+    * the **raw** family asks "does the treatment resolve more instances than
+      the baseline at whatever spend each arm naturally drew?";
+    * the **cost-matched** family asks "does it still resolve more once both
+      arms are capped at the equal-budget cheaper arm's max?".
+
+    Adjusting them as ONE family of eight conflates these two questions and
+    weakens a marginal cost-matched signal whenever the raw family is strong
+    (and vice versa). The spec calls the cost-matched delta out as a SEPARATE
+    column in the §Confidence intervals and pairwise tests table; treating it
+    as a separate family preserves that distinction at correction time. The
+    eight-test alternative is statistically more conservative but conflates
+    the two readings.
+
+    Each family carries four planned comparisons (:data:`PAIRWISE_DELTAS`), so
+    the within-family family-wise error rate stays at ``α = 0.05`` per the
+    spec's pinned default. Returns ``(adjusted_raw, adjusted_cost_matched)`` in
+    the same input order as :func:`holm_bonferroni_adjusted_pvalues`.
+    """
+    _ = alpha  # The alpha is encoded by the caller's significant-at-α decision.
+    raw_adj = holm_bonferroni_adjusted_pvalues(raw_p_values)
+    cost_adj = holm_bonferroni_adjusted_pvalues(cost_matched_p_values)
+    return raw_adj, cost_adj
 
 
 # --- per-arm slicing helpers -------------------------------------------------
@@ -647,6 +714,68 @@ def build_arm_row(
     )
 
 
+def _arm_costs_for_pair(run: CampaignRun, arm: str, basis: CostBasis) -> list[float]:
+    """Per-trial cost of an arm's scored trials on ``basis``.
+
+    Mirrors the per-arm cost-list extraction in :func:`_budget_for_run`, isolated
+    so the pairwise per-pair-budget derivation can reuse it without recomputing
+    over all five arms. Skips results without an ArtifactBundle (defensive — the
+    driver guarantees one for scored trials).
+    """
+    costs: list[float] = []
+    for r in _arm_scored_results(run, arm):
+        if r.bundle is None:
+            continue
+        tel = r.bundle.telemetry
+        if basis is CostBasis.DOLLARS:
+            costs.append(float(tel.costUsd))
+        elif basis is CostBasis.TOKENS:
+            costs.append(float(tel.inputTokens + tel.outputTokens))
+        else:  # WALL_CLOCK
+            costs.append(float(tel.wallClockSeconds))
+    return costs
+
+
+def _arm_instance_cost_matched_resolved(
+    run: CampaignRun,
+    arm: str,
+    *,
+    budget: float,
+    basis: CostBasis,
+) -> dict[str, bool]:
+    """Per-instance bool: ``cost(trial) <= budget AND resolved`` for ANY trial.
+
+    Cost-matched analogue of
+    :func:`benchmark.harness.stats.outcome._arm_instance_resolved`. The pairing
+    reduction is the same ``any``-over-trials rule
+    (:func:`benchmark.harness.stats.outcome._instance_resolved_any`): an
+    instance is "cost-matched resolved" for the arm iff any of the arm's
+    trials on that instance both came in within budget AND reported resolved.
+
+    The denominator of the McNemar pairing is the set of instances both arms
+    scored — :func:`mcnemar_delta` intersects the two bool maps; a missing
+    instance (the arm did not score it) is distinct from a False bool.
+    """
+    arm_results = _arm_scored_results(run, arm)
+    by_instance: dict[str, list[bool]] = {}
+    for result in arm_results:
+        if result.report is None or result.bundle is None:
+            continue
+        tel = result.bundle.telemetry
+        if basis is CostBasis.DOLLARS:
+            cost = float(tel.costUsd)
+        elif basis is CostBasis.TOKENS:
+            cost = float(tel.inputTokens + tel.outputTokens)
+        else:  # WALL_CLOCK
+            cost = float(tel.wallClockSeconds)
+        within_and_resolved = cost <= budget and result.report.resolved
+        by_instance.setdefault(result.trial.taskInstance, []).append(
+            within_and_resolved
+        )
+    # Same any-over-trials reduction _arm_instance_resolved uses.
+    return {instance: any(trials) for instance, trials in by_instance.items()}
+
+
 def _budget_for_run(run: CampaignRun, arms: Sequence[str], basis: CostBasis) -> float:
     """Derive the equal-budget cap from the requested arms' per-trial costs.
 
@@ -729,11 +858,24 @@ def build_ablation_report(
 
     deltas = apply_holm_bonferroni(raw_deltas, alpha=alpha)
 
+    # Cost-matched deltas: one McNemar per pairwise comparison, where the
+    # per-instance bool is "cost(trial) <= B AND resolved" at the SHARED equal
+    # budget B derived from the two arms in the comparison only — the spec's
+    # "equalising the budget across the two arms" reading. Built by the
+    # single-source helper so :func:`ablation_metric_results` and the renderer
+    # agree on every comparison's budget, McNemar result, and adjusted-p.
+    # Holm-Bonferroni: raw and cost-matched are TWO SEPARATE families of four,
+    # both at α — see :func:`apply_holm_bonferroni_per_family` for the why.
+    cost_matched_deltas = _build_cost_matched_delta_rows(
+        run, cost_basis=cost_basis, alpha=alpha
+    )
+
     return AblationReport(
         arms=arm_rows,
         deltas=deltas,
         cost_basis=cost_basis,
         budget=budget,
+        cost_matched_deltas=cost_matched_deltas,
         alpha=alpha,
     )
 
@@ -1043,6 +1185,95 @@ _OUTCOME_AND_ARTIFACT_EMITTERS: dict[
     METRIC_GATE_ESCAPE_RATE: gate_escape_rate_metric_result,
 }
 
+#: Prefix for the four cost-matched-delta MetricResult names. The full
+#: metricName is ``cost_matched_delta__<label>`` where ``<label>`` is the
+#: ASCII-safe form of the comparison label (e.g. ``a1_minus_a0``).
+COST_MATCHED_DELTA_METRIC_PREFIX: str = "cost_matched_delta__"
+
+#: Encoded as 0.0 for "not significant at α", 1.0 for "significant at α".
+#: Mirrors :func:`dag_validity_metric_result`'s 1.0/0.0 encoding of a bool in a
+#: float-only schema slot.
+_SIGNIFICANT_FLAG_TRUE: float = 1.0
+_SIGNIFICANT_FLAG_FALSE: float = 0.0
+
+
+def _cost_matched_delta_metric_name(label: str) -> str:
+    """ASCII-safe metricName for a cost-matched delta row.
+
+    Lowercases and replaces the U+2212 MINUS SIGN in ``A1−A0``-style labels
+    with ``_minus_`` so the metricName fits a typical ASCII-only metric
+    namespace (the schema only requires minLength=1; this is the convention
+    matched by the task spec's example ``cost_matched_delta__a1_minus_a0``).
+    """
+    return COST_MATCHED_DELTA_METRIC_PREFIX + label.lower().replace("−", "_minus_")
+
+
+def cost_matched_delta_metric_result(
+    *,
+    campaign: str,
+    suite: str,
+    row: CostMatchedDeltaRow,
+    n_trials: int,
+) -> MetricResult:
+    """Emit one ``cost_matched_delta__<label>`` MetricResult.
+
+    Chosen shape (documented because ``ablation_metric_results`` does not
+    currently emit delta-row MetricResults — the four cost-matched deltas are
+    the first delta rows on the metric stream):
+
+    * ``arm`` = the TREATMENT arm (e.g. ``A1`` for ``A1−A0``). A pairwise
+      delta spans two arms; the treatment is the one whose effect the row
+      attributes. This matches the column-ordering convention the rendered
+      table uses (treatment listed first in every label).
+    * ``metricName`` = ``cost_matched_delta__<label>`` per the task spec —
+      one of ``cost_matched_delta__a1_minus_a0``,
+      ``cost_matched_delta__a1_minus_a2``,
+      ``cost_matched_delta__a2_minus_a3``,
+      ``cost_matched_delta__a1_minus_a4``.
+    * ``value`` = the cost-matched Δ%Resolved (treatment − baseline) as a
+      proportion in ``[-1.0, 1.0]`` — matches the units the rendered bullet
+      uses (rendered as percentage points; the metric stream stays in
+      proportion-space).
+    * ``ciLow``, ``ciHigh`` encode BOTH the no-closed-form-CI fact and the
+      Holm-Bonferroni-adjusted significance flag, respecting the MetricResult
+      schema invariant ``ciLow <= value <= ciHigh``:
+
+      - When the Holm-Bonferroni-adjusted p ≤ α (**significant**):
+        ``ciLow == ciHigh == value`` — degenerate point interval, the
+        "Holm-adjusted decision rejected H0: delta = 0" reading (same shape as
+        the speedup emitter's point-in-both-bounds convention).
+      - When the adjusted p > α (**not significant**):
+        ``ciLow = min(value, 0.0)``; ``ciHigh = max(value, 0.0)`` — an
+        interval that contains zero, the "Holm-adjusted decision failed to
+        reject H0: delta = 0 is consistent with the data" reading.
+
+      A consumer recovers the flag with
+      ``ci_low == ci_high == value`` ⇔ significant. The two encodings are
+      mutually exclusive (a non-zero delta with ``ci_low == ci_high`` cannot
+      also straddle zero); both keep the schema invariant.
+
+    * ``nTrials`` = the number of paired instances ``mcn.n_pairs`` — the
+      number of trials that fed the McNemar test (each arm contributes one
+      bool per instance). Matches the "n" the rendered bullet shows.
+    """
+    delta = row.mcnemar.delta
+    if row.significant_at_alpha:
+        ci_low = delta
+        ci_high = delta
+    else:
+        ci_low = min(delta, 0.0)
+        ci_high = max(delta, 0.0)
+    return _metric_result(
+        campaign=campaign,
+        arm=row.treatment,
+        suite=suite,
+        metric_name=_cost_matched_delta_metric_name(row.label),
+        value=delta,
+        ci_low=ci_low,
+        ci_high=ci_high,
+        n_trials=n_trials,
+    )
+
 
 def ablation_metric_results(
     run: CampaignRun,
@@ -1168,7 +1399,102 @@ def ablation_metric_results(
             if emitted is not None:
                 out.append(emitted)
 
+    # Path 3: the four cost-matched pairwise-delta rows. Distinct from the
+    # column emitters above — these are pairwise deltas, not single-arm metric
+    # cells. The metricName is ``cost_matched_delta__<label>`` (one per
+    # PAIRWISE_DELTAS); the ``arm`` slot carries the TREATMENT arm (delta
+    # rows span two arms; the treatment is the one whose effect the row
+    # attributes). The Holm-Bonferroni adjustment is applied within the
+    # cost-matched family of four — separate from the raw-delta family.
+    #
+    # Negative-space rule for the metric stream: emit the delta record only
+    # when BOTH arms in the comparison have at least one scored trial — same
+    # arms-with-scored-trials rule the column-metric paths use. A comparison
+    # whose treatment OR baseline went un-sampled would carry a meaningless
+    # treatment-arm slug into the stream (the un-sampled arm contributes no
+    # bool map); the in-memory :class:`CostMatchedDeltaRow` still carries it
+    # (n_pairs == 0) so the rendered report preserves the structural row.
+    cost_matched_rows = _build_cost_matched_delta_rows(run, cost_basis=cost_basis)
+    scored_arms = {arm_slug for arm_slug in arm_rows}
+    for cmd_row in cost_matched_rows:
+        if cmd_row.treatment not in scored_arms or cmd_row.baseline not in scored_arms:
+            continue
+        out.append(
+            cost_matched_delta_metric_result(
+                campaign=campaign_id,
+                suite=suite,
+                row=cmd_row,
+                n_trials=cmd_row.mcnemar.n_pairs,
+            )
+        )
+
     return out
+
+
+def _build_cost_matched_delta_rows(
+    run: CampaignRun,
+    *,
+    cost_basis: CostBasis,
+    alpha: float = HOLM_BONFERRONI_ALPHA,
+) -> tuple[CostMatchedDeltaRow, ...]:
+    """Build the four :class:`CostMatchedDeltaRow`s for a CampaignRun.
+
+    Shared single-source helper for :func:`build_ablation_report` and
+    :func:`ablation_metric_results`. Computes a per-pair equal budget B over
+    just the two arms in each comparison (spec: "equalising the budget across
+    the two arms"), caches the per-(arm, budget) cost-matched bool maps, runs
+    the existing :func:`mcnemar_delta` to get a McNemar result per comparison,
+    then applies Holm-Bonferroni within the cost-matched family of four —
+    SEPARATE from the raw-delta family (see
+    :func:`apply_holm_bonferroni_per_family`).
+    """
+    arm_cost_cache: dict[str, list[float]] = {}
+    bool_map_cache: dict[tuple[str, float], dict[str, bool]] = {}
+    cost_matched_mcnemars: list[tuple[str, str, str, str, McNemarResult, float]] = []
+    for treatment, baseline, label, isolates in PAIRWISE_DELTAS:
+        for arm in (treatment, baseline):
+            if arm not in arm_cost_cache:
+                arm_cost_cache[arm] = _arm_costs_for_pair(run, arm, cost_basis)
+        treat_costs = arm_cost_cache[treatment]
+        base_costs = arm_cost_cache[baseline]
+        if treat_costs and base_costs:
+            pair_budget = equal_budget_for_arms(
+                {treatment: treat_costs, baseline: base_costs}
+            )
+        else:
+            pair_budget = 0.0
+        for arm in (baseline, treatment):
+            key = (arm, pair_budget)
+            if key not in bool_map_cache:
+                bool_map_cache[key] = _arm_instance_cost_matched_resolved(
+                    run, arm, budget=pair_budget, basis=cost_basis
+                )
+        base_bools = bool_map_cache[(baseline, pair_budget)]
+        treat_bools = bool_map_cache[(treatment, pair_budget)]
+        mcn = mcnemar_delta(base_bools, treat_bools)
+        cost_matched_mcnemars.append(
+            (label, treatment, baseline, isolates, mcn, pair_budget)
+        )
+
+    cm_p = [row[4].p_value for row in cost_matched_mcnemars]
+    cm_adj = holm_bonferroni_adjusted_pvalues(cm_p)
+    return tuple(
+        CostMatchedDeltaRow(
+            label=label,
+            treatment=treatment,
+            baseline=baseline,
+            isolates=isolates,
+            mcnemar=mcn,
+            adjusted_p=adj_p,
+            significant_at_alpha=adj_p <= alpha,
+            budget=pair_budget,
+            basis=cost_basis,
+            alpha=alpha,
+        )
+        for (label, treatment, baseline, isolates, mcn, pair_budget), adj_p in zip(
+            cost_matched_mcnemars, cm_adj, strict=True
+        )
+    )
 
 
 # --- rendering --------------------------------------------------------------
@@ -1300,6 +1626,29 @@ def _delta_line(row: DeltaRow) -> str:
     )
 
 
+def _cost_matched_delta_line(row: CostMatchedDeltaRow) -> str:
+    """Render one cost-matched pairwise-delta row as a Markdown line.
+
+    Same shape as :func:`_delta_line` plus the per-comparison equal-budget cap
+    ``B`` (so a reader sees the budget the bool map was capped at without
+    cross-referencing the section preamble).
+    """
+    mcn = row.mcnemar
+    kind = "exact binomial" if mcn.exact else "chi-square_1"
+    flag = "**significant**" if row.significant_at_alpha else "not significant"
+    return (
+        f"- **Cost-matched delta {row.label}** "
+        f"({row.isolates}; paired, n={mcn.n_pairs}; "
+        f"B={row.budget:.4f} {row.basis.value}): "
+        f"Δ%Resolved = {mcn.delta * 100:+.1f} pp; "
+        f"McNemar χ² = {mcn.statistic:.3f} (cc), "
+        f"p = {mcn.p_value:.4f} ({kind}); "
+        f"discordant b={mcn.b}, c={mcn.c}; "
+        f"Holm-Bonferroni adjusted p = {row.adjusted_p:.4f} "
+        f"({flag} at α = {row.alpha})."
+    )
+
+
 def render_ablation_report(report: AblationReport) -> str:
     """Render an :class:`AblationReport` as a deterministic Markdown table.
 
@@ -1348,12 +1697,36 @@ def render_ablation_report(report: AblationReport) -> str:
     for d in report.deltas:
         delta_section.append(_delta_line(d))
 
-    return "\n".join(preamble + [header_line, rule_line, *body_lines, *delta_section])
+    cost_matched_section: list[str] = []
+    if report.cost_matched_deltas:
+        cost_matched_section = [
+            "",
+            "### Cost-matched pairwise deltas",
+            "",
+            f"_Cost basis: {report.cost_basis.value}. Each comparison's "
+            "equal-budget cap ``B`` is derived from the two arms in that "
+            "comparison only (per-comparison budgets are stated on each "
+            "bullet)._",
+            "",
+            "_Multiple-comparison correction: Holm-Bonferroni at α = "
+            f"{report.alpha} across the four cost-matched deltas, applied "
+            "as a SEPARATE family from the raw pairwise deltas (preserves "
+            "the spec's α = 0.05 per-comparison family-wise rate per reading)._",
+            "",
+        ]
+        for cmd in report.cost_matched_deltas:
+            cost_matched_section.append(_cost_matched_delta_line(cmd))
+
+    return "\n".join(
+        preamble
+        + [header_line, rule_line, *body_lines, *delta_section, *cost_matched_section]
+    )
 
 
 __all__ = [
     "ABLATION_ARMS",
     "APPLICABILITY",
+    "COST_MATCHED_DELTA_METRIC_PREFIX",
     "GATED_ARMS",
     "HOLM_BONFERRONI_ALPHA",
     "METRIC_COLUMNS",
@@ -1379,12 +1752,15 @@ __all__ = [
     "PLAN_PRODUCING_ARMS",
     "AblationReport",
     "ArmRow",
+    "CostMatchedDeltaRow",
     "DeltaRow",
     "ablation_metric_results",
     "apply_holm_bonferroni",
+    "apply_holm_bonferroni_per_family",
     "build_ablation_report",
     "build_arm_row",
     "conformance_metric_result",
+    "cost_matched_delta_metric_result",
     "dag_validity_metric_result",
     "gate_catch_rate_metric_result",
     "gate_escape_rate_metric_result",
