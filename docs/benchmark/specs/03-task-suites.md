@@ -79,13 +79,21 @@ The suite is not part of the ablation result; it is harness infrastructure. Real
 ```
 benchmark/
   suites/
+    greenfield.py            # in-Python InstanceSpecs → TaskInstance records (constructed at load time)
+    greenfield_images.py     # two-image build (run image + scoring image) per instance
     greenfield-features/
-      instances.jsonl        # TaskInstance records, validated against canonical-types.schema.json
-      <slug>/                # per-instance skeleton repo + withheld test suite
-    local-fixture/           # bundled fixture repo + hidden tests + goldPatch (Docker-free)
+      <slug>/
+        repo/
+          base/              # run-visible skeleton (and the passToPass smoke tests)
+          hidden/            # withheld failToPass acceptance suite
+        given_spec/          # frozen A2/A3 spec (see §Per-instance assets)
+        reference/           # optional private reference solution (see §Per-instance assets)
+    local_fixture.py         # bundled fixture loader + GOLD_PATCH
+    local-fixture/
+      repo/{base,hidden}/    # Docker-free fixture (run-visible base + hidden tests)
 ```
 
-Instance records conform to the `TaskInstance` `$def` in [`canonical-types.schema.json`](canonical-types.schema.json). The withheld test suites live beside the instances but are injected only into the *scoring* container, never the run container ([05-harness-architecture.md](05-harness-architecture.md)).
+`TaskInstance` records are constructed in Python from `InstanceSpec` constants in `greenfield.py` (and `local_fixture.py`) and re-validated against the `TaskInstance` `$def` in [`canonical-types.schema.json`](canonical-types.schema.json) on construction — so a stale spec fails at load time, not in a downstream metric. There is no separate on-disk JSONL form; the in-Python authoring is the source of truth, chosen because instances carry multi-line prose `problemStatement`s and structured tag tuples that read better as Python than as one-line JSONL. The withheld test suites live beside the instances but are injected only into the *scoring* container, never the run container ([05-harness-architecture.md](05-harness-architecture.md)).
 
 The agent run image (the run image plus a non-root user with the `claude` CLI installed) is built from the run image and described under [05-harness-architecture.md](05-harness-architecture.md) → §Run container.
 
