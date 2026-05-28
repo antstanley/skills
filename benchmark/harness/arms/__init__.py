@@ -43,6 +43,16 @@ from benchmark.harness.arms.a2_a3 import (
     a3_prompt,
     extract_gate_events,
 )
+from benchmark.harness.arms.a4 import (
+    A4,
+    A4_MODEL,
+    A4_N,
+    A4_PER_AGENT_MAX_BUDGET_USD,
+    A4_SLICE_INSTRUCTION,
+    A4_SLUG,
+    A4_TOTAL_MAX_BUDGET_USD,
+    a4_slice_prompt,
+)
 
 __all__ = [
     "A0",
@@ -71,6 +81,13 @@ __all__ = [
     "A2_SLUG",
     "A3",
     "A3_SLUG",
+    "A4",
+    "A4_MODEL",
+    "A4_N",
+    "A4_PER_AGENT_MAX_BUDGET_USD",
+    "A4_SLICE_INSTRUCTION",
+    "A4_SLUG",
+    "A4_TOTAL_MAX_BUDGET_USD",
     "AUTH_PROBE_MAX_BUDGET_USD",
     "GIVEN_SPEC_CONTAINER_RELPATH",
     "GIVEN_SPEC_QUALITY_BAR",
@@ -79,5 +96,6 @@ __all__ = [
     "a1_prompt",
     "a2_prompt",
     "a3_prompt",
+    "a4_slice_prompt",
     "extract_gate_events",
 ]
