@@ -38,9 +38,13 @@ Identical to A1 except `spec-creator` does not run; a ready-made spec is provide
 
 Identical to A2 except `spec-builder`'s two gates — `semi-formal-review` (correctness) and `validate-done-certificate` (completeness) — are disabled. The implementer's self-report decides task completion. Isolates the value of the gates, which is the workflow's central claim ("a task is only done when proven done by someone other than its builder").
 
+The gate ON vs OFF difference becomes observable through `spec-builder`'s discharged done-certificates: a gates-on run (A1, A2) emits one `GateEvent` per discharged certificate whose `VERDICT:` line carries a `GATE_VERDICTS` value (PASS / FAIL / PARTIAL / UNVERIFIED), parsed by `extract_gate_events` in `benchmark/harness/arms/a2_a3.py`; a gates-off run (A3) leaves the authored `(blank …)` placeholder and emits no events. So A2 surfaces ≥ 1 `GateEvent` and A3 surfaces zero on the same instance, observable from `ArtifactBundle.certificateArtifacts` plus the threaded `TrialResult.gate_events` ([05-harness-architecture.md](05-harness-architecture.md) → §Responsibilities → GateEvent threading).
+
 ### A4 — Parallel but unstructured
 
 A naive N-way decomposition of the problem across parallel agents, with no dependency-ordered DAG, no per-task definition of done, and no gates. Controls for the possibility that any A1 gain is merely the effect of running several agents at once rather than of the spec-driven structure. `N` is set to match A1's typical task count on the same instance so the parallelism budget is comparable.
+
+The N per-agent diffs are merged naively: each diff is applied with plain `git apply` in agent-index order, the first applier wins, and any overlapping diff that fails to apply is **recorded as a merge conflict** (in `ContainerRunBackend.last_merge_conflicts`) rather than 3-way-resolved. The merged candidate patch is `git diff <base>..HEAD` after the apply pass. This is the point of A4: an arm with no structure has no principled way to resolve conflicts between agents, so surfacing the conflict — not papering over it — is the honest reading. The merge-conflict rate appears as a robustness metric ([04-metrics.md](04-metrics.md) → Bucket 4).
 
 ---
 
@@ -98,10 +102,10 @@ Arms are configuration, not code branches: each is an `Arm` record ([`canonical-
 
 - *Five arms, closed set.* **A0–A4.** Each isolates one stage in a pair; more arms would add cost without isolating a new stage. The set is fixed so cross-campaign comparison is stable.
 - *A3 ablates gates against A2, not A1.* **A2 − A3 is the gate delta.** Holding spec-authoring out of the comparison keeps the gate effect from being confounded with the spec-authoring effect.
-- *A4 matches A1's parallelism budget.* **`N` ≈ A1's task count.** Equalising the concurrency budget is what makes A1 − A4 a test of *structure* rather than of *how many agents ran*.
+- *A4 matches A1's parallelism budget on both dollars and concurrency.* **`N ≈ A1's task count` and total `--max-budget-usd` matched.** `A4_TOTAL_MAX_BUDGET_USD = A1_MAX_BUDGET_USD` and each agent's cap is `A4_TOTAL_MAX_BUDGET_USD / A4_N` (`benchmark/harness/arms/a4.py:115, 120`), so the sum of A4's per-agent caps equals A1's single-run cap by construction. Without the dollar match, A1 − A4 would partly measure who got a bigger budget rather than what structure adds over raw parallelism.
+- *Given-spec provenance for A2/A3.* **A frozen, human-authored spec per instance**, checked into the suite at `benchmark/suites/greenfield-features/<slug>/given_spec/given_spec.md` and consumed identically (same bytes) by both A2 and A3. Authored once to the fixed quality bar named in `benchmark/harness/arms/a2_a3.py::GIVEN_SPEC_QUALITY_BAR` (overview → domain model and invariants → one contract section per component with ≥2 worked examples → definition of done). A per-run `spec-creator` pass would make A2 partly re-measure spec-creator (defeating A1 − A2) and inject run-to-run spec variance into A2 − A3; a human-frozen shared asset removes both confounds.
+- *A4 decomposition policy.* **A fixed, prompt-only N-way split with no intelligent planning.** All `N` agents receive the identical full `problemStatement` plus a coordination-free framing ("you are agent _i_ of _N_ working concurrently with no coordination and no shared plan; implement your share"). No coordinator chooses the slices — a component partition was rejected because producing a sensible partition is itself planning, which would smuggle (un-gated) planning value into A1 − A4. The fixed template lives in `benchmark/harness/arms/a4.py::A4_SLICE_INSTRUCTION`; `N = A4_N = 4`, matching A1's typical task count on the seed.
 
 **Open questions**
 
 - *Planning is not independently isolated.* No single-variable pair isolates `spec-planner`'s contribution — A1 − A4 bundles spec authoring, planning, gates, and structure, and the closed five-arm set has no "build from a hand-given plan, no planner" arm. Should a sixth arm be added to isolate planning, or is the bundled A1 − A4 reading acceptable for the benchmark's purpose?
-- *Given-spec provenance for A2/A3.* Should the handed-in spec be authored by `spec-creator` in a separate pass (risking that A2 then partly measures spec-creator anyway), by a human, or drawn from the greenfield suite's authoring materials? The choice affects what A1 − A2 means.
-- *A4 decomposition policy.* What counts as a fair "naive split" — fixed file/region partition, or a single unstructured "split this N ways" prompt — needs pinning so A4 is reproducible.

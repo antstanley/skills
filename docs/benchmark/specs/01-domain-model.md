@@ -19,7 +19,7 @@ Mutable, human-meaningful entities carry a **stable slug**; per-execution record
 |---|---|
 | `A0`–`A4` (slug) | Arm |
 | suite slug (`greenfield-features`, `local-fixture`) | Suite |
-| task slug (suite-scoped, e.g. `greenfield__url_shortener`) | TaskInstance |
+| task slug (suite-scoped, e.g. `greenfield__text_toolkit__0001`) | TaskInstance |
 | `camp_` | Campaign |
 | `trial_` | Trial |
 | `bundle_` | ArtifactBundle |
@@ -203,6 +203,28 @@ queued ─► provisioning ─► running ─► captured ─► scored ─► a
 | All GateEvents for a Trial | Gate-efficacy and retry-count analysis. |
 | All ScoreReports with `gateEscape` true | False-`Done` escape rate — the headline gate metric. |
 | Telemetry summed over an Arm | Cost-matched resolution ([04-metrics.md](04-metrics.md)). |
+
+---
+
+## Persistence
+
+Entity records are read and written as JSON, validated against [`canonical-types.schema.json`](canonical-types.schema.json) on both sides of the boundary. The persistence helpers in `benchmark/harness/domain.py` are:
+
+- `dump_jsonl(records, path)` / `load_jsonl(record_type, path)` / `iter_jsonl(record_type, path)` — one JSON object per line, used for collections of homogeneous records (a campaign's trials, an arm's score reports, the gate-event log).
+- `dump_json(record, path)` / `load_json(record_type, path)` — one JSON object per file, used for singleton records (an ArtifactBundle, a Campaign).
+
+Every `load_*` call re-validates against the schema before constructing the dataclass, so a stale or partially-written record fails at read time rather than poisoning a downstream computation. The on-disk shape is the same as the JSON the schema describes; there is no separate serialised form.
+
+---
+
+## Runtime aggregates
+
+The driver returns two in-memory aggregates that group the entities defined above:
+
+- **`TrialResult`** (`benchmark/harness/driver/scheduler.py`) — the outcome of driving one Trial through the lifecycle. Carries the `Trial`, its `ArtifactBundle` and `ScoreReport` (both `None` for a `failed` trial), the `fault` string for the re-queue log, and the `GateEvent`s the run backend surfaced for the trial. Properties `is_scored` and `is_failed` partition trials into the two metric-relevant buckets.
+- **`CampaignRun`** — the rollup over a Campaign's `TrialResult`s. Exposes `score_reports`, `scored_results`, `failed_results`, `gate_events`, and `raw_resolved_rate` as the canonical access surface for the §Required query patterns above. The whole stats layer (`benchmark/harness/stats/`) consumes a `CampaignRun`; downstream callers never iterate raw `results` lists.
+
+Neither aggregate is persisted to disk — they are the per-process view a campaign run produces. Persisting requires writing the underlying entities through the JSONL helpers above.
 
 ---
 

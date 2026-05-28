@@ -1,6 +1,6 @@
 # Change: Document shipped public surfaces the canonical spec does not name
 
-**Status:** Proposed · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Target:** apps/benchmark
+**Status:** Merged · **Date:** 2026-05-28 · **Merged:** 2026-05-28 · **Owner:** Ant Stanley · **Target:** apps/benchmark
 
 The benchmark harness ships several public surfaces — persistence helpers, runtime aggregates, an arm-or-solver interface alias, the A4 budget-matching invariant, the A4 naive-merge policy, gate observability via parsed certificates, three per-instance suite assets, GateEvent threading off the run backend, the McNemar pairing-reduction rule, the InjectedDefect taxonomy, and the live-probe verdict mapping — that the canonical spec set never names in its body. Each is a real surface a reader needs to understand the system; each lives in code as named constants, public dataclasses, or documented module-level functions. This change spec adds spec body for them, distributed across the pages that own each surface. **No schema changes** — every field involved already exists in `canonical-types.schema.json`; the gap is in the prose that describes how the fields are used and where they are produced.
 
@@ -10,7 +10,7 @@ The benchmark harness ships several public surfaces — persistence helpers, run
 
 A canonical spec is "the canonical definition of what exists in the current branch". When a public surface ships without ever being named in the spec body, two things break. First, a reader has no way to discover the surface from the spec — they have to read the code and reconstruct the model. Second, the spec stops being a faithful map of the codebase, so subsequent edits cannot trust it as a base.
 
-The R2 review consolidated under [`docs/plans/2026-05-27-spec_workflow_benchmark/plan.md`](../../../plans/2026-05-27-spec_workflow_benchmark/plan.md) catalogued these gaps page by page. Each one is small in isolation — one paragraph or one table row — but together they cover ten public surfaces across five canonical pages. Routing them through one change spec keeps the merge mechanical and lets the reader see the whole shape at once.
+The R2 review consolidated under [`docs/plans/2026-05-27-spec_workflow_benchmark/plan.md`](../../../../plans/2026-05-27-spec_workflow_benchmark/plan.md) catalogued these gaps page by page. Each one is small in isolation — one paragraph or one table row — but together they cover ten public surfaces across five canonical pages. Routing them through one change spec keeps the merge mechanical and lets the reader see the whole shape at once.
 
 A separate companion change spec ([`2026-05-28-promote_built_state_and_resolved_decisions.md`](2026-05-28-promote_built_state_and_resolved_decisions.md)) handles the *other* axis of divergence — built reality the spec asserts is not built yet, and Open questions the build resolved. That change spec edits framing and Decisions; this one adds new body.
 
@@ -20,11 +20,11 @@ A separate companion change spec ([`2026-05-28-promote_built_state_and_resolved_
 
 | Canonical page | Nature of change |
 |---|---|
-| [`01-domain-model.md`](../01-domain-model.md) | Add §Persistence subsection (`dump_jsonl` / `load_jsonl` / `dump_json` / `load_json` / `iter_jsonl`); add §Runtime aggregates subsection (`TrialResult`, `CampaignRun`) |
-| [`02-arms.md`](../02-arms.md) | Extend the *A4 matches A1's parallelism budget* Decision to record the **dollar-budget matching** invariant; add an §A4 paragraph on the **naive-merge policy**; add a §A2/§A3 paragraph on **gate observability** via parsed certificates |
-| [`03-task-suites.md`](../03-task-suites.md) | Add a §Per-instance assets subsection covering the `given_spec/given_spec.md`, optional `reference/solution.patch`, and the `testTags` field (with a new row in the greenfield field table); cross-reference the agent run image to [05-harness-architecture.md](../05-harness-architecture.md) |
-| [`05-harness-architecture.md`](../05-harness-architecture.md) | Add §GateEvent threading paragraph to §Responsibilities; describe the `ArmOrSolver` alias under §Backends as the backend-input shape |
-| [`06-scoring-and-statistics.md`](../06-scoring-and-statistics.md) | Add a pairing-reduction sentence to §Confidence intervals and pairwise tests; enumerate the **defect taxonomy** under §Gate-efficacy probes; describe the **live-probe verdict mapping** under §Gate-efficacy probes |
+| [`01-domain-model.md`](../../01-domain-model.md) | Add §Persistence subsection (`dump_jsonl` / `load_jsonl` / `dump_json` / `load_json` / `iter_jsonl`); add §Runtime aggregates subsection (`TrialResult`, `CampaignRun`) |
+| [`02-arms.md`](../../02-arms.md) | Extend the *A4 matches A1's parallelism budget* Decision to record the **dollar-budget matching** invariant; add an §A4 paragraph on the **naive-merge policy**; add a §A2/§A3 paragraph on **gate observability** via parsed certificates |
+| [`03-task-suites.md`](../../03-task-suites.md) | Add a §Per-instance assets subsection covering the `given_spec/given_spec.md`, optional `reference/solution.patch`, and the `testTags` field (with a new row in the greenfield field table); cross-reference the agent run image to [05-harness-architecture.md](../../05-harness-architecture.md) |
+| [`05-harness-architecture.md`](../../05-harness-architecture.md) | Add §GateEvent threading paragraph to §Responsibilities; describe the `ArmOrSolver` alias under §Backends as the backend-input shape |
+| [`06-scoring-and-statistics.md`](../../06-scoring-and-statistics.md) | Add a pairing-reduction sentence to §Confidence intervals and pairwise tests; enumerate the **defect taxonomy** under §Gate-efficacy probes; describe the **live-probe verdict mapping** under §Gate-efficacy probes |
 
 No new canonical page is added; no schema fragment is changed.
 

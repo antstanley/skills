@@ -10,6 +10,8 @@ The harness owns the execution of a Campaign: expanding the Arms × Suites × Tr
 
 The harness owns one invariant above all others: **the run environment and the scoring environment are separate containers, and the hidden test suite exists only in the latter.**
 
+The driver also re-keys `GateEvent`s onto the Trial. A `RunBackend` that surfaces gate activity (the `container` backend on the workflow arms A1 and A2) accumulates events on a `last_gate_events` attribute during each `run()` call; the driver reads that attribute via duck-typing, rewrites each event's `trial` field to the current Trial's id, and attaches the re-keyed tuple to `TrialResult.gate_events`. The `CampaignRun` aggregates the per-trial gate events. This contract is **backend-neutral**: a backend without a `last_gate_events` attribute (the `local` backend, the A0 path on the `container` backend) contributes the empty tuple, and the `RunBackend` Protocol itself does not require the attribute. Gate-efficacy metrics ([04-metrics.md](04-metrics.md) → Bucket 3, [06-scoring-and-statistics.md](06-scoring-and-statistics.md) → §Gate-efficacy probes) read from `TrialResult.gate_events`, not from the backend.
+
 ---
 
 ## Component shape
@@ -50,9 +52,9 @@ The driver is a scheduler over the Trial lifecycle (`queued → provisioning →
 
 ## Substrate — BenchFlow
 
-The harness is built on the **BenchFlow `bench` SDK** (the substrate behind [benchflow-ai/skillsbench](https://github.com/benchflow-ai/skillsbench)) rather than a bespoke runner. BenchFlow already provides task init/validation (`bench tasks init`, `bench tasks check`), evaluation execution (`bench eval create`), a runnable/excluded task split, and locked dependencies for reproducibility. The benchmark supplies its own TaskInstance schema, Arm provisioning recipes, and scoring step on top.
+The harness uses the **BenchFlow `bench` SDK** ([benchflow-ai/benchflow](https://github.com/benchflow-ai/benchflow)) as a complementary layer for task authoring and validation — `bench tasks init` and `bench tasks check` validate a probe task in `benchmark/suites/benchflow-probe/` against BenchFlow's task layout, so the benchmark stays compatible with that SDK without depending on it for runtime execution.
 
-Reusing BenchFlow keeps the bespoke surface to what is genuinely specific to this benchmark — the arm provisioning and the two-container scoring split — and inherits a maintained harness for everything else.
+The **runtime substrate** for the two-container split and the custom `TaskInstance` schema is the benchmark's own `RunBackend` / `ScoringBackend` seam, recorded as a substrate finding in `benchmark/harness/substrate.py` (named constants `BENCH_TASKS_CLI_AVAILABLE = True`, `BENCH_NATIVE_TWO_CONTAINER_SPLIT = False`, `BENCH_VALIDATES_TASKINSTANCE_SCHEMA = False`). BenchFlow's stock `bench eval create` runs an agent rollout in the task's single sandbox and then runs the verifier in that same sandbox; the benchmark's integrity rule (a fresh scoring container distinct from the run container, hidden tests injected only there) is not expressible in that eval model, so the run/scoring split lives on the benchmark's own seam. Reusing BenchFlow for authoring keeps the probe task discoverable by `bench tasks check`; the bespoke surface shrinks to the two backend protocols and the arm provisioning recipes.
 
 ---
 
@@ -64,6 +66,8 @@ The run side and the scoring side are each a **pluggable backend** behind a fixe
 - **`ScoringBackend`** — applies a `candidatePatch` to a clean copy of the instance base, injects the hidden tests, runs them, and returns a `ScoreReport`. Implementations: `container` (a fresh scoring container running the suite's hidden tests) and `local` (a fresh temp checkout, hidden tests run as a local subprocess).
 
 A `Campaign` selects the backend (`backend: container | local`, default `container`). The `local` backend requires only Python, `uv`, and the repo under test; the `container` backend requires Docker and the prebuilt images. The two backends honour the **same** integrity rule (below): the run side never sees the hidden tests, whichever backend runs.
+
+`RunBackend.run` takes a polymorphic second argument — an `Arm` record (a real arm A0–A4) or a solver-mode slug string (a `Campaign.solver` value such as `"fixture"`). The `ArmOrSolver` alias in `benchmark/harness/backends/interfaces.py` names this input shape. The `local` `RunBackend` plus the `fixture` solver is the deterministic Docker-free path the run-local demo uses; the `container` `RunBackend` plus a real `Arm` is the production path. The two backends and the two solvers compose freely.
 
 ---
 
@@ -109,10 +113,15 @@ Without this separation, a workflow arm could discharge its gates against the ve
 benchmark/
   harness/
     driver/            # matrix expansion, Trial scheduler, lifecycle
+    backends/          # RunBackend / ScoringBackend Protocols + container + local impls
     arms/              # one provisioning recipe per Arm (plugins, flags, exec mode)
-    scoring/           # the clean-container oracle runner (see 06)
+    scoring/           # the clean-container oracle runner + shared resolution rule
     telemetry/         # token/cost/wall-clock/turn capture → ArtifactBundle.telemetry
-  suites/              # TaskInstance records + greenfield skeletons (see 03)
+    stats/             # binomial CIs, McNemar, Pass@k, cost-matching, ablation-table render (see 04, 06)
+    domain.py          # entity records (Campaign, Trial, ScoreReport, …; see 01)
+    substrate.py       # the BenchFlow substrate finding (see §Substrate)
+    run_local_demo.py  # Docker-free pipeline demo entrypoint
+  suites/              # TaskInstance records + greenfield skeletons + local-fixture + benchflow-probe (see 03)
 ```
 
 ---
@@ -128,7 +137,7 @@ benchmark/
 **Decisions**
 
 - *Run and scoring are separate containers.* **Hidden tests live only in scoring.** This is the integrity backbone; collapsing them into one container would let the gates overfit the oracle and void the gate-efficacy metrics.
-- *Build on BenchFlow rather than bespoke.* **Reuse the `bench` SDK.** It already solves task validation, eval execution, and locked reproducibility; the bespoke surface shrinks to arm provisioning and the scoring split.
+- *Build on BenchFlow only for task authoring.* **`bench tasks check` is wired against a probe; the runtime two-container split stays on the benchmark's own backend seam.** BenchFlow's stock eval runs the agent and the verifier in one sandbox, which collapses the integrity rule. The substrate finding in `benchmark/harness/substrate.py` records this narrowing; the bespoke surface is the two backend protocols.
 - *Intra-arm concurrency belongs to the arm, not the driver.* **`spec-builder`'s waves run inside the run container.** Pulling that scheduling into the driver would change the system under test; the benchmark must run the workflow as it actually executes.
 
 **Open questions**

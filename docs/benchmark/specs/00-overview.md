@@ -1,12 +1,12 @@
 # spec-workflow-benchmark — Design Overview
 
-**Status:** Draft · **Date:** 2026-05-27 · **Owner:** Ant Stanley · **Scope:** apps/benchmark
+**Status:** Built · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Scope:** apps/benchmark
 
 The **spec-workflow benchmark** (`docs/benchmark/`) is a harness that measures the software-development workflow implemented by this repo's three `spec-*` plugins — `spec-creator`, `spec-planner`, `spec-builder` — against a plain single-agent baseline, on shared task suites with hidden test oracles.
 
 This document is the entry point for the benchmark's design. It states the problem, the goals, the system shape, and the scope. Detail pages are linked from each section.
 
-No component described here is implemented. This page and its siblings define the intended design; `Status: Draft` records that the build has not started. The implementation sequence is an Open question, deferred to a separate plan (see [§Assumptions and open questions](#assumptions-and-open-questions)).
+The harness is implemented and running. The benchmark package under `benchmark/` covers every component this spec set defines — driver, backends (`local` and `container`), arms A0–A4, the greenfield-features and local-fixture suites, the scoring and conformance and probes layers, and the full five-arm ablation report. `Status: Built` records that the build has shipped; the implementation history is in [`docs/plans/2026-05-27-spec_workflow_benchmark/`](../../plans/2026-05-27-spec_workflow_benchmark/plan.md).
 
 ---
 
@@ -94,7 +94,7 @@ A **Campaign** fixes a model and runs every **Arm** over every **Suite** for a s
 | Oracle | Hidden `fail-to-pass` / `pass-to-pass`, plus a conformance judge | [06-scoring-and-statistics.md](06-scoring-and-statistics.md). The workflow's gates never see it. |
 | Substrate | BenchFlow `bench` SDK; Docker per trial | [05-harness-architecture.md](05-harness-architecture.md). jj and git both available in-container. |
 | Model | Fixed per campaign | A campaign variable, not a benchmark axis. |
-| Implementation | None | This spec defines the design; nothing is built. |
+| Implementation | Built and tested | The whole pipeline ships under `benchmark/`; live arms verified end to end on the greenfield seed (`benchmark/tests/_a*_live_evidence/`). See [`benchmark/README.md`](../../../benchmark/README.md) for how to run a campaign. |
 
 ---
 
@@ -108,11 +108,11 @@ A **Campaign** fixes a model and runs every **Arm** over every **Suite** for a s
 
 **Decisions**
 
-- *Subject of the spec.* **The benchmark's design, not a built system.** Nothing is implemented; the body describes the intended design and `Status` stays `Draft` until components exist. The alternative — withholding the spec until code exists — would block planning the build from it.
+- *Subject of the spec.* **The benchmark's design, as built.** The body describes what ships under `benchmark/`; `Status: Built` records the implementation has shipped, and divergences between the body and the code are change-spec material rather than body edits.
 - *Variable under test.* **The scaffold, with the model fixed.** The question is whether the workflow helps, which is only answerable when the model is held constant across arms (the *SWE-Skills-Bench* attribution discipline, arXiv 2603.15401).
+- *Build sequence.* **M0 (Docker-free local pipeline) → M1 (greenfield suite + container backends + A0) → M2 (A1 + the A1−A0 delta) → M3 (A2/A3 + A4) → M4 (conformance, gate efficacy, cost-matched, the full ablation report).** Decomposed and executed in [`docs/plans/2026-05-27-spec_workflow_benchmark/`](../../plans/2026-05-27-spec_workflow_benchmark/plan.md); 23 reviewable task packages, each gated by `semi-formal-review` (correctness) and `validate-done-certificate` (completeness) before merge.
 
 **Open questions**
 
-- *Build sequence.* How the harness is decomposed into reviewable task packages and milestones is a plan, not a spec — it belongs to `spec-planner`, run against this spec. What is the minimal first slice (which arms, how many instances) that proves the harness end to end?
 - *Conformance judge calibration.* The spec-conformance metric uses an LLM judge ([06-scoring-and-statistics.md](06-scoring-and-statistics.md)). How large a human-labelled sample is needed to trust its agreement, and what agreement threshold is acceptable?
 - *UI-bound tasks.* `spec-builder` pauses for manual sign-off on visually-reviewable tasks. Are such tasks excluded from the suites, or is a scripted oracle supplied to stand in for the human reviewer?

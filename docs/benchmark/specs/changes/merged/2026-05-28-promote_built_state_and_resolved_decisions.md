@@ -1,6 +1,6 @@
 # Change: Promote built state and resolved decisions into the canonical spec
 
-**Status:** Proposed · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Target:** apps/benchmark
+**Status:** Merged · **Date:** 2026-05-28 · **Merged:** 2026-05-28 · **Owner:** Ant Stanley · **Target:** apps/benchmark
 
 The benchmark harness described by `docs/benchmark/specs/` has shipped — milestones M0–M4 are merged on the `spec-workflow-benchmark` bookmark (integration tip `4184092d`), 262 tests pass, and every per-task certificate is `Validated`. In the course of building it, five Open questions were resolved (with the resolutions encoded as named constants in code), one §Substrate paragraph drifted out of date, two §Implementation layout boxes drifted out of date, the `dockerImage` row on greenfield's field table was written before the two-image build crystallised, and the §ID-scheme example slug names an instance the suite does not author. This change spec catches the canonical pages up to that built reality. **No schema changes**, no new content; every block here is a stale paragraph rewritten to describe what already exists in the current branch.
 
@@ -20,13 +20,13 @@ The remaining edits (§Substrate, §Implementation layout on 05 and 06, the `doc
 
 | Canonical page | Nature of change |
 |---|---|
-| [`00-overview.md`](../00-overview.md) | `Status: Draft → Built`; rewrite the "No component described here is implemented" preamble; replace the Scope-summary "Implementation: None" row with a row that names what shipped; close the *Build sequence* Open question with a Decision pointing at the executed plan |
-| [`01-domain-model.md`](../01-domain-model.md) | Replace the §ID-scheme example slug `greenfield__url_shortener` with a real bundled slug |
-| [`02-arms.md`](../02-arms.md) | Promote *Given-spec provenance for A2/A3* and *A4 decomposition policy* from Open questions to Decisions |
-| [`03-task-suites.md`](../03-task-suites.md) | Rewrite the greenfield field-table `dockerImage` row to reflect the two-image build |
-| [`04-metrics.md`](../04-metrics.md) | Promote *Conformance judge trust* and *Cost-matching method* from Open questions to Decisions |
-| [`05-harness-architecture.md`](../05-harness-architecture.md) | Rewrite §Substrate to record the substrate finding (BenchFlow used for task authoring, the two-container split stays on the benchmark seam); update §Implementation layout to list `backends/`, `substrate.py`, `domain.py`, `stats/` |
-| [`06-scoring-and-statistics.md`](../06-scoring-and-statistics.md) | Promote *Multiple-comparison correction* to a Decision; rewrite §Implementation layout to drop the absent `scoring/oracle/` subdirectory |
+| [`00-overview.md`](../../00-overview.md) | `Status: Draft → Built`; rewrite the "No component described here is implemented" preamble; replace the Scope-summary "Implementation: None" row with a row that names what shipped; close the *Build sequence* Open question with a Decision pointing at the executed plan |
+| [`01-domain-model.md`](../../01-domain-model.md) | Replace the §ID-scheme example slug `greenfield__url_shortener` with a real bundled slug |
+| [`02-arms.md`](../../02-arms.md) | Promote *Given-spec provenance for A2/A3* and *A4 decomposition policy* from Open questions to Decisions |
+| [`03-task-suites.md`](../../03-task-suites.md) | Rewrite the greenfield field-table `dockerImage` row to reflect the two-image build |
+| [`04-metrics.md`](../../04-metrics.md) | Promote *Conformance judge trust* and *Cost-matching method* from Open questions to Decisions |
+| [`05-harness-architecture.md`](../../05-harness-architecture.md) | Rewrite §Substrate to record the substrate finding (BenchFlow used for task authoring, the two-container split stays on the benchmark seam); update §Implementation layout to list `backends/`, `substrate.py`, `domain.py`, `stats/` |
+| [`06-scoring-and-statistics.md`](../../06-scoring-and-statistics.md) | Promote *Multiple-comparison correction* to a Decision; rewrite §Implementation layout to drop the absent `scoring/oracle/` subdirectory |
 
 No new canonical page is added; no schema fragment is changed.
 
@@ -44,11 +44,11 @@ Each block below is the prose as it should read in the canonical page after merg
 
 ### `00-overview.md` → intro paragraph 3 (Modify)
 
-> The harness is implemented and running. The benchmark package under `benchmark/` covers every component this spec set defines — driver, backends (`local` and `container`), arms A0–A4, the greenfield-features and local-fixture suites, the scoring and conformance and probes layers, and the full five-arm ablation report. `Status: Built` records that the build has shipped; the implementation history is in [`docs/plans/2026-05-27-spec_workflow_benchmark/`](../../../plans/2026-05-27-spec_workflow_benchmark/plan.md).
+> The harness is implemented and running. The benchmark package under `benchmark/` covers every component this spec set defines — driver, backends (`local` and `container`), arms A0–A4, the greenfield-features and local-fixture suites, the scoring and conformance and probes layers, and the full five-arm ablation report. `Status: Built` records that the build has shipped; the implementation history is in [`docs/plans/2026-05-27-spec_workflow_benchmark/`](../../../../plans/2026-05-27-spec_workflow_benchmark/plan.md).
 
 ### `00-overview.md` → §Scope summary, the "Implementation" row (Modify)
 
-> | Implementation | Built and tested | The whole pipeline ships under `benchmark/`; live arms verified end to end on the greenfield seed (`benchmark/tests/_a*_live_evidence/`). See [`benchmark/README.md`](../../../benchmark/README.md) for how to run a campaign. |
+> | Implementation | Built and tested | The whole pipeline ships under `benchmark/`; live arms verified end to end on the greenfield seed (`benchmark/tests/_a*_live_evidence/`). See [`benchmark/README.md`](../../../../benchmark/README.md) for how to run a campaign. |
 
 ### `00-overview.md` → §Assumptions and open questions, *Build sequence* Open question (Modify — promote to Decisions)
 
@@ -58,7 +58,7 @@ Remove from `**Open questions**`:
 
 Add under `**Decisions**`:
 
-> - *Build sequence.* **M0 (Docker-free local pipeline) → M1 (greenfield suite + container backends + A0) → M2 (A1 + the A1−A0 delta) → M3 (A2/A3 + A4) → M4 (conformance, gate efficacy, cost-matched, the full ablation report).** Decomposed and executed in [`docs/plans/2026-05-27-spec_workflow_benchmark/`](../../../plans/2026-05-27-spec_workflow_benchmark/plan.md); 23 reviewable task packages, each gated by `semi-formal-review` (correctness) and `validate-done-certificate` (completeness) before merge.
+> - *Build sequence.* **M0 (Docker-free local pipeline) → M1 (greenfield suite + container backends + A0) → M2 (A1 + the A1−A0 delta) → M3 (A2/A3 + A4) → M4 (conformance, gate efficacy, cost-matched, the full ablation report).** Decomposed and executed in [`docs/plans/2026-05-27-spec_workflow_benchmark/`](../../../../plans/2026-05-27-spec_workflow_benchmark/plan.md); 23 reviewable task packages, each gated by `semi-formal-review` (correctness) and `validate-done-certificate` (completeness) before merge.
 
 ### `01-domain-model.md` → §ID scheme, the `task slug` row of the prefix table (Modify)
 
@@ -217,7 +217,7 @@ The shared cross-references between resolved Open questions and `00-overview.md`
 
 **Decisions**
 
-- *One change spec, two groups.* **Group B only (spec staleness and layout drift).** Group C (shipped surfaces the spec body never named — persistence helpers, runtime aggregates, A4 budget matching, the given-spec asset, GateEvent threading, etc.) is a separate change spec under [`2026-05-28-document_shipped_surfaces.md`](2026-05-28-document_shipped_surfaces.md). The two kinds of edit are coherent on their own and mixing them would make either change spec harder to review.
+- *One change spec, two groups.* **Group B only (spec staleness and layout drift).** Group C (shipped surfaces the spec body never named — persistence helpers, runtime aggregates, A4 budget matching, the given-spec asset, GateEvent threading, etc.) is a separate change spec under [`2026-05-28-document_shipped_surfaces.md`](../2026-05-28-document_shipped_surfaces.md). The two kinds of edit are coherent on their own and mixing them would make either change spec harder to review.
 - *No schema delta.* **Body-only.** Every field this change spec mentions already exists in `canonical-types.schema.json`; the gap is in the prose that describes them, not in the type definitions.
 
 **Open questions**

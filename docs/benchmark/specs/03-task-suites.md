@@ -25,13 +25,22 @@ Newly authored, Commit0-style ([arXiv 2412.01769](https://arxiv.org/pdf/2412.017
 | `goldPatch` | `null` — there is no single reference solution |
 | `failToPass` | the hidden acceptance test suite |
 | `passToPass` | skeleton smoke tests that must keep passing |
-| `dockerImage` | an image built for the instance with the hidden tests baked in but withheld from the run container |
+| `dockerImage` | the per-instance **run image** tag, hidden tests excluded; a matching scoring image with the hidden tests overlaid is built alongside but lives outside `TaskInstance` (see [05-harness-architecture.md](05-harness-architecture.md) → §Run container) |
 | `contaminationTier` | `authored-private` |
+| `testTags` | every greenfield instance carries a `selector → component or spec section` mapping for its hidden tests, so a failing hidden test can be attributed to the task that claimed responsibility for it. The component name doubles as the per-instance plan-task key the gate-escape attribution uses ([06-scoring-and-statistics.md](06-scoring-and-statistics.md) → §Gate-efficacy probes). |
 
 This suite is where the full pipeline's strengths — decomposition into a task graph, parallel waves, and the two gates — have room to pay off, and where issue-fixing tasks cannot reach. Two design constraints make it trustworthy:
 
 1. **Private and novel.** Tasks are authored fresh and kept out of public channels, so `authored-private` means absent from training data at campaign time. This is the contamination defence the `public` suite cannot offer.
 2. **Multi-component by construction.** Each spec names several components with dependencies between them, so the task graph has width (for the parallel arms) and depth (for the reviewability ordering). Single-file tasks would not exercise the workflow.
+
+### Per-instance assets
+
+A greenfield instance directory at `benchmark/suites/greenfield-features/<slug>/` carries up to three per-instance asset trees alongside `repo/{base,hidden}/`:
+
+- **`given_spec/given_spec.md`** — a frozen, human-authored specification of the feature the instance asks the arms to build. Consumed identically by A2 and A3 (the spec-given arms; see [02-arms.md](02-arms.md) → §Decisions → *Given-spec provenance for A2/A3*); A0/A1/A4 do not read it. Loaded by `benchmark.suites.greenfield.load_given_spec(slug)`.
+- **`reference/solution.patch`** (optional, per-instance) — a private reference solution carried **outside** the arms-visible `TaskInstance`. Loaded only by `benchmark.suites.greenfield.load_reference_solution(slug)`; `TaskInstance.goldPatch` stays `null` regardless. The reference solution exists so the greenfield self-test can demonstrate the scoring pipeline recognises a known-good patch (`resolved: true`) and rejects a no-op (`resolved: false`) without ever exposing the solution to a run-side arm.
+- **`repo/base/`** — the run-visible skeleton the run backend provisions from (plus the `passToPass` smoke tests that must keep passing). **`repo/hidden/`** — the withheld acceptance suite the scoring backend injects. The `hidden/` tree is never copied into the run image; the integrity rule lives in the image build ([05-harness-architecture.md](05-harness-architecture.md) → §Scoring isolation).
 
 ---
 
@@ -77,6 +86,8 @@ benchmark/
 ```
 
 Instance records conform to the `TaskInstance` `$def` in [`canonical-types.schema.json`](canonical-types.schema.json). The withheld test suites live beside the instances but are injected only into the *scoring* container, never the run container ([05-harness-architecture.md](05-harness-architecture.md)).
+
+The agent run image (the run image plus a non-root user with the `claude` CLI installed) is built from the run image and described under [05-harness-architecture.md](05-harness-architecture.md) → §Run container.
 
 ---
 

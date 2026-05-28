@@ -52,6 +52,10 @@ The gate metrics ([04-metrics.md](04-metrics.md)) need cases with a *known* answ
 
 Catch rate and escape rate bound gate quality from opposite sides ([04-metrics.md](04-metrics.md) → Bucket 3). Both depend on the gates never having seen the hidden suite — the integrity rule of [05-harness-architecture.md](05-harness-architecture.md).
 
+**Defect taxonomy.** The InjectedDefect generator works from a closed taxonomy of three `defectKind`s — `off-by-one`, `dropped-branch`, and `wrong-return` (`DEFECT_KINDS` in `benchmark/harness/scoring/probes/defects.py:53`). Each kind ships a concrete `before → after` line mutation against the seed instance's private reference solution; the catch-rate accounting breaks the rate down per kind in addition to the aggregate, so a gate that catches one kind of fault but misses another is visible in the report.
+
+**Live-probe verdict mapping.** The opt-in live gate probe (`benchmark/harness/scoring/probes/live.py`, gated by `BENCHMARK_RUN_GATE_PROBE_LIVE=1`) injects one classified mutation, runs the `semi-formal-review` gate as a bounded `claude -p` call, and maps the verdict line to `caughtBy`: verdicts in `{CONCERNS, BUGGY}` count as caught (with `caughtBy = "semi-formal-review"`); verdicts in `{CORRECT, LIKELY_CORRECT}` count as escaped. The PARTIAL / UNVERIFIED verdicts are unmapped — they should not appear on a defect-injected diff, so seeing one is a probe failure to report, not a silent third bucket.
+
 ---
 
 ## Repetition and Pass@k
@@ -75,6 +79,8 @@ Only `scored` trials enter the statistics; `failed` (infra) trials are excluded 
 
 Pairing is what gives the deltas their power: because both arms in a comparison face the *same* instances, shared task difficulty and shared training-data contamination cancel out, and the test sees only the difference the arm makes. The arm pairs and what each isolates are defined in [02-arms.md](02-arms.md).
 
+Each arm-instance pair is reduced to one resolved bool before McNemar pairs the arms: the rule is **`any` over the arm's `k` trials on that instance** (`benchmark/harness/stats/outcome.py::_instance_resolved_any`), so the pair's bool matches the `Pass@k` notion at `k = trialsPerInstance` and is well-defined at `k = 1`. Majority-of-trials was considered and rejected because it requires a tie-break rule at even `k`; `any` is parameter-free and the same shape the §Reporting ablation table already uses.
+
 ---
 
 ## Reporting
@@ -89,10 +95,12 @@ A Campaign's output is an **ablation table**, not a single rank: each row an arm
 benchmark/
   harness/
     scoring/
-      oracle/         # clean-container test runner → resolved / regressed / gateEscape
-      conformance/    # rubric judge + human-label calibration harness
-      probes/         # InjectedDefect generation and catch-rate accounting
-    stats/            # binomial CIs, McNemar, Pass@k, cost-matching, ablation-table render
+      resolution.py       # the shared resolved/regressed rule, single-sourced across backends
+      local.py            # local ScoringBackend (Docker-free temp checkout)
+      container.py        # container ScoringBackend (fresh scoring container, hidden tests baked in)
+      conformance/        # rubric judge + human-label calibration harness
+      probes/             # InjectedDefect generation, catch-rate accounting, escape rate, opt-in live probe
+    stats/                # binomial CIs, McNemar, Pass@k, cost-matching, artifact metrics, ablation report
 ```
 
 ---
@@ -109,10 +117,10 @@ benchmark/
 - *Resolution is all-or-nothing.* **All `failToPass` pass and all `passToPass` hold.** A single definition across backends and suites keeps the resolved verdict comparable across arms.
 - *Deltas are paired and tested with McNemar.* **Same instances, both arms.** Pairing cancels shared difficulty and any training-data contamination, which is what makes the within-suite comparison hold.
 - *Output is an ablation table, not a rank.* **Per-arm metrics plus four delta rows.** A single leaderboard number would discard the attribution the benchmark is built to produce.
+- *Multiple-comparison correction.* **Holm-Bonferroni at α = 0.05 across the four pairwise deltas (A1 − A0, A1 − A2, A2 − A3, A1 − A4).** With four planned comparisons the uncorrected family-wise error rate is roughly `1 - 0.95^4 ≈ 0.185`, so omitting a correction is not honest at this many tests. Holm-Bonferroni (Holm 1979) is the textbook step-down procedure: uniformly more powerful than plain Bonferroni at the same family-wise rate, parameter-free, and valid under arbitrary dependence (which is what we have — the four deltas share arms). Each delta row carries the raw McNemar p-value, a Holm-Bonferroni-adjusted p-value, and a binary `significant_at_alpha` flag. The named constant `HOLM_BONFERRONI_ALPHA` lives in `benchmark/harness/stats/ablation_report.py:151`.
 
 **Open questions**
 
 - *Trial count.* How many `trialsPerInstance` are needed to stabilise Pass@1 intervals given agent nondeterminism, and does that count fit the cost budget? Drives the suite-size power analysis in [03-task-suites.md](03-task-suites.md).
 - *Conformance calibration.* The human-label agreement threshold and sample size that make `conformanceScore` reportable (shared with [00-overview.md](00-overview.md) and [04-metrics.md](04-metrics.md)).
-- *Multiple-comparison correction.* Four pairwise deltas per suite invite a multiple-comparison adjustment; whether to apply one, and which, is unsettled.
 - *Per-task escape attribution.* The per-task false-`Done` rate needs `testTags` on greenfield instances plus a join through each task's `Implements` pointer. How reliably can hidden tests be tagged to spec sections at authoring time, and is the instance-granularity fallback informative enough where they cannot?
