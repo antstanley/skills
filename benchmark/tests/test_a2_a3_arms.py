@@ -322,6 +322,28 @@ def test_review_verdict_mapping_onto_the_closed_enum() -> None:
     assert all(v in GATE_VERDICTS for _, v in verdicts)
 
 
+def test_unverified_validate_verdict_is_the_manual_pause_signal() -> None:
+    """A parked-for-human certificate (``VERDICT: UNVERIFIED``) yields exactly one
+    UNVERIFIED validate GateEvent — the signal the manual-pause-rate metric counts
+    (``04-metrics.md`` → Bucket 4). Before this, the extractor dropped it, leaving
+    the metric structurally always-zero."""
+    cap = [
+        _capture_entry(
+            "docs/plans/p/certificates/05-ui-dashboard.md",
+            "# Done Certificate — Task 05\n\n"
+            "## Conclusion\n\nVERDICT: UNVERIFIED\n"
+            "State: parked for human sign-off (UI-bound task)\n",
+        ),
+    ]
+    events = extract_gate_events(cap, trial_id=_TRIAL_ID)
+    assert len(events) == 1  # one event, not double-counted by the review map
+    (event,) = events
+    assert event.gateKind == GATE_KIND_VALIDATE
+    assert event.verdict == "UNVERIFIED"
+    assert event.verdict in GATE_VERDICTS
+    assert event.task == "05-ui-dashboard"
+
+
 def test_backend_last_gate_events_starts_empty() -> None:
     """Before any workflow run, the backend exposes no gate events."""
     assert ContainerRunBackend().last_gate_events == []

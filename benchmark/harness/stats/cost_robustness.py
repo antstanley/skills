@@ -88,8 +88,10 @@ On our captured live data:
 * Gate retry depth is 0 (every ``GateEvent.retryIndex`` was 0 — Task 10 records
   this: the merged certificate reflects only the FINAL gate discharge, the
   retries before it are not currently preserved as separate events).
-* Manual-pause rate is 0 (no ``UNVERIFIED`` verdicts emitted on the real
-  pipelines).
+* Manual-pause rate is 0 (the captured runs parked no task for human sign-off,
+  so no certificate carried a ``VERDICT: UNVERIFIED`` line; the extractor DOES
+  recognise that verdict — ``arms.a2_a3._VALIDATE_VERDICT_MAP`` — so the metric
+  goes non-zero as soon as a task does park).
 * Merge-conflict rate is 0 except A4 (which DID record 3 conflicts but in a
   side channel the driver does not currently thread to ``TrialResult``).
 

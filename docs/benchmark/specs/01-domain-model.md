@@ -128,7 +128,7 @@ A known-bad patch deliberately introduced into a gate-efficacy probe trial, to m
 Carries:
 
 - `id`, `taskInstance`.
-- `defectKind` — the class of fault injected (e.g. `off-by-one`, `dropped-null-check`, `wrong-branch`).
+- `defectKind` — the class of fault injected. The closed taxonomy is `off-by-one`, `dropped-branch`, `wrong-return` ([06-scoring-and-statistics.md](06-scoring-and-statistics.md) → §Gate-efficacy probes → *Defect taxonomy*).
 - `caughtBy` — the `gateKind` that flagged it, or `null` if it escaped.
 
 ### ScoreReport (`score_`)

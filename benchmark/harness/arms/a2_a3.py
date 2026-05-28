@@ -302,11 +302,16 @@ GATE_KIND_VALIDATE = "validate-done-certificate"
 #: matches this is treated as ungated and yields NO GateEvent.
 _BLANK_VERDICT_MARKER = re.compile(r"\*\*Verdict:\*\*\s*\(blank", re.IGNORECASE)
 
-#: A discharged validate-done verdict line: ``VERDICT: DONE|PARTIAL|NOT_DONE``.
-#: Written by the validate-done-certificate gate into the certificate's
-#: Conclusion block (see the plugin's validation-protocol).
+#: A discharged validate-done verdict line:
+#: ``VERDICT: DONE|PARTIAL|NOT_DONE|UNVERIFIED``. Written by the
+#: validate-done-certificate gate into the certificate's Conclusion block (see
+#: the plugin's validation-protocol). ``UNVERIFIED`` is the parked-for-human
+#: outcome — the gate ran but could not confirm done-ness without a human
+#: sign-off (a UI-bound / non-``headlessVerifiable`` task, ``00-overview.md`` →
+#: Open questions). It is the signal the manual-pause-rate metric counts
+#: (``04-metrics.md`` → Bucket 4, ``benchmark/harness/stats/cost_robustness.py``).
 _VALIDATE_VERDICT_RE = re.compile(
-    r"\bVERDICT:\s*(DONE|PARTIAL|NOT_DONE)\b", re.IGNORECASE
+    r"\bVERDICT:\s*(DONE|PARTIAL|NOT_DONE|UNVERIFIED)\b", re.IGNORECASE
 )
 
 #: A discharged semi-formal-review verdict line:
@@ -329,11 +334,15 @@ _ELAPSED_LINE_RE = re.compile(
 
 #: Map each validate-done certificate verdict onto the closed ``GATE_VERDICTS``
 #: enum (``PASS|FAIL|PARTIAL|UNVERIFIED``). DONE -> PASS (complete), PARTIAL ->
-#: PARTIAL, NOT_DONE -> FAIL.
+#: PARTIAL, NOT_DONE -> FAIL, UNVERIFIED -> UNVERIFIED (the gate parked for a
+#: human sign-off; surfaced as the manual-pause signal, not a pass/fail). The
+#: review map below has no UNVERIFIED member, so a ``VERDICT: UNVERIFIED`` line
+#: yields exactly one (validate) event, never a double count.
 _VALIDATE_VERDICT_MAP = {
     "DONE": "PASS",
     "PARTIAL": "PARTIAL",
     "NOT_DONE": "FAIL",
+    "UNVERIFIED": "UNVERIFIED",
 }
 
 #: Map each semi-formal-review verdict onto the closed ``GATE_VERDICTS`` enum.
