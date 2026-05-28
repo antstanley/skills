@@ -53,7 +53,7 @@ from dataclasses import dataclass
 
 from benchmark.harness.arms.a0 import A0
 from benchmark.harness.backends.interfaces import HIDDEN_TEST_FIELDS
-from benchmark.harness.domain import ScoreReport, TaskInstance
+from benchmark.harness.domain import Arm, GateEvent, ScoreReport, TaskInstance
 
 # --- opt-in / bounding constants -------------------------------------------
 
@@ -107,6 +107,39 @@ _LISTING_RECORD_SEP = "\x1e"  # ASCII record separator
 
 #: ``docker``/pytest-style success exit code for the listing ``docker run``.
 _DOCKER_EXIT_OK = 0
+
+# --- gate-emission check constants -----------------------------------------
+
+#: Repetitions per (arm, instance) for the gate-emission driver run. ONE trial
+#: per arm is enough: the check is qualitative (A2 emits >= 1 event, A3 emits
+#: none), and each workflow run is a recursive ``spec-builder`` invocation, so
+#: the smallest count keeps the (bounded) live spend down.
+GATE_CHECK_TRIALS_PER_INSTANCE = 1
+
+#: Worker-pool size for the gate-emission driver run. MUST be ``1`` (serial):
+#: the driver reads the run's events off the SHARED backend's
+#: :attr:`~benchmark.harness.backends.ContainerRunBackend.last_gate_events`
+#: property — which reflects only the LAST run — immediately after each ``run``.
+#: Running A2 and A3 concurrently through one backend would race that read, so
+#: the two arms are driven one at a time to keep the re-keying deterministic.
+GATE_CHECK_POOL_SIZE = 1
+
+#: The model recorded on the gate-emission campaign. The arms (A2/A3) carry
+#: their own model in their recipe; this is the campaign-record placeholder.
+GATE_CHECK_MODEL = "claude-opus-4-7"
+
+#: A fixed ``createdAt`` so the gate-emission campaign record is reproducible.
+GATE_CHECK_CREATED_AT = "2026-05-28T00:00:00Z"
+
+# --- live gate-probe check constants ---------------------------------------
+
+#: Index into :data:`~benchmark.harness.scoring.probes.defects.DEFECT_MUTATIONS`
+#: of the off-by-one mutation the live probe injects. ``[0]`` is the
+#: ``text_toolkit`` ``frequency`` off-by-one (``return ranked[:limit]`` ->
+#: ``return ranked[: limit + 1]``) — the classic fault a correctness gate must
+#: catch. The probe stays bounded by the probe module's existing
+#: ``PROBE_MAX_BUDGET_USD`` / ``PROBE_TIMEOUT_SECONDS``; no second budget here.
+OFF_BY_ONE_MUTATION_INDEX = 0
 
 
 class ContainerCheckError(RuntimeError):
@@ -385,6 +418,180 @@ def assert_resolved_parity(
     return verdict
 
 
+def assert_gate_emission(instance: TaskInstance) -> None:
+    """Assert A2 surfaces >= 1 ``GateEvent`` and A3 zero — at BOTH layers.
+
+    The gate-difference witness, observed twice over so it proves the whole
+    re-keying path, not just one backend attribute:
+
+    1. **Backend layer.** Run A2 then A3 through a SHARED
+       :class:`~benchmark.harness.backends.ContainerRunBackend` and read the
+       events off its ``last_gate_events`` property right after each run (the
+       property reflects the LAST run). A2 (gates ON) must leave ``>= 1`` event;
+       A3 (gates OFF) must leave none.
+    2. **Driver-threaded layer.** Drive the SAME two arms through the real
+       driver (:func:`~benchmark.harness.driver.run_campaign`) — serially
+       (:data:`GATE_CHECK_POOL_SIZE` ``== 1``, so the shared backend's
+       last-run property is read uninterleaved) — and assert the A2
+       :class:`~benchmark.harness.driver.TrialResult.gate_events` is non-empty
+       and A3's is empty. This proves the driver re-keys the run's events onto
+       the Trial (the tasks-08/10 wiring), not merely that the backend exposed
+       them.
+
+    Raises :class:`ContainerCheckError` on any violation at either layer. The
+    Docker-bound run/scoring backends and the driver are imported locally so the
+    module imports cleanly without Docker.
+    """
+    from benchmark.harness.arms.a2_a3 import A2, A3
+    from benchmark.harness.backends import ContainerRunBackend
+
+    # 1. Backend layer: run each arm on a shared backend and read last_gate_events.
+    backend = ContainerRunBackend()
+    backend.run(instance, A2)
+    a2_backend_events = backend.last_gate_events
+    if not a2_backend_events:
+        raise ContainerCheckError(
+            f"gate-emission FAILED at the backend layer: A2 (gates ON) surfaced "
+            f"0 GateEvents on last_gate_events for {instance.slug!r}; a gates-on "
+            "arm must discharge >= 1 certificate verdict."
+        )
+    backend.run(instance, A3)
+    a3_backend_events = backend.last_gate_events
+    if a3_backend_events:
+        raise ContainerCheckError(
+            f"gate-emission FAILED at the backend layer: A3 (gates OFF) surfaced "
+            f"{len(a3_backend_events)} GateEvent(s) on last_gate_events for "
+            f"{instance.slug!r}; a gates-off arm must discharge none."
+        )
+    print(
+        f"gate-emission OK [backend last_gate_events]: A2={len(a2_backend_events)} "
+        f"event(s) (>= 1), A3={len(a3_backend_events)} event(s) (== 0)."
+    )
+
+    # 2. Driver-threaded layer: drive both arms through run_campaign and assert
+    #    the events reached TrialResult.gate_events, proving the re-keying.
+    a2_trial_events = _drive_arm_gate_events(instance, A2)
+    a3_trial_events = _drive_arm_gate_events(instance, A3)
+    if not a2_trial_events:
+        raise ContainerCheckError(
+            "gate-emission FAILED at the driver layer: A2 (gates ON) carried 0 "
+            "GateEvents on TrialResult.gate_events; the driver did not thread the "
+            "backend's events onto the Trial."
+        )
+    if a3_trial_events:
+        raise ContainerCheckError(
+            f"gate-emission FAILED at the driver layer: A3 (gates OFF) carried "
+            f"{len(a3_trial_events)} GateEvent(s) on TrialResult.gate_events; a "
+            "gates-off arm must thread none."
+        )
+    print(
+        f"gate-emission OK [driver TrialResult.gate_events]: A2="
+        f"{len(a2_trial_events)} event(s) (>= 1), A3={len(a3_trial_events)} "
+        f"event(s) (== 0)."
+    )
+
+
+def _drive_arm_gate_events(instance: TaskInstance, arm: Arm) -> tuple[GateEvent, ...]:
+    """Drive ONE arm over ``instance`` through the driver; return its threaded events.
+
+    Builds a minimal one-arm, one-instance :class:`~benchmark.harness.domain.Campaign`
+    (mirroring :mod:`benchmark.harness.run_local_demo`) and runs it through the
+    real :func:`~benchmark.harness.driver.run_campaign` with the ``container``
+    run/scoring backends injected, SERIALLY (:data:`GATE_CHECK_POOL_SIZE`), so the
+    shared backend's last-run gate events are read uninterleaved. Returns the
+    single Trial's :attr:`~benchmark.harness.driver.TrialResult.gate_events` for
+    the requested ``arm`` (matched by ``result.trial.arm``).
+    """
+    from benchmark.harness import domain
+    from benchmark.harness.backends import ContainerRunBackend
+    from benchmark.harness.domain import Campaign, new_record_id
+    from benchmark.harness.driver import run_campaign
+    from benchmark.harness.scoring import ContainerScoringBackend
+    from benchmark.suites.greenfield import SUITE_SLUG
+
+    campaign = Campaign(
+        id=new_record_id(domain.CAMPAIGN_ID_PREFIX),
+        createdAt=GATE_CHECK_CREATED_AT,
+        model=GATE_CHECK_MODEL,
+        arms=[arm.slug],
+        suites=[SUITE_SLUG],
+        trialsPerInstance=GATE_CHECK_TRIALS_PER_INSTANCE,
+    )
+    run = run_campaign(
+        campaign,
+        arms=[arm],
+        instances=[instance],
+        run_backend=ContainerRunBackend(),
+        scoring_backend=ContainerScoringBackend(),
+        pool_size=GATE_CHECK_POOL_SIZE,
+    )
+    for result in run.results:
+        if result.trial.arm == arm.slug:
+            return tuple(result.gate_events)
+    raise ContainerCheckError(
+        f"gate-emission FAILED: no TrialResult for arm {arm.slug!r} in the driver "
+        f"run over {instance.slug!r}."
+    )
+
+
+def assert_live_gate_probe_catches_off_by_one() -> None:
+    """Run the REAL review gate on an injected off-by-one; assert it was CAUGHT.
+
+    Loads the ``text_toolkit`` reference solution, injects the off-by-one
+    :data:`~benchmark.harness.scoring.probes.defects.DEFECT_MUTATIONS` entry
+    (index :data:`OFF_BY_ONE_MUTATION_INDEX`) as a unified diff, and runs it
+    through the live :func:`~benchmark.harness.scoring.probes.live.run_gate_probe`
+    with the host-side ``claude -p`` reviewer
+    (:func:`~benchmark.harness.scoring.probes.live.cli_review_gate`). Asserts the
+    returned :class:`~benchmark.harness.domain.InjectedDefect` was CAUGHT —
+    ``caughtBy == GATE_KIND_REVIEW`` — and raises :class:`ContainerCheckError` if
+    the defect ESCAPED (``caughtBy is None``).
+
+    The live model is nondeterministic, so this is an operator-run assertion: it
+    cannot run in CI and only fires on the gated live path. The probe is bounded
+    by the probe module's existing ``PROBE_MAX_BUDGET_USD`` /
+    ``PROBE_TIMEOUT_SECONDS`` — no second budget is introduced here. The
+    probe-bound imports are local so the module imports cleanly without the CLI.
+    """
+    from benchmark.harness.scoring.probes.defects import DEFECT_MUTATIONS
+    from benchmark.harness.scoring.probes.live import (
+        GATE_KIND_REVIEW,
+        cli_review_gate,
+        run_gate_probe,
+    )
+    from benchmark.suites.greenfield import load_reference_solution
+
+    # Mirror the proven bad-diff pattern (benchmark/tests/test_gate_probes.py):
+    # the off-by-one mutation rendered as a one-hunk unified diff against the
+    # reference solution component. Load the reference solution and confirm the
+    # mutation truly targets it (a stale mutation table would otherwise inject a
+    # no-op diff the gate could not catch).
+    reference_patch = load_reference_solution(INSTANCE_SLUG)
+    mutation = DEFECT_MUTATIONS[OFF_BY_ONE_MUTATION_INDEX]
+    if mutation.before not in reference_patch:
+        raise ContainerCheckError(
+            f"live gate probe SETUP failed: the off-by-one mutation target "
+            f"{mutation.before!r} is absent from the {INSTANCE_SLUG!r} reference "
+            "solution; the mutation table is stale and would inject a no-op diff."
+        )
+    bad_diff = (
+        f"--- a/{mutation.component}.py\n+++ b/{mutation.component}.py\n"
+        f"-{mutation.before}\n+{mutation.after}\n"
+    )
+    defect = run_gate_probe(INSTANCE_SLUG, bad_diff, mutation, reviewer=cli_review_gate)
+    if defect.caughtBy != GATE_KIND_REVIEW:
+        raise ContainerCheckError(
+            f"live gate probe FAILED: the {GATE_KIND_REVIEW!r} gate did not catch "
+            f"an injected {mutation.defect_kind} defect on {INSTANCE_SLUG!r} "
+            f"(caughtBy={defect.caughtBy!r}); a correctness gate must flag a real "
+            "off-by-one fault."
+        )
+    print(
+        f"live gate probe OK: the {GATE_KIND_REVIEW!r} gate CAUGHT the injected "
+        f"{mutation.defect_kind} defect (caughtBy={defect.caughtBy!r})."
+    )
+
+
 def run_container_check() -> tuple[ParityVerdict, ParityVerdict]:
     """Run the live A0 round-trip + integrity + dual-pole resolved-parity witness.
 
@@ -402,6 +609,12 @@ def run_container_check() -> tuple[ParityVerdict, ParityVerdict]:
        backends) and the no-op ``None`` patch (known-FALSE, expected
        ``resolved: false`` on both) — the negative space proving the witness is
        not trivially always-true.
+    4. Assert gate-emission (:func:`assert_gate_emission`): A2 surfaces ``>= 1``
+       ``GateEvent`` and A3 zero, observed at BOTH the backend
+       (``last_gate_events``) and the driver-threaded
+       (``TrialResult.gate_events``) layers.
+    5. Assert the live ``claude -p`` review gate CAUGHT an injected off-by-one
+       defect (:func:`assert_live_gate_probe_catches_off_by_one`).
 
     Returns ``(reference_verdict, noop_verdict)``. Raises
     :class:`ContainerCheckError` on any verification failure. All Docker-bound
@@ -448,6 +661,13 @@ def run_container_check() -> tuple[ParityVerdict, ParityVerdict]:
     noop_verdict = assert_resolved_parity(instance, None, pole="noop")
     _assert_pole_verdict(noop_verdict, expected_resolved=False)
     print(_format_verdict("no-op patch (known-FALSE pole)", noop_verdict))
+
+    # 4. Gate-emission: A2 emits >= 1 GateEvent and A3 none, at the backend and
+    #    the driver-threaded layers (the paired gate-difference witness).
+    assert_gate_emission(instance)
+
+    # 5. Live claude -p review gate: catch an injected off-by-one defect.
+    assert_live_gate_probe_catches_off_by_one()
 
     return reference_verdict, noop_verdict
 
