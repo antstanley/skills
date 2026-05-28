@@ -22,8 +22,11 @@ from __future__ import annotations
 from benchmark.harness.scoring.conformance import (
     CONFORMANCE_MAX_BUDGET_USD,
     CONFORMANCE_RUBRIC,
+    JUDGE_NAME_RUBRIC,
+    JUDGE_NAME_SPEC_REVIEWER,
     MIN_CALIBRATION_AGREEMENT,
     MIN_CALIBRATION_SAMPLE_SIZE,
+    SPEC_REVIEWER_JUDGE_MAX_BUDGET_USD,
     AgreementReport,
     ConformanceJudgeError,
     ConformanceResult,
@@ -31,6 +34,7 @@ from benchmark.harness.scoring.conformance import (
     run_calibration,
     score_arm_conformance,
     score_conformance,
+    spec_reviewer_judge,
     suite_supplies_spec,
 )
 from benchmark.harness.scoring.container import (
@@ -55,6 +59,8 @@ from benchmark.harness.scoring.resolution import (
 __all__ = [
     "CONFORMANCE_MAX_BUDGET_USD",
     "CONFORMANCE_RUBRIC",
+    "JUDGE_NAME_RUBRIC",
+    "JUDGE_NAME_SPEC_REVIEWER",
     "MIN_CALIBRATION_AGREEMENT",
     "MIN_CALIBRATION_SAMPLE_SIZE",
     "PYTEST_TIMEOUT_SECONDS",
@@ -63,6 +69,7 @@ __all__ = [
     "SCORE_CONTAINER_TIMEOUT_SECONDS",
     "SCORING_DIR_PREFIX",
     "SCORING_TEMP_BASE",
+    "SPEC_REVIEWER_JUDGE_MAX_BUDGET_USD",
     "AgreementReport",
     "ConformanceJudgeError",
     "ConformanceResult",
@@ -76,5 +83,6 @@ __all__ = [
     "run_calibration",
     "score_arm_conformance",
     "score_conformance",
+    "spec_reviewer_judge",
     "suite_supplies_spec",
 ]
