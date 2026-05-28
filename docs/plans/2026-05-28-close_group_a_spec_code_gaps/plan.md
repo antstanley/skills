@@ -1,6 +1,6 @@
 # Plan: close the Group A spec-vs-code gaps
 
-**Status:** In progress · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Source spec:** [docs/benchmark/specs/](../../benchmark/specs/) (Group A findings from the R2 conformance review)
+**Status:** Done · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Source spec:** [docs/benchmark/specs/](../../benchmark/specs/) (Group A findings from the R2 conformance review)
 
 Close the five Group A divergences my R2 spec-conformance review surfaced — cases where the existing canonical benchmark spec asserts a feature the integrated code under `benchmark/` does not honor. Each gap is small in isolation; together they form a focused tidy-up on the scoring and stats layer, with one independent task on the conformance judge. The reviewability spine builds the foundation first (populate the `ScoreReport.gateEscape` field the spec promises; capture intra-trial timing so parallel speedup means what the spec says it means), then layers the universal `MetricResult` emission and the cost-matched paired delta on top of those clean inputs, while the spec-reviewer-backed conformance-judge alternative runs on its own track and can land any time.
 
@@ -71,6 +71,49 @@ Every `Depends on` references a **lower** task number — the property that numb
 - *Reviewability over dependency-only sort puts `01` ahead of `02`.* **The smaller, scope-stable closure leads.** `01` and `02` have no edges between them; either could come first by dependency. `01` is one short field population plus its test; `02` reshapes telemetry capture inside `_run_workflow_arm`. Leading with `01` clears the smaller debt fast, lets a reviewer sign off on the gateEscape claim independently, and means `03`'s reverse pass over the ablation columns sees a populated `gateEscape` from day one.
 - *Cost-matched delta and universal MetricResult emission are two tasks, not one.* **They share machinery but the surfaces a reviewer signs off on are different.** `03` is "every column is a `MetricResult`" — a coverage claim; `04` is "the cost-matched comparison has a delta row, not just a column" — a behaviour claim. Reviewing them together would conflate the two; splitting keeps each DoD checkable on its own evidence.
 - *No done certificates authored.* **Skipped at the user's request (this plan is a focused tidy-up; the per-task DoD lines are sufficient on their own).** A later pass can author certificates by running `spec-planner:done-certificates` over this folder; the present plan does not block on them. The Phase 5 Done-certificates cross-link check is therefore not applicable here.
+
+---
+
+## Build summary (2026-05-28)
+
+All five tasks merged into `spec-workflow-benchmark` (origin tip `6d1fb024`); 328 tests passing, 6 opt-in live tests skipped on CI; ruff format + check, pyright, pytest all clean.
+
+| Task | Commit | Gate 1 (correctness) | Gate 2 (completeness) | Push |
+|---|---|---|---|---|
+| 01 populate ScoreReport.gateEscape | `c587c1e9` | CORRECT / high | DONE / high (1 UNVERIFIED: live A2 reproduce) | ✓ |
+| 02 capture intra-trial workflow timing | `7222e016` | CORRECT / high | PARTIAL / high (UNVERIFIED only — live A1 reproduce; build-loop.md surfaces, does not re-dispatch) | ✓ |
+| 05 spec-reviewer-backed conformance judge | `bb4f6c4b` | CORRECT / high | DONE / high (1 UNVERIFIED: live $3 judgment evidence) | ✓ |
+| 03 MetricResult for every ablation column | `81a0f0be` | CORRECT / high | DONE / high (no UNVERIFIED) | ✓ |
+| 04 cost-matched paired delta | `6d1fb024` | LIKELY_CORRECT / high (ciLow/ciHigh-as-significance overload flagged) | DONE / high (1 UNVERIFIED: render on five-arm live evidence — no saved five-arm campaign on disk) | ✓ |
+
+**Build mode.** Wave-scheduled with `max_parallel_agents=3`. Wave 1 dispatched 01, 02, 05 concurrently from `spec-workflow-benchmark @ e8f6ab48` (each in its own jj workspace under `../skills-task-NN`); merges landed sequentially after both gates passed. Wave 2 dispatched 03 from the post-wave-1 tip; Wave 3 dispatched 04 from the post-task-03 tip. Each task: workspace from `spec-workflow-benchmark`, implementer + reviewer + validator (three independent agents), squash into `@`, describe, set bookmark, `jj git push`, forget + rm workspace. The push-per-task cadence kept origin honest throughout.
+
+**Open obligations the user owns** (surfaced by the gates as `UNVERIFIED`, not blocking the build):
+
+1. **Task 01 — live A2 reproduce.** Confirm `gateEscape` is now `true`/`false` rather than `null`/absent on a freshly captured A2 `score_report.json`. Command:
+   ```
+   BENCHMARK_RUN_A2_A3_LIVE=1 uv run pytest -q benchmark/tests/test_a2_a3_arms.py
+   ```
+   then inspect `benchmark/tests/_a2_a3_live_evidence/a2/score_report.json`. (Spends real A2 budget, requires Docker + claude credentials + spec-* plugins.)
+
+2. **Task 02 — live A1 reproduce.** Confirm a fresh A1 bundle carries a populated `taskWallClocks` keyed by plan task ids, and `parallel_speedup_for_arm` returns `used_per_task_timing=True` with the spec-defined ratio:
+   ```
+   BENCHMARK_RUN_A1_LIVE=1 uv run pytest -q benchmark/tests/test_a1_pipeline.py
+   ```
+   The pre-existing saved A1 evidence cannot be used here — its certificates were authored before the `TIMING_DIRECTIVE` shipped and therefore lack `Elapsed:` lines.
+
+3. **Task 05 — live spec-reviewer judgment evidence.** Opt in once to spend ≤ $3 of live budget against the saved A2 patch + spec text and confirm the verdict + rationale is plausible:
+   ```
+   BENCHMARK_RUN_SPEC_REVIEWER_JUDGE_LIVE=1 uv run pytest \
+     benchmark/tests/test_conformance.py::test_live_spec_reviewer_judge_on_saved_patch_and_artifacts -v
+   ```
+   then read `benchmark/tests/_conformance_live_evidence/spec_reviewer_judgment.json`.
+
+4. **Task 04 — render on a full five-arm live campaign.** No saved five-arm `CampaignRun` exists on disk; rendering against saved evidence is exercised on a synthetic fixture only. To exercise the renderer on real data, run a five-arm campaign (all four `BENCHMARK_RUN_*_LIVE=1` envs together) and call `render_ablation_report(build_ablation_report(run))`, confirming each of the four pairwise comparisons carries both a raw and a cost-matched bullet with `B` printed.
+
+**Open question carried forward.** Task 04's `cost_matched_delta__*` `MetricResult`s encode the Holm-adjusted significance flag in `ciLow`/`ciHigh` (degenerate point vs zero-straddling interval). This reuses the same shape `_emit_scalar` uses for "no closed-form CI" — disambiguated by `metricName` prefix but readability-fragile. A future schema delta could add an optional `significant` or `adjustedP` field to `MetricResult` and the cost-matched emitters could carry the flag explicitly; until then the per-record docstring is the contract. Flagged on `04-compute_cost_matched_paired_delta.md` §Open questions.
+
+**Phase 5 spec-conformance reconciliation.** The two gates prove each task is correct and complete against its own DoD. The plan's scope was *closing the five Group A divergences the R2 conformance review surfaced* — so the spec-conformance reconciliation is effectively the plan's `Implements:` lines being satisfied (recorded per-task in the §Gate verdicts blocks). Whether a fresh R2 pass over the integrated tip surfaces *new* divergences (e.g. drift introduced by the build) is the user's to run via `spec-reviewer` R2 against `docs/benchmark/specs/`; out of scope for this build.
 
 **Open questions**
 
