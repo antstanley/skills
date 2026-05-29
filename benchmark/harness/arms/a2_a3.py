@@ -310,15 +310,27 @@ _BLANK_VERDICT_MARKER = re.compile(r"\*\*Verdict:\*\*\s*\(blank", re.IGNORECASE)
 #: sign-off (a UI-bound / non-``headlessVerifiable`` task, ``00-overview.md`` →
 #: Open questions). It is the signal the manual-pause-rate metric counts
 #: (``04-metrics.md`` → Bucket 4, ``benchmark/harness/stats/cost_robustness.py``).
+#:
+#: The ``VERDICT:`` label is matched TOLERANT of markdown emphasis: the live
+#: ``spec-builder`` / ``validate-done-certificate`` gate writes the label
+#: BOLD (``**VERDICT:** DONE``) under a ``## Verdict`` heading, and italic
+#: (``*VERDICT:*``) / underscore-bold (``__VERDICT:__``) shapes are equally
+#: valid markdown. The ``[*_]*`` runs absorb the emphasis markers around the
+#: label and BETWEEN the colon and the verdict token, so both the bold live
+#: shape and the bare ``VERDICT: DONE`` register — without this, a live
+#: bolded certificate parses to NO gate event and A2 falsely looks ungated.
 _VALIDATE_VERDICT_RE = re.compile(
-    r"\bVERDICT:\s*(DONE|PARTIAL|NOT_DONE|UNVERIFIED)\b", re.IGNORECASE
+    r"VERDICT[*_]*:\s*[*_]*\s*(DONE|PARTIAL|NOT_DONE|UNVERIFIED)\b", re.IGNORECASE
 )
 
 #: A discharged semi-formal-review verdict line:
 #: ``VERDICT: CORRECT|LIKELY_CORRECT|CONCERNS|BUGGY``. Written by the
-#: semi-formal-review gate.
+#: semi-formal-review gate. Like :data:`_VALIDATE_VERDICT_RE`, the label is
+#: matched tolerant of markdown emphasis (bold/italic/underscore-bold around
+#: the label and between the colon and the verdict token), because the live
+#: gate bolds the label (``**VERDICT:** CORRECT``).
 _REVIEW_VERDICT_RE = re.compile(
-    r"\bVERDICT:\s*(CORRECT|LIKELY_CORRECT|CONCERNS|BUGGY)\b", re.IGNORECASE
+    r"VERDICT[*_]*:\s*[*_]*\s*(CORRECT|LIKELY_CORRECT|CONCERNS|BUGGY)\b", re.IGNORECASE
 )
 
 #: Per-task wall-clock line written by spec-builder into each certificate when

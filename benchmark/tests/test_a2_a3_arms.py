@@ -292,6 +292,70 @@ def test_gate_events_extracted_from_a_gates_on_capture() -> None:
     assert any(e.verdict == "PASS" for e in review_events)  # CORRECT -> PASS
 
 
+#: The REAL live shape captured from an A2 recursive run: the discharged
+#: ``validate-done-certificate`` gate writes a ``## Verdict`` heading and a
+#: MARKDOWN-BOLD label line ``**VERDICT:** DONE`` (not the bare ``VERDICT:
+#: DONE`` the older unit fixtures use). This block reproduces that capture so
+#: the parser is exercised against the bytes the live gate actually emits.
+_LIVE_BOLD_VERDICT_CAPTURE = [
+    _capture_entry(
+        "docs/plans/2026-05-29-x/certificates/01-tokenizer.md",
+        "# Done Certificate — Task 01\n\n"
+        "**Status:** Validated 2026-05-29\n\n"
+        "## Verdict\n\n**VERDICT:** DONE\n\n"
+        "State: Validated 2026-05-29\n",
+    ),
+]
+
+
+def test_markdown_bold_verdict_line_yields_one_pass_event() -> None:
+    """The REAL live cert shape ``**VERDICT:** DONE`` (markdown-bold label,
+    under a ``## Verdict`` heading) yields exactly ONE validate GateEvent mapped
+    to PASS. Before the label-emphasis tolerance the bold ``**`` between the
+    colon and ``DONE`` defeated the regex, so a live discharged certificate
+    parsed to NO gate event and A2 falsely looked ungated."""
+    events = extract_gate_events(_LIVE_BOLD_VERDICT_CAPTURE, trial_id=_TRIAL_ID)
+    assert len(events) == 1  # one validate event, no double-count
+    (event,) = events
+    assert event.gateKind == GATE_KIND_VALIDATE
+    assert event.verdict == "PASS"  # DONE -> PASS
+    assert event.verdict in GATE_VERDICTS
+    assert event.task == "01-tokenizer"
+
+
+def test_bare_verdict_line_still_yields_one_pass_event() -> None:
+    """No regression: the bare ``VERDICT: DONE`` shape (no markdown emphasis)
+    still yields exactly one validate PASS GateEvent."""
+    cap = [
+        _capture_entry(
+            "docs/plans/p/certificates/01-x.md",
+            "## Conclusion\n\nVERDICT: DONE\nState: Validated 2026-05-29\n",
+        ),
+    ]
+    events = extract_gate_events(cap, trial_id=_TRIAL_ID)
+    assert len(events) == 1
+    (event,) = events
+    assert event.gateKind == GATE_KIND_VALIDATE
+    assert event.verdict == "PASS"
+
+
+def test_italic_emphasis_verdict_line_maps_to_partial() -> None:
+    """Italic emphasis (``*VERDICT:* PARTIAL``) is also tolerated and maps the
+    validate verdict PARTIAL onto the closed enum's PARTIAL."""
+    cap = [
+        _capture_entry(
+            "docs/plans/p/certificates/02-y.md",
+            "## Verdict\n\n*VERDICT:* PARTIAL\n",
+        ),
+    ]
+    events = extract_gate_events(cap, trial_id=_TRIAL_ID)
+    assert len(events) == 1
+    (event,) = events
+    assert event.gateKind == GATE_KIND_VALIDATE
+    assert event.verdict == "PARTIAL"
+    assert event.verdict in GATE_VERDICTS
+
+
 def test_no_gate_events_from_a_gates_off_capture() -> None:
     """A3 (gates off): blank/undischarged certificates yield NO GateEvent."""
     events = extract_gate_events(_GATES_OFF_CAPTURE, trial_id=_TRIAL_ID)
