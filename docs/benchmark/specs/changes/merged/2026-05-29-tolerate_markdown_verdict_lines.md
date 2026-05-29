@@ -1,8 +1,8 @@
 # Change: Tolerate markdown emphasis in discharged `VERDICT:` lines
 
-**Status:** Proposed · **Date:** 2026-05-29 · **Owner:** Ant Stanley · **Target:** apps/benchmark
+**Status:** Merged · **Date:** 2026-05-29 · **Merged:** 2026-05-29 · **Owner:** Ant Stanley · **Target:** apps/benchmark
 
-The gate-efficacy machinery reads each discharged done-certificate's `VERDICT:` line to turn a gate run into a typed `GateEvent` ([06-scoring-and-statistics.md](../06-scoring-and-statistics.md) → §Gate-efficacy probes). A live A2 recursive run surfaced a false negative: the `validate-done-certificate` gate writes its verdict line as a MARKDOWN-BOLD label under a `## Verdict` heading — the literal line is `**VERDICT:** DONE`, not the bare `VERDICT: DONE` the unit fixtures used. The parser required a bare label (after the colon it expected only whitespace before the verdict word), so the closing bold `**` between the colon and `DONE` defeated the regex: `extract_gate_events` returned no events, A2 emitted zero `GateEvent`s, and the arm falsely looked ungated. This change commits the parser to reading the `VERDICT:` line tolerant of markdown emphasis, so live `spec-builder` certificates (which bold the label) register as gate events. The fix is small and surfaced by a real live run; no schema change, no new canonical page, no domain change.
+The gate-efficacy machinery reads each discharged done-certificate's `VERDICT:` line to turn a gate run into a typed `GateEvent` ([06-scoring-and-statistics.md](../../06-scoring-and-statistics.md) → §Gate-efficacy probes). A live A2 recursive run surfaced a false negative: the `validate-done-certificate` gate writes its verdict line as a MARKDOWN-BOLD label under a `## Verdict` heading — the literal line is `**VERDICT:** DONE`, not the bare `VERDICT: DONE` the unit fixtures used. The parser required a bare label (after the colon it expected only whitespace before the verdict word), so the closing bold `**` between the colon and `DONE` defeated the regex: `extract_gate_events` returned no events, A2 emitted zero `GateEvent`s, and the arm falsely looked ungated. This change commits the parser to reading the `VERDICT:` line tolerant of markdown emphasis, so live `spec-builder` certificates (which bold the label) register as gate events. The fix is small and surfaced by a real live run; no schema change, no new canonical page, no domain change.
 
 ---
 
@@ -30,7 +30,7 @@ Markdown emphasis around a label is ordinary markdown: the gate may equally writ
 
 | Canonical page | Nature of change |
 |---|---|
-| [`06-scoring-and-statistics.md`](../06-scoring-and-statistics.md) | §Gate-efficacy probes → *Live-probe verdict mapping*: note that the organic-path `VERDICT:` line read by `extract_gate_events` is parsed tolerant of markdown emphasis, so live `spec-builder` / `validate-done-certificate` certificates (which bold the label, `**VERDICT:** DONE`) register as gate events |
+| [`06-scoring-and-statistics.md`](../../06-scoring-and-statistics.md) | §Gate-efficacy probes → *Live-probe verdict mapping*: note that the organic-path `VERDICT:` line read by `extract_gate_events` is parsed tolerant of markdown emphasis, so live `spec-builder` / `validate-done-certificate` certificates (which bold the label, `**VERDICT:** DONE`) register as gate events |
 
 No new canonical page is added; the schema (`canonical-types.schema.json`) is unchanged — this change introduces no entity, field, or enum and refines no type. The closed `GateVerdict` enum and the `DONE → PASS` / `PARTIAL → PARTIAL` / `NOT_DONE → FAIL` / `UNVERIFIED → UNVERIFIED` mapping are untouched. It is a prose clarification of one already-described parsing step plus the matching parser fix.
 
@@ -38,7 +38,7 @@ No new canonical page is added; the schema (`canonical-types.schema.json`) is un
 
 ## Proposed changes
 
-The block below is the prose as it should read in the canonical page after merge. It appends one clarifying sentence to the *Live-probe verdict mapping* paragraph under [06-scoring-and-statistics.md](../06-scoring-and-statistics.md) → §Gate-efficacy probes (the paragraph that already names `extract_gate_events` and `_REVIEW_VERDICT_MAP`). The canonical page itself is NOT edited here — only this proposed-changes block is authored; the orchestrator merges the prose at integration.
+The block below is the prose as it should read in the canonical page after merge. It appends one clarifying sentence to the *Live-probe verdict mapping* paragraph under [06-scoring-and-statistics.md](../../06-scoring-and-statistics.md) → §Gate-efficacy probes (the paragraph that already names `extract_gate_events` and `_REVIEW_VERDICT_MAP`). The canonical page itself is NOT edited here — only this proposed-changes block is authored; the orchestrator merges the prose at integration.
 
 ### `06-scoring-and-statistics.md` → §Gate-efficacy probes, *Live-probe verdict mapping* (append one sentence)
 
