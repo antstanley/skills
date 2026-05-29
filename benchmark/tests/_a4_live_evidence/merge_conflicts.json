@@ -1,0 +1,14 @@
+[
+  {
+    "agentIndex": 1,
+    "stderr": "error: patch failed: text_toolkit/frequency.py:9\nerror: text_toolkit/frequency.py: patch does not apply\nerror: patch failed: text_toolkit/normalizer.py:6\nerror: text_toolkit/normalizer.py: patch does not apply\nerror: patch failed: text_toolkit/pipeline.py:9\nerror: text_toolkit/pipeline.py: patch does not apply\nerror: patch failed: text_toolkit/tokenizer.py:9\nerror: text_toolkit/tokenizer.py: patch does not apply"
+  },
+  {
+    "agentIndex": 2,
+    "stderr": "error: patch failed: text_toolkit/frequency.py:9\nerror: text_toolkit/frequency.py: patch does not apply\nerror: patch failed: text_toolkit/normalizer.py:8\nerror: text_toolkit/normalizer.py: patch does not apply\nerror: patch failed: text_toolkit/pipeline.py:9\nerror: text_toolkit/pipeline.py: patch does not apply\nerror: patch failed: text_toolkit/tokenizer.py:9\nerror: text_toolkit/tokenizer.py: patch does not apply"
+  },
+  {
+    "agentIndex": 3,
+    "stderr": "error: patch failed: text_toolkit/frequency.py:7\nerror: text_toolkit/frequency.py: patch does not apply\nerror: patch failed: text_toolkit/normalizer.py:6\nerror: text_toolkit/normalizer.py: patch does not apply\nerror: patch failed: text_toolkit/pipeline.py:7\nerror: text_toolkit/pipeline.py: patch does not apply\nerror: patch failed: text_toolkit/tokenizer.py:8\nerror: text_toolkit/tokenizer.py: patch does not apply"
+  }
+]

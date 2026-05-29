@@ -1,0 +1,74 @@
+diff --git a/text_toolkit/frequency.py b/text_toolkit/frequency.py
+index e772bfb..9e6c51f 100644
+--- a/text_toolkit/frequency.py
++++ b/text_toolkit/frequency.py
+@@ -7,11 +7,19 @@ Skeleton stub.
+ from __future__ import annotations
+ 
+ 
++from text_toolkit.normalizer import normalize
++from text_toolkit.tokenizer import tokenize
++
++
+ def word_counts(text: str) -> dict[str, int]:
+     """Return a mapping of normalized term -> occurrence count. (TODO.)"""
+-    raise NotImplementedError("word_counts is not implemented yet")
++    counts: dict[str, int] = {}
++    for term in normalize(tokenize(text)):
++        counts[term] = counts.get(term, 0) + 1
++    return counts
+ 
+ 
+ def top_terms(text: str, limit: int) -> list[tuple[str, int]]:
+     """Return the ``limit`` most frequent ``(term, count)`` pairs. (TODO.)"""
+-    raise NotImplementedError("top_terms is not implemented yet")
++    counts = word_counts(text)
++    return sorted(counts.items(), key=lambda x: (-x[1], x[0]))[:limit]
+diff --git a/text_toolkit/normalizer.py b/text_toolkit/normalizer.py
+index 12db3e7..e0b8840 100644
+--- a/text_toolkit/normalizer.py
++++ b/text_toolkit/normalizer.py
+@@ -6,6 +6,9 @@ Depends on :mod:`text_toolkit.tokenizer`. Skeleton stub.
+ from __future__ import annotations
+ 
+ 
++_STOP_WORDS = {"a", "an", "the", "of", "and", "to", "in"}
++
++
+ def normalize(tokens: list[str]) -> list[str]:
+     """Return ``tokens`` folded to canonical form. (TODO: implement.)"""
+-    raise NotImplementedError("normalize is not implemented yet")
++    return [t.lower() for t in tokens if t.lower() not in _STOP_WORDS]
+diff --git a/text_toolkit/pipeline.py b/text_toolkit/pipeline.py
+index 68da38b..083b8f0 100644
+--- a/text_toolkit/pipeline.py
++++ b/text_toolkit/pipeline.py
+@@ -7,6 +7,16 @@ Depends on :mod:`text_toolkit.tokenizer`, :mod:`text_toolkit.normalizer`, and
+ from __future__ import annotations
+ 
+ 
++from text_toolkit.frequency import top_terms, word_counts
++from text_toolkit.tokenizer import tokenize
++
++
+ def summarize(text: str, limit: int) -> dict[str, object]:
+     """Return a summary dict for ``text``. (TODO: implement.)"""
+-    raise NotImplementedError("summarize is not implemented yet")
++    tokens = tokenize(text)
++    counts = word_counts(text)
++    return {
++        "tokens": len(tokens),
++        "terms": len(counts),
++        "top": top_terms(text, limit),
++    }
+diff --git a/text_toolkit/tokenizer.py b/text_toolkit/tokenizer.py
+index 792b6cb..1fa0a10 100644
+--- a/text_toolkit/tokenizer.py
++++ b/text_toolkit/tokenizer.py
+@@ -9,4 +9,5 @@ from __future__ import annotations
+ 
+ def tokenize(text: str) -> list[str]:
+     """Split ``text`` into a list of word tokens. (TODO: implement.)"""
+-    raise NotImplementedError("tokenize is not implemented yet")
++    import re
++    return [t for t in re.split(r'[^a-zA-Z0-9]+', text) if t]

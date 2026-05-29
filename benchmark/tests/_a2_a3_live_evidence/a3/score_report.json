@@ -1,0 +1,27 @@
+{
+  "failToPassResults": {
+    "hidden/test_frequency.py::test_top_terms_breaks_ties_alphabetically": true,
+    "hidden/test_frequency.py::test_top_terms_orders_by_count_then_term": true,
+    "hidden/test_frequency.py::test_top_terms_respects_limit": true,
+    "hidden/test_frequency.py::test_word_counts_empty_text": true,
+    "hidden/test_frequency.py::test_word_counts_uses_normalized_terms": true,
+    "hidden/test_normalizer.py::test_drops_stop_words": true,
+    "hidden/test_normalizer.py::test_empty_input_yields_empty": true,
+    "hidden/test_normalizer.py::test_lowercases_tokens": true,
+    "hidden/test_normalizer.py::test_preserves_order_of_survivors": true,
+    "hidden/test_pipeline.py::test_summarize_empty_text": true,
+    "hidden/test_pipeline.py::test_summarize_reports_token_and_term_counts": true,
+    "hidden/test_tokenizer.py::test_empty_text_yields_no_tokens": true,
+    "hidden/test_tokenizer.py::test_preserves_case_and_digits": true,
+    "hidden/test_tokenizer.py::test_splits_on_punctuation_and_drops_empties": true,
+    "hidden/test_tokenizer.py::test_splits_on_whitespace": true
+  },
+  "id": "score_019e7421-cdaf-756b-a5de-bee2e5c813e1",
+  "passToPassResults": {
+    "test_smoke.py::test_component_modules_import": true,
+    "test_smoke.py::test_public_api_is_exposed": true
+  },
+  "regressed": false,
+  "resolved": true,
+  "trial": "trial_019e7416-3965-7680-8c11-405cdaf5805a"
+}

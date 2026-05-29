@@ -1,0 +1,7 @@
+{
+  "instance": "greenfield__text_toolkit__0001",
+  "arm": "A2",
+  "score": 0.97,
+  "raw_score": 0.97,
+  "rationale": "All four spec components are fully implemented: tokenize correctly splits on runs of non-alphanumeric chars and drops empty tokens; normalize lowercases and removes exactly the specified stop words in order; word_counts composes tokenize+normalize into a count dict; top_terms sorts descending by count with ties broken by term ascending and slices to limit; summarize returns the correct dict shape with 'tokens' (raw token count), 'terms' (distinct normalized term count), and 'top' (top_terms result). The public API signatures match the spec exactly. The diff does not show the __init__.py re-exports, which is a minor gap \u2014 if those re-exports are absent the package-level API contract would be violated \u2014 but this is likely in an unmodified file already present in the skeleton. Behavioural fidelity is high across all axes with no unspecified divergence."
+}

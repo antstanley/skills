@@ -1,0 +1,13 @@
+{
+  "arm": "A4",
+  "cost_usd": 0.6512460499999999,
+  "fault": null,
+  "merge_conflict_count": 3,
+  "n_agents": 4,
+  "per_agent_budget_usd": 5.0,
+  "regressed": false,
+  "resolved": true,
+  "total_budget_usd": 20.0,
+  "trial_status": "aggregated",
+  "wall_clock_seconds": 108.98291413800325
+}

@@ -1,0 +1,109 @@
+diff --git a/text_toolkit/frequency.py b/text_toolkit/frequency.py
+index e772bfb..095e98f 100644
+--- a/text_toolkit/frequency.py
++++ b/text_toolkit/frequency.py
+@@ -1,17 +1,26 @@
+ """Component 3: ``frequency`` — count and rank normalized terms.
+ 
+ Depends on :mod:`text_toolkit.tokenizer` and :mod:`text_toolkit.normalizer`.
+-Skeleton stub.
+ """
+ 
+ from __future__ import annotations
+ 
++from .tokenizer import tokenize
++from .normalizer import normalize
++
+ 
+ def word_counts(text: str) -> dict[str, int]:
+-    """Return a mapping of normalized term -> occurrence count. (TODO.)"""
+-    raise NotImplementedError("word_counts is not implemented yet")
++    """Return a mapping of normalized term -> occurrence count."""
++    counts: dict[str, int] = {}
++    for term in normalize(tokenize(text)):
++        counts[term] = counts.get(term, 0) + 1
++    return counts
+ 
+ 
+ def top_terms(text: str, limit: int) -> list[tuple[str, int]]:
+-    """Return the ``limit`` most frequent ``(term, count)`` pairs. (TODO.)"""
+-    raise NotImplementedError("top_terms is not implemented yet")
++    """Return the ``limit`` most frequent ``(term, count)`` pairs.
++
++    Sorted by count descending; ties broken by term ascending.
++    """
++    items = sorted(word_counts(text).items(), key=lambda item: (-item[1], item[0]))
++    return items[:limit]
+diff --git a/text_toolkit/normalizer.py b/text_toolkit/normalizer.py
+index 12db3e7..593a795 100644
+--- a/text_toolkit/normalizer.py
++++ b/text_toolkit/normalizer.py
+@@ -6,6 +6,9 @@ Depends on :mod:`text_toolkit.tokenizer`. Skeleton stub.
+ from __future__ import annotations
+ 
+ 
++_STOP_WORDS = {"a", "an", "the", "of", "and", "to", "in"}
++
++
+ def normalize(tokens: list[str]) -> list[str]:
+-    """Return ``tokens`` folded to canonical form. (TODO: implement.)"""
+-    raise NotImplementedError("normalize is not implemented yet")
++    """Return ``tokens`` lowercased with stop words removed, order preserved."""
++    return [t.lower() for t in tokens if t.lower() not in _STOP_WORDS]
+diff --git a/text_toolkit/pipeline.py b/text_toolkit/pipeline.py
+index 68da38b..264ddde 100644
+--- a/text_toolkit/pipeline.py
++++ b/text_toolkit/pipeline.py
+@@ -1,12 +1,28 @@
+ """Component 4: ``pipeline`` — orchestrate the other three components.
+ 
+ Depends on :mod:`text_toolkit.tokenizer`, :mod:`text_toolkit.normalizer`, and
+-:mod:`text_toolkit.frequency`. Skeleton stub.
++:mod:`text_toolkit.frequency`.
+ """
+ 
+ from __future__ import annotations
+ 
++from text_toolkit.tokenizer import tokenize
++from text_toolkit.frequency import word_counts, top_terms
++
+ 
+ def summarize(text: str, limit: int) -> dict[str, object]:
+-    """Return a summary dict for ``text``. (TODO: implement.)"""
+-    raise NotImplementedError("summarize is not implemented yet")
++    """Return a summary dict for ``text``.
++
++    Returns::
++
++        {
++            'tokens': len(tokenize(text)),   # raw token count
++            'terms':  len(word_counts(text)), # distinct normalized terms
++            'top':    top_terms(text, limit),
++        }
++    """
++    return {
++        "tokens": len(tokenize(text)),
++        "terms": len(word_counts(text)),
++        "top": top_terms(text, limit),
++    }
+diff --git a/text_toolkit/tokenizer.py b/text_toolkit/tokenizer.py
+index 792b6cb..f8d1058 100644
+--- a/text_toolkit/tokenizer.py
++++ b/text_toolkit/tokenizer.py
+@@ -6,7 +6,14 @@ acceptance suite under ``hidden/`` is the oracle.
+ 
+ from __future__ import annotations
+ 
++import re
++
+ 
+ def tokenize(text: str) -> list[str]:
+-    """Split ``text`` into a list of word tokens. (TODO: implement.)"""
+-    raise NotImplementedError("tokenize is not implemented yet")
++    """Split ``text`` into a list of word tokens.
++
++    Returns a list of maximal runs of alphanumeric characters from *text*,
++    splitting on any run of non-alphanumeric characters.  Original case and
++    digits are preserved; empty strings are never returned.
++    """
++    return re.findall(r'[A-Za-z0-9]+', text)

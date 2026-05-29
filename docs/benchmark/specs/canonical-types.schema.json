@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://antstanley.dev/schemas/benchmark-canonical-types.schema.json",
+  "title": "spec-workflow-benchmark canonical types",
+  "description": "Authoritative shapes for the spec-workflow benchmark's domain entities. See docs/benchmark/specs/01-domain-model.md.",
+  "$defs": {
+    "Slug": {
+      "description": "Stable lowercase identifier, kebab or double-underscore separated.",
+      "type": "string",
+      "pattern": "^[a-z0-9]([a-z0-9_-]*[a-z0-9])?$"
+    },
+    "RecordId": {
+      "description": "Generated record id of the form <prefix>_<uuid7>.",
+      "type": "string",
+      "pattern": "^[a-z]+_[0-9a-f-]{36}$"
+    },
+    "Timestamp": {
+      "description": "RFC3339 timestamp in UTC.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "ArmSlug": {
+      "description": "One of the six fixed ablation arms.",
+      "type": "string",
+      "enum": ["A0", "A1", "A2", "A3", "A4", "A5"]
+    },
+    "GateKind": {
+      "type": "string",
+      "enum": ["semi-formal-review", "validate-done-certificate"]
+    },
+    "GateVerdict": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "PARTIAL", "UNVERIFIED"]
+    },
+    "Suite": {
+      "type": "object",
+      "required": ["slug", "kind", "oracleConvention"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": { "$ref": "#/$defs/Slug" },
+        "kind": { "type": "string", "enum": ["greenfield", "local-fixture"] },
+        "oracleConvention": { "type": "string", "enum": ["greenfield-hidden-tests", "local"] }
+      }
+    },
+    "TaskInstance": {
+      "type": "object",
+      "required": ["slug", "suite", "repo", "baseCommit", "problemStatement", "failToPass", "passToPass", "contaminationTier", "headlessVerifiable"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": { "$ref": "#/$defs/Slug" },
+        "suite": { "$ref": "#/$defs/Slug" },
+        "repo": { "type": "string", "minLength": 1 },
+        "baseCommit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+        "problemStatement": { "type": "string", "minLength": 1 },
+        "goldPatch": { "type": ["string", "null"], "description": "Reference solution; null for greenfield." },
+        "failToPass": { "type": "array", "items": { "type": "string" }, "description": "Hidden test selectors that must transition to passing. Never exposed to any arm." },
+        "passToPass": { "type": "array", "items": { "type": "string" }, "description": "Hidden test selectors that must remain passing." },
+        "testTags": { "type": ["object", "null"], "additionalProperties": { "type": "string" }, "description": "Greenfield only: hidden-test-selector -> spec section/component it exercises, enabling per-task gateEscape attribution. Null when escape is computed at instance granularity." },
+        "dockerImage": { "type": ["string", "null"] },
+        "contaminationTier": { "type": "string", "enum": ["public", "held-out", "authored-private"] },
+        "headlessVerifiable": { "type": "boolean" }
+      }
+    },
+    "Arm": {
+      "type": "object",
+      "required": ["slug", "pluginsEnabled", "gatesEnabled", "specProvided", "executionMode"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": { "$ref": "#/$defs/ArmSlug" },
+        "pluginsEnabled": { "type": "array", "items": { "type": "string" } },
+        "gatesEnabled": { "type": "boolean" },
+        "specProvided": { "type": "boolean" },
+        "executionMode": { "type": "string", "enum": ["single", "parallel-structured", "parallel-unstructured"] }
+      }
+    },
+    "Campaign": {
+      "type": "object",
+      "required": ["id", "createdAt", "model", "arms", "suites", "trialsPerInstance"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "createdAt": { "$ref": "#/$defs/Timestamp" },
+        "model": { "type": "string", "minLength": 1 },
+        "arms": { "type": "array", "items": { "$ref": "#/$defs/ArmSlug" }, "minItems": 1 },
+        "suites": { "type": "array", "items": { "$ref": "#/$defs/Slug" }, "minItems": 1 },
+        "trialsPerInstance": { "type": "integer", "minimum": 1 },
+        "backend": { "type": "string", "enum": ["container", "local"], "default": "container" },
+        "solver": { "type": "string", "enum": ["agent", "fixture"], "default": "agent" }
+      }
+    },
+    "Trial": {
+      "type": "object",
+      "required": ["id", "campaign", "arm", "taskInstance", "seed", "createdAt", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "campaign": { "$ref": "#/$defs/RecordId" },
+        "arm": { "$ref": "#/$defs/ArmSlug" },
+        "taskInstance": { "$ref": "#/$defs/Slug" },
+        "seed": { "type": "integer" },
+        "createdAt": { "$ref": "#/$defs/Timestamp" },
+        "status": { "type": "string", "enum": ["queued", "provisioning", "running", "captured", "scored", "aggregated", "failed"] },
+        "candidatePatch": { "type": ["string", "null"] },
+        "artifactBundle": { "type": ["string", "null"], "description": "ArtifactBundle id." },
+        "scoreReport": { "type": ["string", "null"], "description": "ScoreReport id." }
+      }
+    },
+    "Telemetry": {
+      "type": "object",
+      "required": ["inputTokens", "outputTokens", "costUsd", "wallClockSeconds", "agentTurns"],
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "costUsd": { "type": "number", "minimum": 0 },
+        "wallClockSeconds": { "type": "number", "minimum": 0 },
+        "agentTurns": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "ArtifactBundle": {
+      "type": "object",
+      "required": ["id", "trial", "telemetry"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "trial": { "$ref": "#/$defs/RecordId" },
+        "specArtifacts": { "type": "array", "items": { "type": "string" } },
+        "planArtifacts": { "type": "array", "items": { "type": "string" } },
+        "certificateArtifacts": { "type": "array", "items": { "type": "string" } },
+        "transcript": { "type": ["string", "null"] },
+        "telemetry": { "$ref": "#/$defs/Telemetry" },
+        "taskWallClocks": {
+          "description": "Per-task wall-clock seconds for a workflow arm's intra-trial work, keyed by the plan task id the certificate stem identifies (e.g. '01-tokenizer'). Populated by the workflow backend from each captured certificate's 'Elapsed: <seconds>s' line; absent on bundles produced before per-task timing was captured.",
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "GateEvent": {
+      "type": "object",
+      "required": ["id", "trial", "task", "gateKind", "verdict", "retryIndex"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "trial": { "$ref": "#/$defs/RecordId" },
+        "task": { "type": "string", "description": "Plan task id being gated." },
+        "gateKind": { "$ref": "#/$defs/GateKind" },
+        "verdict": { "$ref": "#/$defs/GateVerdict" },
+        "retryIndex": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "InjectedDefect": {
+      "type": "object",
+      "required": ["id", "taskInstance", "defectKind", "caughtBy"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "taskInstance": { "$ref": "#/$defs/Slug" },
+        "defectKind": { "type": "string", "minLength": 1 },
+        "caughtBy": { "oneOf": [{ "$ref": "#/$defs/GateKind" }, { "type": "null" }] }
+      }
+    },
+    "ScoreReport": {
+      "type": "object",
+      "required": ["id", "trial", "resolved", "regressed"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "trial": { "$ref": "#/$defs/RecordId" },
+        "resolved": { "type": "boolean" },
+        "failToPassResults": { "type": "object", "additionalProperties": { "type": "boolean" } },
+        "passToPassResults": { "type": "object", "additionalProperties": { "type": "boolean" } },
+        "regressed": { "type": "boolean" },
+        "conformanceScore": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "gateEscape": { "type": ["boolean", "null"] }
+      }
+    },
+    "MetricResult": {
+      "type": "object",
+      "required": ["id", "campaign", "arm", "suite", "metricName", "value", "ciLow", "ciHigh", "nTrials"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "campaign": { "$ref": "#/$defs/RecordId" },
+        "arm": { "$ref": "#/$defs/ArmSlug" },
+        "suite": { "$ref": "#/$defs/Slug" },
+        "metricName": { "type": "string", "minLength": 1 },
+        "value": { "type": "number" },
+        "ciLow": { "type": "number" },
+        "ciHigh": { "type": "number" },
+        "nTrials": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

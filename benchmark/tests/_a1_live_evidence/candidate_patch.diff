@@ -1,0 +1,16 @@
+diff --git a/text_toolkit/tokenizer.py b/text_toolkit/tokenizer.py
+index 792b6cb..de64efa 100644
+--- a/text_toolkit/tokenizer.py
++++ b/text_toolkit/tokenizer.py
+@@ -6,7 +6,9 @@ acceptance suite under ``hidden/`` is the oracle.
+ 
+ from __future__ import annotations
+ 
++import re
++
+ 
+ def tokenize(text: str) -> list[str]:
+-    """Split ``text`` into a list of word tokens. (TODO: implement.)"""
+-    raise NotImplementedError("tokenize is not implemented yet")
++    """Split ``text`` into a list of word tokens."""
++    return [t for t in re.split(r'[^A-Za-z0-9]+', text) if t]

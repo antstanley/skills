@@ -1,0 +1,175 @@
+diff --git a/text_toolkit/frequency.py b/text_toolkit/frequency.py
+index e772bfb..2c586b9 100644
+--- a/text_toolkit/frequency.py
++++ b/text_toolkit/frequency.py
+@@ -1,17 +1,48 @@
+ """Component 3: ``frequency`` — count and rank normalized terms.
+ 
+ Depends on :mod:`text_toolkit.tokenizer` and :mod:`text_toolkit.normalizer`.
+-Skeleton stub.
+ """
+ 
+ from __future__ import annotations
+ 
++import collections
++
++from text_toolkit.tokenizer import tokenize
++from text_toolkit.normalizer import normalize
++
+ 
+ def word_counts(text: str) -> dict[str, int]:
+-    """Return a mapping of normalized term -> occurrence count. (TODO.)"""
+-    raise NotImplementedError("word_counts is not implemented yet")
++    """Return a mapping of normalized term -> occurrence count.
++
++    Tokenizes ``text`` and normalizes the resulting tokens (lowercasing and
++    stop-word removal), then counts each surviving term.
++
++    Examples::
++
++        >>> word_counts("the the cat")
++        {'cat': 1}
++        >>> word_counts("")
++        {}
++        >>> word_counts("cat dog cat")
++        {'cat': 2, 'dog': 1}
++    """
++    terms = normalize(tokenize(text))
++    return dict(collections.Counter(terms))
+ 
+ 
+ def top_terms(text: str, limit: int) -> list[tuple[str, int]]:
+-    """Return the ``limit`` most frequent ``(term, count)`` pairs. (TODO.)"""
+-    raise NotImplementedError("top_terms is not implemented yet")
++    """Return the ``limit`` most frequent ``(term, count)`` pairs.
++
++    Results are sorted by count descending; ties are broken by term ascending
++    (lexicographic order).
++
++    Examples::
++
++        >>> top_terms("cat dog cat", 2)
++        [('cat', 2), ('dog', 1)]
++        >>> top_terms("cat dog cat", 1)
++        [('cat', 2)]
++    """
++    counts = word_counts(text)
++    sorted_terms = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
++    return sorted_terms[:limit]
+diff --git a/text_toolkit/normalizer.py b/text_toolkit/normalizer.py
+index 12db3e7..2531b24 100644
+--- a/text_toolkit/normalizer.py
++++ b/text_toolkit/normalizer.py
+@@ -1,11 +1,25 @@
+ """Component 2: ``normalizer`` — fold tokens to a canonical form.
+ 
+-Depends on :mod:`text_toolkit.tokenizer`. Skeleton stub.
++Depends on :mod:`text_toolkit.tokenizer`.
+ """
+ 
+ from __future__ import annotations
+ 
++STOP_WORDS: frozenset[str] = frozenset({"a", "an", "the", "of", "and", "to", "in"})
++
+ 
+ def normalize(tokens: list[str]) -> list[str]:
+-    """Return ``tokens`` folded to canonical form. (TODO: implement.)"""
+-    raise NotImplementedError("normalize is not implemented yet")
++    """Lowercase each token and remove stop words, preserving order of survivors.
++
++    Stop-word matching is case-insensitive (tokens are lowercased before
++    checking).  The output is a subsequence of the lowercased input —
++    order is preserved and only stop-word removal takes place.
++
++    Examples
++    --------
++    >>> normalize(["The", "Cat", "and", "THE", "dog"])
++    ['cat', 'dog']
++    >>> normalize([])
++    []
++    """
++    return [low for token in tokens if (low := token.lower()) not in STOP_WORDS]
+diff --git a/text_toolkit/pipeline.py b/text_toolkit/pipeline.py
+index 68da38b..5defd40 100644
+--- a/text_toolkit/pipeline.py
++++ b/text_toolkit/pipeline.py
+@@ -1,12 +1,33 @@
+ """Component 4: ``pipeline`` — orchestrate the other three components.
+ 
+ Depends on :mod:`text_toolkit.tokenizer`, :mod:`text_toolkit.normalizer`, and
+-:mod:`text_toolkit.frequency`. Skeleton stub.
++:mod:`text_toolkit.frequency`.
+ """
+ 
+ from __future__ import annotations
+ 
++from text_toolkit.tokenizer import tokenize
++from text_toolkit.frequency import word_counts, top_terms
++
+ 
+ def summarize(text: str, limit: int) -> dict[str, object]:
+-    """Return a summary dict for ``text``. (TODO: implement.)"""
+-    raise NotImplementedError("summarize is not implemented yet")
++    """Return a summary dict for ``text``.
++
++    Returns a dict with three keys:
++
++    - ``'tokens'``: count of raw tokens (``len(tokenize(text))``).
++    - ``'terms'``: count of distinct normalized terms (``len(word_counts(text))``).
++    - ``'top'``: the ``limit`` most frequent ``(term, count)`` pairs
++      (``top_terms(text, limit)``).
++
++    Examples::
++
++        >>> summarize("", 3)
++        {'tokens': 0, 'terms': 0, 'top': []}
++        >>> summarize("the cat and the dog", 2)['tokens']
++        5
++    """
++    tokens = len(tokenize(text))
++    terms = len(word_counts(text))
++    top = top_terms(text, limit)
++    return {'tokens': tokens, 'terms': terms, 'top': top}
+diff --git a/text_toolkit/tokenizer.py b/text_toolkit/tokenizer.py
+index 792b6cb..f05957a 100644
+--- a/text_toolkit/tokenizer.py
++++ b/text_toolkit/tokenizer.py
+@@ -1,12 +1,34 @@
+ """Component 1: ``tokenizer`` — split raw text into word tokens.
+ 
+-Skeleton stub. See the specification for the exact contract; the hidden
+-acceptance suite under ``hidden/`` is the oracle.
++Splits text into word tokens on any run of non-alphanumeric characters,
++preserving original case and dropping empty tokens.
+ """
+ 
+ from __future__ import annotations
+ 
++import re
++
+ 
+ def tokenize(text: str) -> list[str]:
+-    """Split ``text`` into a list of word tokens. (TODO: implement.)"""
+-    raise NotImplementedError("tokenize is not implemented yet")
++    """Split ``text`` into a list of word tokens.
++
++    Tokens are maximal runs of alphanumeric characters (A-Z, a-z, 0-9).
++    Any run of non-alphanumeric characters acts as a delimiter and is
++    discarded. Empty strings are never returned.
++
++    Examples::
++
++        >>> tokenize("Hello, World!")
++        ['Hello', 'World']
++        >>> tokenize("it's a test")
++        ['it', 's', 'a', 'test']
++        >>> tokenize("one1two2three")
++        ['one1two2three']
++        >>> tokenize("---")
++        []
++        >>> tokenize("")
++        []
++        >>> tokenize("Hello WORLD")
++        ['Hello', 'WORLD']
++    """
++    return re.findall(r'[A-Za-z0-9]+', text)

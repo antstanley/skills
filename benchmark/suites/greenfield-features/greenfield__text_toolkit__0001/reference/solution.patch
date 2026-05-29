@@ -1,0 +1,110 @@
+diff --git a/text_toolkit/frequency.py b/text_toolkit/frequency.py
+index e772bfb..36ac9f5 100644
+--- a/text_toolkit/frequency.py
++++ b/text_toolkit/frequency.py
+@@ -1,17 +1,23 @@
+-"""Component 3: ``frequency`` — count and rank normalized terms.
+-
+-Depends on :mod:`text_toolkit.tokenizer` and :mod:`text_toolkit.normalizer`.
+-Skeleton stub.
+-"""
++"""Component 3: ``frequency`` — count and rank normalized terms."""
+ 
+ from __future__ import annotations
+ 
++from collections import Counter
++
++from text_toolkit.normalizer import normalize
++from text_toolkit.tokenizer import tokenize
++
+ 
+ def word_counts(text: str) -> dict[str, int]:
+-    """Return a mapping of normalized term -> occurrence count. (TODO.)"""
+-    raise NotImplementedError("word_counts is not implemented yet")
++    """Return a mapping of normalized term -> occurrence count."""
++    return dict(Counter(normalize(tokenize(text))))
+ 
+ 
+ def top_terms(text: str, limit: int) -> list[tuple[str, int]]:
+-    """Return the ``limit`` most frequent ``(term, count)`` pairs. (TODO.)"""
+-    raise NotImplementedError("top_terms is not implemented yet")
++    """Return the ``limit`` most frequent ``(term, count)`` pairs.
++
++    Sorted by count descending, then term ascending on ties.
++    """
++    counts = word_counts(text)
++    ranked = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
++    return ranked[:limit]
+diff --git a/text_toolkit/normalizer.py b/text_toolkit/normalizer.py
+index 12db3e7..678e06c 100644
+--- a/text_toolkit/normalizer.py
++++ b/text_toolkit/normalizer.py
+@@ -1,11 +1,11 @@
+-"""Component 2: ``normalizer`` — fold tokens to a canonical form.
+-
+-Depends on :mod:`text_toolkit.tokenizer`. Skeleton stub.
+-"""
++"""Component 2: ``normalizer`` — fold tokens to a canonical form."""
+ 
+ from __future__ import annotations
+ 
++_STOP_WORDS = frozenset({"a", "an", "the", "of", "and", "to", "in"})
++
+ 
+ def normalize(tokens: list[str]) -> list[str]:
+-    """Return ``tokens`` folded to canonical form. (TODO: implement.)"""
+-    raise NotImplementedError("normalize is not implemented yet")
++    """Lowercase each token and drop stop words, preserving order."""
++    folded = (token.lower() for token in tokens)
++    return [token for token in folded if token not in _STOP_WORDS]
+diff --git a/text_toolkit/pipeline.py b/text_toolkit/pipeline.py
+index 68da38b..5080a55 100644
+--- a/text_toolkit/pipeline.py
++++ b/text_toolkit/pipeline.py
+@@ -1,12 +1,15 @@
+-"""Component 4: ``pipeline`` — orchestrate the other three components.
+-
+-Depends on :mod:`text_toolkit.tokenizer`, :mod:`text_toolkit.normalizer`, and
+-:mod:`text_toolkit.frequency`. Skeleton stub.
+-"""
++"""Component 4: ``pipeline`` — orchestrate the other three components."""
+ 
+ from __future__ import annotations
+ 
++from text_toolkit.frequency import top_terms, word_counts
++from text_toolkit.tokenizer import tokenize
++
+ 
+ def summarize(text: str, limit: int) -> dict[str, object]:
+-    """Return a summary dict for ``text``. (TODO: implement.)"""
+-    raise NotImplementedError("summarize is not implemented yet")
++    """Return a summary dict for ``text``."""
++    return {
++        "tokens": len(tokenize(text)),
++        "terms": len(word_counts(text)),
++        "top": top_terms(text, limit),
++    }
+diff --git a/text_toolkit/tokenizer.py b/text_toolkit/tokenizer.py
+index 792b6cb..0111475 100644
+--- a/text_toolkit/tokenizer.py
++++ b/text_toolkit/tokenizer.py
+@@ -1,12 +1,12 @@
+-"""Component 1: ``tokenizer`` — split raw text into word tokens.
+-
+-Skeleton stub. See the specification for the exact contract; the hidden
+-acceptance suite under ``hidden/`` is the oracle.
+-"""
++"""Component 1: ``tokenizer`` — split raw text into word tokens."""
+ 
+ from __future__ import annotations
+ 
++import re
++
++_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
++
+ 
+ def tokenize(text: str) -> list[str]:
+-    """Split ``text`` into a list of word tokens. (TODO: implement.)"""
+-    raise NotImplementedError("tokenize is not implemented yet")
++    """Split ``text`` into word tokens on runs of non-alphanumeric chars."""
++    return _TOKEN_RE.findall(text)

@@ -1,0 +1,6 @@
+{
+  "instance": "greenfield__text_toolkit__0001",
+  "defectKind": "off-by-one",
+  "caughtBy": "semi-formal-review",
+  "component": "frequency"
+}
