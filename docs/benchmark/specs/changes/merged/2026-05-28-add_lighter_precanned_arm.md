@@ -1,6 +1,6 @@
 # Change: Add a lighter pre-canned ablation arm (A5)
 
-**Status:** Proposed · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Target:** apps/benchmark
+**Status:** Merged · **Date:** 2026-05-28 · **Merged:** 2026-05-29 · **Owner:** Ant Stanley · **Target:** apps/benchmark
 
 Add a sixth ablation arm, **A5 — Lighter pre-canned**, that produces the same *observable artifacts* a gated workflow arm does — a candidate code patch plus at least one discharged done-certificate carrying a real `VERDICT:` line — but WITHOUT running the full recursive `spec-planner` + `spec-builder` build. A5 runs a single, FIXED, non-recursive `claude -p` call on a small budget cap and a short wall-clock timeout. It exists so the gate-emission machinery (`extract_gate_events`) and the cheaper end of the cost curve have a witness that *completes within a small bounded budget/timeout* — the recursive workflow arms (A1/A2/A3) can legitimately exceed the run timeout, so they are a poor fit for a fast, reliable gate-emission check. This change opens the closed `ArmSlug` enum from five members to six and adds the A5 record + its pre-canned provisioning recipe; the existing arms, metrics, scoring rule, and the run/scoring split are unchanged.
 
@@ -8,7 +8,7 @@ Add a sixth ablation arm, **A5 — Lighter pre-canned**, that produces the same 
 
 ## Motivation
 
-The benchmark's gate-emission behaviour — a gates-on workflow run discharges its done-certificates and yields ≥ 1 `GateEvent`, a gates-off run yields none — is the observable backbone of the `A2 − A3` gate delta ([02-arms.md](../02-arms.md) → §A3). Today the only arms that emit gate events are A1 and A2, both of which are RECURSIVE `spec-*` workflows: the orchestrator spawns `spec-planner` and `spec-builder` sub-agents that walk a plan DAG in waves. Those arms are bounded by a generous `--max-budget-usd` cap and a ~20-minute timeout (`A1_RUN_TIMEOUT_SECONDS`, `benchmark/harness/backends/container.py`), and they can *legitimately hit the cap or the timeout before finishing*. That is honest for a campaign, but it makes them an unreliable and expensive fixture for two needs:
+The benchmark's gate-emission behaviour — a gates-on workflow run discharges its done-certificates and yields ≥ 1 `GateEvent`, a gates-off run yields none — is the observable backbone of the `A2 − A3` gate delta ([02-arms.md](../../02-arms.md) → §A3). Today the only arms that emit gate events are A1 and A2, both of which are RECURSIVE `spec-*` workflows: the orchestrator spawns `spec-planner` and `spec-builder` sub-agents that walk a plan DAG in waves. Those arms are bounded by a generous `--max-budget-usd` cap and a ~20-minute timeout (`A1_RUN_TIMEOUT_SECONDS`, `benchmark/harness/backends/container.py`), and they can *legitimately hit the cap or the timeout before finishing*. That is honest for a campaign, but it makes them an unreliable and expensive fixture for two needs:
 
 1. **A fast gate-emission witness.** Verifying that `extract_gate_events` maps a discharged `VERDICT:` line in a captured certificate onto a typed `GateEvent` does not require a full recursive build; it requires a captured certificate carrying a real verdict. A recursive arm produces that only at the end of a long, costly run that may time out first.
 2. **A cheaper ablation point.** The cost curve from A0 (plain agent) to A1 (full workflow) has a large gap; a lighter arm that still emits gate events sits between the recursive arms and the plain baseline at a fraction of the budget.
@@ -23,9 +23,9 @@ A5 is *not* a new pairwise-delta arm: it does not isolate a workflow stage in a 
 
 | Canonical page | Nature of change |
 |---|---|
-| [`01-domain-model.md`](../01-domain-model.md) | §Arm (slug): the `slug` member set changes from `A0`–`A4` to `A0`–`A5`; the entity prose is otherwise unchanged |
-| [`02-arms.md`](../02-arms.md) | Add an **A5 — Lighter pre-canned** subsection and a row to the arm table; RECONCILE the *"Five arms, closed set"* Decision to *"Six arms"* with the rationale that A5 is a lighter pre-canned variant for gate-emission verification and a cheaper cost point, not a new stage isolation |
-| [`canonical-types.schema.json`](../canonical-types.schema.json) | Add `"A5"` to the `ArmSlug` enum (this is the runtime validation authority the code needs, so it is edited as implementation, not deferred to merge) |
+| [`01-domain-model.md`](../../01-domain-model.md) | §Arm (slug): the `slug` member set changes from `A0`–`A4` to `A0`–`A5`; the entity prose is otherwise unchanged |
+| [`02-arms.md`](../../02-arms.md) | Add an **A5 — Lighter pre-canned** subsection and a row to the arm table; RECONCILE the *"Five arms, closed set"* Decision to *"Six arms"* with the rationale that A5 is a lighter pre-canned variant for gate-emission verification and a cheaper cost point, not a new stage isolation |
+| [`canonical-types.schema.json`](../../canonical-types.schema.json) | Add `"A5"` to the `ArmSlug` enum (this is the runtime validation authority the code needs, so it is edited as implementation, not deferred to merge) |
 
 No new canonical page is added. The `Arm` schema shape is otherwise unchanged: A5 reuses `executionMode = "single"` (the enum is NOT extended) and the existing `pluginsEnabled` / `gatesEnabled` / `specProvided` fields.
 

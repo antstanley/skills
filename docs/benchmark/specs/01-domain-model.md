@@ -17,7 +17,7 @@ Mutable, human-meaningful entities carry a **stable slug**; per-execution record
 
 | Prefix / slug | Entity |
 |---|---|
-| `A0`–`A4` (slug) | Arm |
+| `A0`–`A5` (slug) | Arm |
 | suite slug (`greenfield-features`, `local-fixture`) | Suite |
 | task slug (suite-scoped, e.g. `greenfield__text_toolkit__0001`) | TaskInstance |
 | `camp_` | Campaign |
@@ -28,7 +28,7 @@ Mutable, human-meaningful entities carry a **stable slug**; per-execution record
 | `defect_` | InjectedDefect |
 | `metric_` | MetricResult |
 
-Arm slugs are fixed and never reused; the set is closed at five ([02-arms.md](02-arms.md)). Suite and task slugs are stable identifiers used to pair trials across arms.
+Arm slugs are fixed and never reused; the set is closed at six ([02-arms.md](02-arms.md)). Suite and task slugs are stable identifiers used to pair trials across arms.
 
 ---
 
@@ -63,11 +63,11 @@ Carries:
 
 ### Arm (slug)
 
-A scaffold configuration: which plugins are active, whether the gates run, and the execution mode. The model is *not* an arm field — it is fixed by the Campaign. The five arms are defined in [02-arms.md](02-arms.md).
+A scaffold configuration: which plugins are active, whether the gates run, and the execution mode. The model is *not* an arm field — it is fixed by the Campaign. The six arms are defined in [02-arms.md](02-arms.md).
 
 Carries:
 
-- `slug` — `A0`–`A4`.
+- `slug` — `A0`–`A5`.
 - `pluginsEnabled` — the `spec-*` plugins active for this arm.
 - `gatesEnabled` — whether `spec-builder`'s correctness and done-certificate gates run.
 - `specProvided` — whether a ready-made spec is handed to the arm rather than authored by `spec-creator`.

@@ -1,8 +1,8 @@
 # Change: Raise the recursive-arm workflow timeout and budget
 
-**Status:** Proposed · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Target:** apps/benchmark
+**Status:** Merged · **Date:** 2026-05-28 · **Merged:** 2026-05-29 · **Owner:** Ant Stanley · **Target:** apps/benchmark
 
-> Built at [`docs/plans/2026-05-28-raise_recursive_arm_timeout_budget/`](../../../plans/2026-05-28-raise_recursive_arm_timeout_budget/plan.md).
+> Built at [`docs/plans/2026-05-28-raise_recursive_arm_timeout_budget/`](../../../../plans/2026-05-28-raise_recursive_arm_timeout_budget/plan.md).
 
 Raise the **recursive-workflow run timeout** for the A1/A2/A3 arms from 1200 s (20 min) to **3600 s (60 min)**, and raise the matched **per-run budget cap** from `$20` to **`$60`** (3× the time → 3× the dollars). The plain-agent (A0) and naive-parallel (A4) per-agent timeouts are *unchanged* — those are not recursive workflows. The change moves two named constants (one timeout, one dollar cap) and lets the existing A2/A3/A4 derivations track the new budget; it adds no entity, field, enum, or arm, and does not touch the resolution rule, the metrics, or the schema.
 
