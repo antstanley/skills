@@ -125,25 +125,7 @@ For specs with explicit scope, add `· **Scope:** Repo-wide` (global) or `· **S
 
 ### Closing block
 
-Every spec file closes with `## Assumptions and open questions`, divided into three subheadings:
-
-```markdown
-## Assumptions and open questions
-
-**Assumptions**
-
-- A bullet list of facts about the world that the spec relies on but does not control. ("IndexedDB is available", "the user is on a desktop browser".)
-
-**Decisions**
-
-- *Item.* **Choice.** One- to two-sentence rationale, ideally pointing at the code or commit.
-
-**Open questions**
-
-- *Item.* The question. What's blocking resolution. (Or: `(None at this stage.)`)
-```
-
-This block is the **only** place aspirational, "to be tuned", or hypothetical content belongs. The body of every spec page describes what is.
+Every spec file closes with `## Assumptions and open questions`, divided into three subheadings — **Assumptions** (facts the spec relies on but does not control), **Decisions** (`*Item.* **Choice.** rationale`), and **Open questions** (or `(None at this stage.)`). This block is the **only** place aspirational, "to be tuned", or hypothetical content belongs; the body of every spec page describes what is. The full worked block is in [`references/voice-and-decisions.md`](references/voice-and-decisions.md).
 
 ### Length
 
@@ -195,30 +177,9 @@ This is the one place the "describes-what-exists" rule is suspended — and only
 
 The change-spec lifecycle is `Proposed` → `Accepted` → `Implemented` → `Merged`. Full template, document structure, and merge procedure are in [`references/change-specs.md`](references/change-specs.md). Read it before writing or merging a change spec.
 
-## Voice and tone
+## Voice and decisions
 
-- Present tense for what exists (`the editor exposes /api/opengraph`).
-- Past tense in Decisions (`we chose IndexedDB because …`).
-- Question form in Open questions (`what is the migration strategy when …`).
-- No marketing voice. No "easily", "simply", "just", "powerful", "robust". Specs describe; they don't advertise.
-- No emoji. Specs are formal documents.
-- No exclamation points.
-- Short declarative sentences. Explanatory clauses earn their place.
-
-## Decisions pattern
-
-Every non-obvious choice is recorded in the closing block as a `Decision`:
-
-```markdown
-- *Document size cap.* **5 MiB serialised JSON.** Rough envelope: a long-form essay with embedded images encoded as data URLs would bump against this; plain prose is well below.
-```
-
-Format:
-- Italic short label naming the decision.
-- Bold the choice.
-- Sentence(s) explaining the *why*. Concrete reasoning, not "team consensus".
-
-A spec without a Decisions list is a spec that hasn't done enough thinking. If you're writing the body and find yourself wanting to insert "we picked X because…" inline, lift it into the Decisions list and reference forward (`see Decisions §<name>`).
+Spec voice is declarative present tense describing what exists; past tense in Decisions; question form in Open questions; no marketing voice, no emoji, no exclamation points; short declarative sentences. Every non-obvious choice is recorded in the closing block as a `Decision` (`*label.* **choice.** concrete why`) — a spec without a Decisions list hasn't done enough thinking. The full voice rules and worked Decision examples are in [`references/voice-and-decisions.md`](references/voice-and-decisions.md); read it when phrasing feels awkward.
 
 ## What NOT to do
 
@@ -231,33 +192,10 @@ A spec without a Decisions list is a spec that hasn't done enough thinking. If y
 - **Don't number global specs.** They're standalone references, not a numbered series.
 - **Don't omit the closing Assumptions / Decisions / Open questions block.** Even `(None at this stage.)` is a valid Open Questions entry.
 
-## Examples
-
-### Promotion (per-package → global)
-
-User: "The architecture page in `docs/editor/specs/06-architecture-principles.md` is mostly cross-cutting. Make it global."
-
-1. Read the per-package file.
-2. Identify cross-cutting paragraphs (hexagonal layering, monorepo layout, dependency graph, TS config, frontend stack).
-3. Identify per-package paragraphs (the editor's specific package boundaries, ports, file layout).
-4. Create `docs/specs/architecture-principles.md` with the cross-cutting content, scoped `Repo-wide`.
-5. Rewrite `docs/editor/specs/06-architecture-principles.md` to a thin per-package version that opens with the **Read first** pointer and only covers the editor-specific deltas.
-6. Update `docs/README.md` (creating it if needed) to index the new global spec.
-
-### Adding a sibling app
-
-User: "Add a spec for the website app at `apps/website` modelled on the editor specs."
-
-1. Read `docs/editor/specs/` end-to-end as the template.
-2. Read `apps/website/` source: routes, layouts, build config.
-3. Pick a numbered file set appropriate to the website's surface area (smaller than the editor's — 00-overview, 01-content-model, 02-routes-and-layouts, 03-build-pipeline, plus per-package architecture and development pointer pages).
-4. Write each file describing what exists.
-5. Cross-link the global specs.
-6. Update `docs/README.md` to add the website specs.
-
 ## Reference files
 
 - [`references/section-templates.md`](references/section-templates.md) — Detailed section skeletons for overview, domain-model, architecture, dev-guidelines, canonical-types schema. Read when you need a starting point for a specific page type.
 - [`references/voice-and-decisions.md`](references/voice-and-decisions.md) — Worked examples of the Decisions pattern and the voice rules. Read when phrasing feels awkward.
 - [`references/checklist.md`](references/checklist.md) — Pre-handoff checklist (no MVP language, all cross-refs resolve, closing block on every page, schema sidecar matches body claims). Read after writing, before declaring done.
 - [`references/change-specs.md`](references/change-specs.md) — Change-spec document type: how a proposed-change document differs from a canonical spec, its single-document structure, the `Proposed → Accepted → Implemented → Merged` lifecycle, and the merge procedure. Read when the user wants to propose a change to an existing spec or merge a shipped change back in.
+- [`references/examples.md`](references/examples.md) — Two worked runs: promoting a per-package page to global, and adding a sibling app modelled on existing specs. Read when a request matches one of these shapes.

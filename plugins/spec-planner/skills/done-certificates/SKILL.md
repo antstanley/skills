@@ -7,12 +7,7 @@ description: Author a task-specific semi-formal done certificate — a structure
 
 A skill for writing the **verification protocol** that decides whether a task is done — not for running it. For each task it produces a task-specific **semi-formal reasoning certificate**: the definition of done restated as explicit proof obligations, each naming the evidence a validator must collect and the checks it must run, with the status and verdict left blank. A separate validating agent later opens the certificate and discharges it against the code.
 
-The split is the whole point:
-
-- **This skill authors the certificate** — it does the reasoning about *what must be true for this task to be done and how a validator would prove it*, tailored to the task's actual definition of done, produces, and code surface.
-- **A different agent validates** — it opens the certificate, collects the named evidence, runs the named checks, fills in each status, and derives the verdict.
-
-A certificate is therefore a checkable, task-specific contract: a validator following it cannot skip an obligation or call a task done without producing the evidence the certificate demands.
+The split is the whole point — **this skill authors** (the reasoning about what must be true for the task to be done and how a validator would prove it, tailored to the task's actual DoD, produces, and code surface); **a different agent validates** (collects the named evidence, runs the checks, fills in each status, derives the verdict). The result is a checkable, task-specific contract: a validator following it cannot skip an obligation or call a task done without producing the evidence the certificate demands.
 
 ## Core principle
 
@@ -23,16 +18,13 @@ Two rules follow:
 1. **Every definition-of-done item becomes one obligation that names its own evidence.** The certificate does not say "verify the lock works"; it says "verify O1 by running `lock.test.ts › rejects wrong passphrase` and tracing `unlock()` at `src/auth/lock.ts`, confirming it returns before `vault.unlock()`." The obligation is specific enough that any validator collects the *same* evidence.
 2. **The certificate is authored blank and discharged by someone else.** Status fields are `☐ unverified` and the verdict is empty when this skill hands the certificate over. Filling them is the validator's job, governed by the rubric the certificate carries. This skill never fabricates evidence or pre-decides the verdict.
 
-This skill applies semi-formal reasoning (the certificate shape and the function-resolution and regression checkpoints, all in [`references/semiformal-method.md`](references/semiformal-method.md)) to the question *"how would an agent prove this specific task is done?"* — and writes that proof obligation down so the agent can.
-
 ## Relationship to spec-planner
 
-This skill is a companion to **spec-planner**. spec-planner produces task packages, each carrying a `Definition of done` checklist that ends in a `Reviewable:` line. done-certificates consumes that checklist and writes the certificate that a validator uses to discharge it.
+This skill is a companion to **spec-planner**, which produces task packages each carrying a `Definition of done` checklist ending in a `Reviewable:` line. done-certificates consumes that checklist and writes the certificate a validator later discharges: **spec-planner** writes *what done means*, **done-certificates** writes *the protocol to prove it*, and a *validating agent* (subagent, reviewer, later session) *runs* it.
 
-- **spec-planner** writes *what done means* for each task (the DoD checklist). **done-certificates** writes *the protocol to prove it* (the certificate). A *validating agent* (a subagent, a reviewer, a later session) *runs* the protocol.
-- The **semi-formal reasoning method** — the premise/claim/evidence/verdict structure and the function-resolution and regression checkpoints — is vendored into this skill at [`references/semiformal-method.md`](references/semiformal-method.md), so the skill is self-contained when installed. A done certificate is that method instantiated for one task's definition of done; the certificate you author tells the validator to run those exact procedures.
+The **semi-formal reasoning method** — the premise/claim/evidence/verdict structure and the function-resolution and regression checkpoints — is vendored at [`references/semiformal-method.md`](references/semiformal-method.md), so the skill is self-contained when installed. A done certificate is that method instantiated for one task's DoD.
 
-It is not limited to spec-planner output. Any task with a definition of done — an issue with acceptance criteria, a PRD feature with a "done when" list, a checklist in a ticket — can have a certificate authored for it. The source of the obligations shapes how you read them; the certificate structure is the same.
+It is not limited to spec-planner output. Any task with a definition of done — an issue with acceptance criteria, a PRD feature with a "done when" list, a ticket checklist — can have a certificate authored for it; the source shapes how the obligations are read, the certificate structure is the same.
 
 ## When to apply this skill
 
@@ -56,7 +48,7 @@ A done certificate is a **blank verification protocol specific to one task**. Wh
 - a **regression check** naming the downstream callers a validator must trace — left blank;
 - a **conclusion** block with the **verdict rubric** spelled out but the **verdict empty**.
 
-A validating agent (or reviewer, or a later session) then opens it, does the work each obligation names, marks each status, and derives the verdict by the rubric. The authored certificate is the *questions and the method*; the validator supplies the *answers*. See [`references/certificate-template.md`](references/certificate-template.md) for the skeleton and the field conventions.
+See [`references/certificate-template.md`](references/certificate-template.md) for the skeleton and the field conventions.
 
 ## Workflow
 
@@ -101,14 +93,7 @@ Numbers are append-only, exactly as in spec-planner: a certificate keeps its tas
 
 ## When invoked by spec-planner
 
-spec-planner may delegate here after Phase 4 (writing the task files), when the user asks for done certificates as part of the plan. In that case:
-
-- The DoD baseline, owner, and task numbering are already established — do not re-derive them.
-- Write **one certificate per task file** into the plan folder's `certificates/` subfolder, with obligations drawn from each task's `Definition of done` and the evidence/checks named per obligation — left unverified.
-- Add the two-way `**Certificate:**` link to each task file's header.
-- spec-planner owns the plan and its cross-link pass; done-certificates owns the `certificates/` subfolder and the certificate ↔ task links within it.
-
-The certificates then ship with the plan as the per-task validation contracts: when each task is built, a validating agent (not this skill) opens its certificate and discharges it to decide whether the task is done.
+spec-planner may delegate here after Phase 4, when done certificates are part of the plan. The DoD baseline, owner, and task numbering are already established — do not re-derive them. Write one certificate per task file into the plan folder's `certificates/` subfolder (see [§Where the certificate lives](#where-the-certificate-lives)), add the two-way `**Certificate:**` link to each task header, and leave every certificate unverified. spec-planner owns the plan and its cross-link pass; done-certificates owns the `certificates/` subfolder.
 
 ## What NOT to do
 

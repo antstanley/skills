@@ -1,6 +1,6 @@
 ---
 name: spec-planner
-description: Build an implementation plan from a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. Triggers on "plan the implementation", "create an implementation plan", "plan out this spec", "break this spec into tasks", "build a task plan", "sequence the work", "how should we build this", "turn this change spec into a plan", or "what's the build order for X". Consumes a canonical spec set, a change spec, or an external/framework spec; produces a plan folder at docs/plans/YYYY-MM-DD-snake_case_title/ — a plan.md carrying a Mermaid + table task graph, the implementation order, and the standard Assumptions / Decisions / Open questions block, plus one markdown file per task package (NN-snake_case_task.md) in hybrid form (structure + step checklist + definition of done).
+description: Build an implementation plan from a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. Triggers on "plan the implementation", "create an implementation plan", "plan out this spec", "break this spec into tasks", "build a task plan", "sequence the work", "how should we build this", "turn this change spec into a plan", or "what's the build order for X". Consumes a canonical spec set, a change spec, or an external/framework spec; produces a plan folder at docs/plans/YYYY-MM-DD-snake_case_title/ (a plan.md task graph plus one hybrid task file per package).
 ---
 
 # Spec Planner
@@ -20,16 +20,16 @@ The plan is **forward-looking** — it describes work that does not yet exist, i
 
 ## Relationship to spec-creator
 
-This skill is a companion to **spec-creator**. It consumes the specs that skill produces and follows its voice and closing-block conventions. Read [`spec-creator`'s `SKILL.md`](../../../spec-creator/skills/spec-creator/SKILL.md) if you have not — this skill assumes the canonical-vs-change distinction and the `Assumptions / Decisions / Open questions` block, and does not restate them.
+This skill is a companion to **spec-creator**: it consumes that skill's specs and follows its voice and closing-block conventions. Read [`spec-creator`'s `SKILL.md`](../../../spec-creator/skills/spec-creator/SKILL.md) if you have not — this skill assumes the canonical-vs-change distinction and the `Assumptions / Decisions / Open questions` block, and does not restate them.
 
-It is not *limited* to spec-creator output. A plan can be built from any specification: a canonical spec set, a single change spec, or a spec written in another method or framework (a PRD, an RFC, a Gherkin feature set, an OpenAPI document). The source shapes Phase 1 (how you read it); the rest of the workflow is the same.
+It is not *limited* to spec-creator output: a plan can be built from any specification — a canonical spec set, a change spec, or an external format (PRD, RFC, Gherkin, OpenAPI). The source shapes Phase 1 (how the spec is read); the rest of the workflow is the same.
 
 The boundaries between the companions:
 
-- **spec-creator** writes the spec (what exists / what will change). **spec-planner** plans how to build it.
-- **development-guidelines** writes the rules of the road, including the `Definition of done` section. spec-planner *reads* that section to derive each task's DoD; it does not write guidelines.
-- **spec-reviewer** checks specs against code. spec-planner may invoke it in Phase 1 (R2 / R3) to learn what is already built, so the plan does not re-plan finished work. It ships in the **spec-creator** plugin and is an *optional* companion, not a hard dependency: when spec-creator is not installed, the Phase 1 code read covers the same ground (it is the fallback, not a skipped step).
-- **done-certificates** turns a task's `Definition of done` into a task-specific semi-formal reasoning certificate — a verification protocol that a *separate* validating agent later runs to decide whether the task is done. spec-planner writes the DoD; done-certificates writes the protocol that proves it; a validator runs it. spec-planner may delegate to done-certificates after Phase 4 to author one certificate per task (see *Adding done certificates* below); it does not author certificates itself, and neither skill runs the validation.
+- **spec-creator** writes the spec; **spec-planner** plans how to build it.
+- **development-guidelines** writes the rules of the road, including the `Definition of done` section that spec-planner *reads* to derive each task's DoD.
+- **spec-reviewer** checks specs against code. spec-planner may invoke it in Phase 1 (R2 / R3) to learn what is already built. It ships in the **spec-creator** plugin and is *optional* — when absent, the Phase 1 code read covers the same ground (a fallback, not a skipped step).
+- **done-certificates** authors the verification protocol for a task's DoD; a *separate* validating agent runs it. See [§Adding done certificates](#adding-done-certificates).
 
 ## When to apply this skill
 
@@ -77,22 +77,16 @@ A plan is a **folder**, not a single file. Create `docs/plans/YYYY-MM-DD-snake_c
 - **`plan.md`** — the overview: header, summary, the source/DoD baseline, the task graph, the implementation order and milestones, and the closing block. It carries no task bodies — it links to them.
 - **One file per task package**, named `NN-snake_case_task.md` — a two-digit number prefix (assigned in **implementation order**, so the files sort the way the work is sequenced) plus a short snake_case description, e.g. `01-passphrase_lock.md`, `02-entry_store.md`. The number is the task's id everywhere else in the plan (the dependency table, the Mermaid graph). Numbers are append-only once the plan is shared — a task added later takes the next free number and records its true position in the order table, rather than renumbering and breaking cross-references.
 
-Follow the two skeletons in [`references/plan-template.md`](references/plan-template.md) — one for `plan.md`, one for a task file.
+Follow the two skeletons in [`references/plan-template.md`](references/plan-template.md) — one for `plan.md`, one for a task file. The load-bearing rules the body keeps inline:
 
-**`plan.md`** carries:
-- A **header** (`Status · Date · Owner · Source spec`) and a one-paragraph summary.
-- A **Source and definition-of-done baseline** note — where the spec lives and where each task's DoD comes from.
-- A **Task graph**: a Mermaid `graph TD` block for the visual, plus a **dependency table that is the source of truth** — each row links the task to its file (`NN`, depends-on, edge kind, produces). Keep the two in sync; the table wins if they ever disagree.
-- An **Implementation order and milestones** section explaining the sequence and the reviewability rationale.
-- The standard **`## Assumptions and open questions`** closing block for the plan as a whole.
+- **`plan.md`** holds the header, the source/DoD baseline note, the **Task graph**, the implementation-order/milestones section, and the closing block — but no task bodies. The graph is a Mermaid `graph TD` plus a **dependency table that is the source of truth**: if the two disagree, the table wins.
+- **Each task file** (`NN-snake_case_task.md`) is `hybrid` form: header + `**Plan:**`/`**Status:**` line, a structure block (`Implements`, `Depends on`, `Produces`, `Pointers`), a step checklist, and a `Definition of done` checklist whose last item is always a `Reviewable:` line.
 
-**Each task file** carries, in `hybrid` form: a minimal header (`# Task NN — <title>`, then a `**Plan:** [plan.md](plan.md) · **Status:** Todo` line), a structure block (`Implements`, `Depends on`, `Produces`, `Pointers`), a step checklist (`- [ ]` implementation steps), and a `Definition of done` checklist whose last item is always a `Reviewable:` line. Task-local uncertainty may end the file in a short `Open questions` list; cross-cutting uncertainty bubbles up to `plan.md`'s closing block.
-
-Voice: future/imperative for the work ("add the session store", "the login route will validate…"). Past tense in Decisions, question form in Open questions. No marketing words, no emoji, no exclamation points — the same voice rules as spec-creator.
+Voice: future/imperative for the work, past tense in Decisions, question form in Open questions — the same voice rules as spec-creator. No marketing words, no emoji, no exclamation points.
 
 ### Phase 4.5 — Author done certificates (default; prompt when interactive)
 
-Done certificates are **on by default**: once the task files exist, delegate to **done-certificates** to author one certificate per task (see *Adding done certificates* below for the mechanics). In an **interactive session, prompt first** — confirm inclusion before authoring, defaulting to yes. In a **non-interactive run** (a batch invocation, a delegated call with no user to ask), include them without prompting unless the request said to skip them. Skip silently only when the user has already declined, or for a plan small enough that the certificates would be ceremony.
+Once the task files exist, delegate to **done-certificates** to author one certificate per task. This is **on by default**; the prompt-vs-include behavior and the delegation mechanics are in [§Adding done certificates](#adding-done-certificates) below.
 
 ### Phase 5 — Cross-link and verify
 
@@ -118,13 +112,13 @@ Mandatory, and easy to skip:
 
 ## Adding done certificates
 
-A task's `Definition of done` is a *claim*; a **done certificate** is the *protocol that proves it* — a task-specific semi-formal reasoning certificate (premises, one obligation per DoD item, the evidence to collect and checks to run per obligation, and a verdict rubric) that the companion **done-certificates** skill authors. A *validating agent* later runs that protocol against the code to decide whether the task is done. The pieces fit together: spec-planner writes the DoD checklist; done-certificates writes the protocol; a validator discharges it.
+A task's `Definition of done` is a *claim*; a **done certificate** is the *protocol that proves it* — a task-specific semi-formal reasoning certificate the companion **done-certificates** skill authors, that a *validating agent* later runs against the code. spec-planner writes the DoD; done-certificates writes the protocol; a validator discharges it.
 
-Authoring them is the **default** (Phase 4.5), not something to wait to be asked for. **In an interactive session, prompt for inclusion before authoring** — a single yes/no, defaulting to yes ("Author a done certificate per task? (default: yes)"); honour an explicit "no" by skipping. **In a non-interactive run**, include them without prompting unless the request said to skip. The user asking outright ("add done certificates", "certify the tasks") is just an explicit yes.
+**When to author.** On by default (Phase 4.5). In an **interactive session, prompt first** — a single yes/no defaulting to yes ("Author a done certificate per task? (default: yes)"); honour an explicit "no". In a **non-interactive run**, include them without prompting unless the request said to skip. An outright "add done certificates" is just an explicit yes.
 
-When included, delegate to done-certificates after Phase 4. It authors **one certificate per task** into a `certificates/` subfolder of the plan folder (`docs/plans/YYYY-MM-DD-title/certificates/NN-…md`, numbered to mirror the tasks), with obligations drawn from each task's `Definition of done` and the evidence/checks named per obligation but the status and verdict left blank for a validator, and adds a two-way `**Certificate:**` link to each task file's header. As each task is built, a separate validating agent (not spec-planner and not done-certificates) opens its certificate and discharges it. spec-planner still owns the plan and its Phase 5 cross-link pass; done-certificates owns the `certificates/` subfolder.
+**Mechanics.** Delegate to done-certificates after Phase 4. It writes **one certificate per task** into the plan folder's `certificates/` subfolder (`docs/plans/YYYY-MM-DD-title/certificates/NN-…md`, mirroring the task numbers), obligations drawn from each task's DoD with evidence/checks named but status and verdict left blank, and adds a two-way `**Certificate:**` link to each task header. spec-planner owns the plan and its Phase 5 cross-link pass; done-certificates owns the `certificates/` subfolder; a separate validating agent (neither skill) discharges each certificate as its task is built.
 
-If certificates are skipped, the Phase 5 *Done certificates* checklist section does not apply — note in `plan.md` that certificates were not authored so a later pass can add them.
+If certificates are skipped, the Phase 5 *Done certificates* checklist section does not apply — note in `plan.md` that they were not authored so a later pass can add them.
 
 ## When invoked by spec-creator
 
