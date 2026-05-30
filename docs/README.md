@@ -16,6 +16,7 @@ App- or component-specific design, layered on the global specs.
 | App | Specs | Topic |
 |---|---|---|
 | benchmark | [docs/benchmark/specs/](benchmark/specs/) | Harness for benchmarking the `spec-*` development workflow against a single-agent baseline. |
+| evaljudge | [docs/evaljudge/specs/](evaljudge/specs/) | *Draft (not yet built).* Harness that runs each `spec-*` skill's `evals.json` live and LLM-judges its behavior against the fixtures' `expected_output`. Reuses the benchmark's conformance judge. |
 
 ## Change specs
 
@@ -41,6 +42,7 @@ Merged ([benchmark/specs/changes/merged/](benchmark/specs/changes/merged/)):
 
 Implementation plans (forward-looking; sequence work by dependency and reviewability).
 
+- [docs/plans/2026-05-30-implement_eval_judge_harness/](plans/2026-05-30-implement_eval_judge_harness/plan.md) — *Draft.* Build the eval-judge harness ([docs/evaljudge/specs/](evaljudge/specs/00-overview.md)) under `benchmark/evaljudge/`, reusing the benchmark's conformance judge. Eight tasks over four milestones (types+schema → readable fixtures → behavior-under-isolation → judged+calibrated → swept+runnable); certificates derived from each task's DoD, not separately authored. Build happens in another environment.
 - [docs/plans/2026-05-27-spec_workflow_benchmark/](plans/2026-05-27-spec_workflow_benchmark/plan.md) — build plan for the spec-workflow benchmark harness (*In progress*; 22 tasks, 5 milestones M0–M4 with a Docker-free local M0, done certificates per task). M0 built; M1–M4 re-planned 2026-05-27 to drop SWE-bench Pro and run the ablation on the greenfield suite only.
 - [docs/plans/2026-05-28-close_group_a_spec_code_gaps/](plans/2026-05-28-close_group_a_spec_code_gaps/plan.md) — *Draft.* Close the five Group A spec-vs-code gaps the R2 conformance review surfaced on the benchmark harness: populate `ScoreReport.gateEscape` (01), capture intra-trial workflow timing so parallel speedup matches the spec definition (02), emit a `MetricResult` for every ablation column (03), compute the cost-matched paired delta (04), add a `spec-reviewer`-backed conformance judge (05). Two milestones (M1 scoring/stats closure, M2 judge alternative). No done certificates authored (skipped at user request).
 - [docs/plans/2026-05-28-add_live_container_verification/](plans/2026-05-28-add_live_container_verification/plan.md) — *Done.* Build the opt-in live in-container runtime verification from the change spec of the same name: a `run_container_check.py` entrypoint (`BENCHMARK_RUN_CONTAINER_LIVE=1`) plus a default-skipped `test_live_container.py`. Three tasks — container round-trip + integrity witness (01), gate-emission + live `claude -p` probe checks (02), pytest wrapper + README opt-in docs (03) — over two milestones. Certificates derived from each task's DoD, not separately authored.

@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://antstanley.dev/schemas/evaljudge-canonical-types.schema.json",
+  "title": "eval-judge harness canonical types",
+  "description": "Authoritative shapes for the eval-judge harness's domain entities. See docs/evaljudge/specs/01-domain-model.md. Status: Draft — the harness is not yet built; this schema is the build target.",
+  "$defs": {
+    "Slug": {
+      "description": "Stable lowercase identifier, kebab or double-underscore separated. Re-declared per-app (not shared with the benchmark schema) until two apps genuinely share it — see 05-architecture.md.",
+      "type": "string",
+      "pattern": "^[a-z0-9]([a-z0-9_-]*[a-z0-9])?$"
+    },
+    "RecordId": {
+      "description": "Generated record id of the form <prefix>_<uuid7>.",
+      "type": "string",
+      "pattern": "^[a-z]+_[0-9a-f-]{36}$"
+    },
+    "Timestamp": {
+      "description": "RFC3339 timestamp in UTC.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "RunStatus": {
+      "description": "Outcome of a run-stage invocation. Only `completed` is judged; the others short-circuit to a NOT_RUN verdict.",
+      "type": "string",
+      "enum": ["completed", "run_failed", "timed_out", "budget_exceeded"]
+    },
+    "ChangeKind": {
+      "description": "How a file in EvalRun.file_changes was affected by the run.",
+      "type": "string",
+      "enum": ["created", "modified", "deleted"]
+    },
+    "Band": {
+      "description": "Conformance band of a score, reusing the benchmark calibration bands.",
+      "type": "string",
+      "enum": ["low", "partial", "high"]
+    },
+    "Verdict": {
+      "description": "Derived per-case outcome. PASS/FAIL come from the judge score vs PASS_THRESHOLD; NOT_RUN comes from a non-completed run.",
+      "type": "string",
+      "enum": ["PASS", "FAIL", "NOT_RUN"]
+    },
+    "SeedFile": {
+      "description": "A file seeded into the working directory before the skill runs (an EvalCase.files entry).",
+      "type": "object",
+      "required": ["path", "contents"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "contents": { "type": "string" }
+      }
+    },
+    "FileChange": {
+      "description": "One observed file-system effect of a run, from diffing the working directory.",
+      "type": "object",
+      "required": ["path", "changeKind", "contents"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "changeKind": { "$ref": "#/$defs/ChangeKind" },
+        "contents": { "type": ["string", "null"], "description": "New file contents for created/modified; null for deleted." }
+      }
+    },
+    "EvalCase": {
+      "description": "One fixture read from a skill's evals.json. Keyed naturally by (skill, id); not generated.",
+      "type": "object",
+      "required": ["skill", "id", "name", "prompt", "expectedOutput", "files", "sourcePath"],
+      "additionalProperties": false,
+      "properties": {
+        "skill": { "$ref": "#/$defs/Slug" },
+        "id": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "prompt": { "type": "string", "minLength": 1 },
+        "expectedOutput": { "type": "string", "minLength": 1, "description": "The judge's authority. The run stage never receives this field." },
+        "files": { "type": "array", "items": { "$ref": "#/$defs/SeedFile" } },
+        "sourcePath": { "type": "string", "minLength": 1, "description": "The evals.json file this case was read from." }
+      }
+    },
+    "Telemetry": {
+      "description": "Optional cost/wall-clock/turn counts for a run, when the backend exposes them.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "costUsd": { "type": ["number", "null"] },
+        "wallClockSeconds": { "type": ["number", "null"] },
+        "turns": { "type": ["integer", "null"] }
+      }
+    },
+    "EvalRun": {
+      "description": "The actual behavior captured by the run stage. Carries no score.",
+      "type": "object",
+      "required": ["id", "caseSkill", "caseId", "response", "fileChanges", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "caseSkill": { "$ref": "#/$defs/Slug" },
+        "caseId": { "type": "integer", "minimum": 1 },
+        "response": { "type": "string", "description": "The skill's final assistant message. Empty when the run did not complete." },
+        "fileChanges": { "type": "array", "items": { "$ref": "#/$defs/FileChange" } },
+        "status": { "$ref": "#/$defs/RunStatus" },
+        "telemetry": { "anyOf": [{ "$ref": "#/$defs/Telemetry" }, { "type": "null" }] }
+      }
+    },
+    "EvalJudgment": {
+      "description": "The judge's verdict for one (expected_output, behavior) pair. Mirrors the benchmark ConformanceResult.",
+      "type": "object",
+      "required": ["id", "run", "score", "rawScore", "rationale"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "run": { "$ref": "#/$defs/RecordId" },
+        "score": { "type": "number", "minimum": 0, "maximum": 1, "description": "Clamped conformance score in [0, 1]." },
+        "rawScore": { "type": "number", "description": "Pre-clamp value the judge returned, kept for auditing." },
+        "rationale": { "type": "string" }
+      }
+    },
+    "EvalResult": {
+      "description": "The full outcome for one EvalCase: run, judgment, and derived verdict. One per case.",
+      "type": "object",
+      "required": ["id", "caseSkill", "caseId", "run", "judgment", "band", "verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "caseSkill": { "$ref": "#/$defs/Slug" },
+        "caseId": { "type": "integer", "minimum": 1 },
+        "run": { "anyOf": [{ "$ref": "#/$defs/RecordId" }, { "type": "null" }], "description": "Null when the run never produced a judgeable behavior." },
+        "judgment": { "anyOf": [{ "$ref": "#/$defs/RecordId" }, { "type": "null" }], "description": "Null when the case was not judged (NOT_RUN)." },
+        "band": { "anyOf": [{ "$ref": "#/$defs/Band" }, { "type": "null" }], "description": "Null for a NOT_RUN result with no score." },
+        "verdict": { "$ref": "#/$defs/Verdict" }
+      }
+    },
+    "SkillPassRate": {
+      "description": "Per-skill aggregate within an EvalReport.",
+      "type": "object",
+      "required": ["skill", "passRate", "total"],
+      "additionalProperties": false,
+      "properties": {
+        "skill": { "$ref": "#/$defs/Slug" },
+        "passRate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "total": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "EvalReport": {
+      "description": "The aggregate over one sweep's EvalResults.",
+      "type": "object",
+      "required": ["id", "created", "results", "passRate", "bySkill"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/RecordId" },
+        "created": { "$ref": "#/$defs/Timestamp" },
+        "results": { "type": "array", "items": { "$ref": "#/$defs/EvalResult" } },
+        "passRate": { "type": "number", "minimum": 0, "maximum": 1, "description": "PASS over all results; a NOT_RUN counts against it." },
+        "bySkill": { "type": "array", "items": { "$ref": "#/$defs/SkillPassRate" } }
+      }
+    }
+  }
+}
