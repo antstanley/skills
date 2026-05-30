@@ -66,7 +66,7 @@ Validate where data crosses from a place you do not control into one you do, and
 
 > Heading on the page: `## Limits and bounds`. Clean Code does not emphasize hard bounds the way Tiger Style does, but the meta-rule survives.
 
-Magic numbers are replaced with **named constants** that state their meaning. Any genuine limit — payload sizes, retry counts, timeouts, collection cardinality — is a named constant referenced wherever it applies, not a literal. The *existence* of a limit is the rule here; concrete values are an app concern and live in the per-app specs.
+Magic numbers are replaced with **named constants** that state their meaning. Any genuine limit — payload sizes, retry counts, timeouts, collection cardinality — is a named constant referenced wherever it applies, not a literal. The *existence* of a limit is the rule here; concrete values are an app concern and live in the per-package specs.
 
 ---
 

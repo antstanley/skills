@@ -1,6 +1,6 @@
 # Plan templates
 
-A plan is a **folder**, not a single file: `docs/plans/YYYY-MM-DD-snake_case_title/` — an ISO date prefix (the date drafted) then a lowercase snake_case short title, e.g. `docs/plans/2026-05-22-add_auth_flow/`. Inside it:
+A plan is a **folder**, not a single file. Repo-wide plans live under the top-level `docs/plans/`; a plan that targets one package lives under `docs/<package>/plans/` by default (or a co-located `<package-location>/docs/plans/`), where `<package>` is the app/package/workspace name. The folder is named `YYYY-MM-DD-snake_case_title/` — an ISO date prefix (the date drafted) then a lowercase snake_case short title, e.g. `docs/plans/2026-05-22-add_auth_flow/`. Inside it:
 
 ```
 docs/plans/2026-05-22-add_auth_flow/

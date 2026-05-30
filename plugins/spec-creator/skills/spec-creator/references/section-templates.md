@@ -55,7 +55,7 @@ This document is the entry point for <surface>'s design. It states the problem, 
 | [02-…](02-….md) | … |
 | [canonical-types.schema.json](canonical-types.schema.json) | Domain entity shapes as JSON Schema |
 
-(If shadowing a global spec, add a paragraph explaining the per-app/global layering.)
+(If shadowing a global spec, add a paragraph explaining the per-package/global layering.)
 
 ---
 
@@ -300,9 +300,9 @@ Rules:
 
 ---
 
-## Per-app specs
+## Per-package specs
 
-<Pointer to where per-app specs layer on top of this document>
+<Pointer to where per-package specs layer on top of this document>
 
 ---
 
@@ -362,7 +362,7 @@ The discipline below — <list pillars> — is non-negotiable across the repo.
 
 ## Limits and bounds
 
-<Meta-rule: every limit a named const. Specific values live in per-app specs.>
+<Meta-rule: every limit a named const. Specific values live in per-package specs.>
 
 ---
 
@@ -408,7 +408,7 @@ The discipline below — <list pillars> — is non-negotiable across the repo.
 
 ## Canonical-types schema (`canonical-types.schema.json`)
 
-JSON Schema Draft 2020-12. Two-layer pattern: global schema for shared types, per-app schemas that `$ref` it.
+JSON Schema Draft 2020-12. Two-layer pattern: global schema for shared types, per-package schemas that `$ref` it.
 
 ### Global schema skeleton
 
@@ -417,7 +417,7 @@ JSON Schema Draft 2020-12. Two-layer pattern: global schema for shared types, pe
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://<project>.dev/schemas/canonical-types.schema.json",
   "title": "<repo> shared canonical types",
-  "description": "Repo-wide shared shapes referenced by every per-app schema.",
+  "description": "Repo-wide shared shapes referenced by every per-package schema.",
   "$defs": {
     "Id": {
       "description": "Generic entity id of the form <prefix>_<uuid7>.",
@@ -453,14 +453,14 @@ JSON Schema Draft 2020-12. Two-layer pattern: global schema for shared types, pe
 }
 ```
 
-### Per-app schema skeleton
+### Per-package schema skeleton
 
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://<project>.dev/schemas/<app>-canonical-types.schema.json",
-  "title": "<app> canonical types",
-  "description": "Authoritative shapes for <app>'s domain entities.",
+  "$id": "https://<project>.dev/schemas/<package>-canonical-types.schema.json",
+  "title": "<package> canonical types",
+  "description": "Authoritative shapes for <package>'s domain entities.",
   "$defs": {
     "<Entity>": {
       "type": "object",

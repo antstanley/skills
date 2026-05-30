@@ -33,7 +33,7 @@ Skip if the request is to *write* or *change* a spec rather than review one — 
 
 Resolve these before reviewing.
 
-1. **Locate the spec set.** Find `docs/specs/` (global) and `docs/<app>/specs/` (per-app). Read `docs/README.md` to learn the layout. For R1 and R3, also locate the change spec under `docs/specs/changes/`.
+1. **Locate the spec set.** Find `docs/specs/` (global) and `docs/<package>/specs/` (per-package). Read `docs/README.md` to learn the layout. For R1 and R3, also locate the change spec under `docs/specs/changes/`.
 2. **Read the canonical pages in scope, end to end.** You cannot judge a delta or a claim without the base. Read the canonical schema (`canonical-types.schema.json`) too — many divergences are schema-vs-prose or schema-vs-code. For R3, read the change spec's `Type changes` fragment and `Implementation notes` closely — they name the entities, fields, migrations, and call sites the code must show.
 3. **For R2 and R3, locate the implementing code.** For R2, map each canonical page to the package, module, or routes it describes. For R3, start from the change spec's `Implementation notes` `file:line` pointers and widen as needed. If the mapping is unclear, ask the user which paths to check rather than guessing.
 4. **Confirm the mode.** State which template you are applying (R1, R2, R3, or a combination) before producing the review, so the user can redirect if you picked wrong.

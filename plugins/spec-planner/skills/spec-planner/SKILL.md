@@ -99,7 +99,7 @@ Done certificates are **on by default**: once the task files exist, delegate to 
 Mandatory, and easy to skip:
 
 1. **Update `docs/README.md`** (creating it if absent) — add a **Plans** section listing the plan folder under `docs/plans/`, pointed at its `plan.md`. A plan the index does not reference is invisible.
-2. **Verify every link resolves.** Spec-page links resolve from the plan folder (so `../../specs/foo.md` for a global page, `../../<app>/specs/NN-name.md` for a per-app page — note the extra `../` now that the plan sits one directory deeper). Each dependency-table row links to a real task file in the folder, and each task file's `Plan:` link points back at `plan.md`.
+2. **Verify every link resolves.** Spec-page links resolve from the plan folder (so `../../specs/foo.md` for a global page, `../../<package>/specs/NN-name.md` for a per-package page — note the extra `../` now that the plan sits one directory deeper). Each dependency-table row links to a real task file in the folder, and each task file's `Plan:` link points back at `plan.md`.
 3. **Verify the graph is coherent** — the Mermaid edges and the dependency table agree, every task number in the table has a matching `NN-…md` file and vice versa, and the DAG has no cycle.
 4. **Verify coverage** — every in-scope spec section maps to at least one task file, and every task file names the spec section it implements. Gaps go in `plan.md`'s Open questions, flagged to the user.
 5. **Verify the done certificates** (when included) — every task file has a matching `certificates/NN-…md`, the obligations are one-to-one with the task's `Definition of done`, and the certificate ↔ task links resolve both ways. See the checklist's *Done certificates* section.

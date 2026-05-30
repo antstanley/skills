@@ -15,7 +15,7 @@ Run through this list before declaring a spec done. The checklist enforces the *
 
 ## File structure
 
-- [ ] Per-app spec files are numbered `NN-name.md` (two-digit prefix, kebab-case suffix).
+- [ ] Per-package spec files are numbered `NN-name.md` (two-digit prefix, kebab-case suffix).
 - [ ] Global spec files (in `docs/specs/`) are **not** numbered.
 - [ ] An overview (`00-overview.md`) exists for any spec set with two or more files.
 - [ ] A `canonical-types.schema.json` sidecar exists if the spec describes typed entities.
@@ -25,7 +25,7 @@ Run through this list before declaring a spec done. The checklist enforces the *
 - [ ] Every markdown spec file opens with `**Status:** … · **Date:** YYYY-MM-DD · **Owner:** …`.
 - [ ] Status is `Draft`, `Implemented`, or `Deprecated` — no other values.
 - [ ] Date reflects today's date (or the meaningful revision date) in `YYYY-MM-DD`.
-- [ ] Global specs and any per-app spec that shares a name with a global one have a `· **Scope:** …` qualifier.
+- [ ] Global specs and any per-package spec that shares a name with a global one have a `· **Scope:** …` qualifier.
 
 ## Closing block
 
@@ -39,17 +39,17 @@ Run through this list before declaring a spec done. The checklist enforces the *
 
 ## Layered structure
 
-- [ ] If the per-app spec set covers a topic also covered by a global spec, the per-app file opens with a **Read first** pointer and only documents per-app deltas.
-- [ ] No per-app spec restates a global rule. Global rules are referenced, not duplicated.
-- [ ] No global spec references a per-app file (the dependency runs one way).
-- [ ] App-specific limit values live in per-app dev guidelines; the meta-rule lives in the global one.
+- [ ] If the per-package spec set covers a topic also covered by a global spec, the per-package file opens with a **Read first** pointer and only documents per-package deltas.
+- [ ] No per-package spec restates a global rule. Global rules are referenced, not duplicated.
+- [ ] No global spec references a per-package file (the dependency runs one way).
+- [ ] App-specific limit values live in per-package dev guidelines; the meta-rule lives in the global one.
 
 ---
 
 ## Schema sidecar
 
 - [ ] `canonical-types.schema.json` uses `$schema: https://json-schema.org/draft/2020-12/schema`.
-- [ ] Per-app schemas `$ref` the global schema for shared types (`Id`, `Timestamp`, `Url`, etc.) rather than redefining them.
+- [ ] Per-package schemas `$ref` the global schema for shared types (`Id`, `Timestamp`, `Url`, etc.) rather than redefining them.
 - [ ] Every entity referenced in the spec body has a definition in the schema.
 - [ ] Schema fields match what the code actually persists / sends — no "reserved for next iteration" fields that don't exist.
 
@@ -58,12 +58,12 @@ Run through this list before declaring a spec done. The checklist enforces the *
 ## Cross-links
 
 - [ ] Every internal link `(some-spec.md)` resolves to a real file in the same directory.
-- [ ] Every cross-directory link uses a relative path that resolves (`../specs/foo.md` from a per-app spec).
+- [ ] Every cross-directory link uses a relative path that resolves (`../specs/foo.md` from a per-package spec).
 - [ ] **`docs/README.md` lists every new file you wrote.** Walk the diff: for each new path under `docs/`, confirm the index references it. Adding a new file without indexing it is the most common miss; check it twice. If the index didn't exist, you created it.
-- [ ] If this spec set is per-app, `docs/<app>/README.md` exists and opens with a pointer at the global specs at `docs/specs/`, then lists the per-app set.
-- [ ] If this work **promoted** content from per-app to a new global spec, both:
+- [ ] If this spec set is per-package, `docs/<package>/README.md` exists and opens with a pointer at the global specs at `docs/specs/`, then lists the per-package set.
+- [ ] If this work **promoted** content from per-package to a new global spec, both:
   - The new `docs/specs/<name>.md` is listed in `docs/README.md`'s global section, AND
-  - The per-app file's "Read first" pointer goes to the new global spec.
+  - The per-package file's "Read first" pointer goes to the new global spec.
 - [ ] Deferred items (Open questions, planned-but-absent Decisions) were collected, and the user was **asked** whether to draft change specs for them. Change specs were created only if the user said yes.
 
 ---

@@ -13,7 +13,7 @@ Read this when the user asks to propose, draft, or write up a change to an exist
 | Subject | What exists now | What will change |
 | Shape | Numbered directory of pages + schema sidecar | A **single** markdown document |
 | Tense in body | Present ("the editor exposes…") | Future / imperative ("the editor will expose…", "add…") |
-| Location | `docs/specs/`, `docs/<app>/specs/` | `docs/specs/changes/` |
+| Location | `docs/specs/`, `docs/<package>/specs/` | `docs/specs/changes/` |
 | Naming | `NN-name.md`, kebab-case | `YYYY-MM-DD-short_snake_case_title.md` |
 | Lifecycle | `Draft` → `Implemented` → `Deprecated` | `Proposed` → `Accepted` → `Implemented` → `Merged` |
 | Aspirational content | Only in the closing block | Throughout the body — that is the point |
@@ -180,4 +180,4 @@ The canonical spec now describes the new reality; the change spec is preserved a
 ## Cross-linking
 
 - `docs/README.md` gains a **Change specs** section: a list of pending change specs under `docs/specs/changes/`, and a pointer to `docs/specs/changes/merged/` for history. A pending change spec the index does not reference is invisible.
-- Every link inside the change spec to a canonical page must resolve from `docs/specs/changes/` (so `../../editor/specs/…` for a per-app page, `../foo.md` for a global page).
+- Every link inside the change spec to a canonical page must resolve from `docs/specs/changes/` (so `../../editor/specs/…` for a per-package page, `../foo.md` for a global page).

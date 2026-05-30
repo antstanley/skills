@@ -1,6 +1,6 @@
 ---
 name: development-guidelines
-description: Add a development-guidelines page to a canonical spec — the "rules of the road" page (toolchain, code style, defensive coding, limits, version control, testing, AI-agent rules, definition of done) rendered in a chosen coding style for the languages a repo uses. Triggers on "add development guidelines", "add a dev-guidelines page to the spec", "generate coding guidelines", "write the development-guidelines spec", "add coding standards to the spec", or when spec-creator needs to write its development-guidelines.md page. Produces a single global spec page at docs/specs/development-guidelines.md (or a thin per-app delta) following spec-creator's conventions.
+description: Add a development-guidelines page to a canonical spec — the "rules of the road" page (toolchain, code style, defensive coding, limits, version control, testing, AI-agent rules, definition of done) rendered in a chosen coding style for the languages a repo uses. Triggers on "add development guidelines", "add a dev-guidelines page to the spec", "generate coding guidelines", "write the development-guidelines spec", "add coding standards to the spec", or when spec-creator needs to write its development-guidelines.md page. Produces a single global spec page at docs/specs/development-guidelines.md (or a thin per-package delta) following spec-creator's conventions.
 ---
 
 # Development Guidelines
@@ -64,7 +64,7 @@ The version-control blocks live in [`references/tiger-style.md`](references/tige
 
 Find the spec the page joins. Global development guidelines live at `docs/specs/development-guidelines.md` (scope `Repo-wide`). This is the default and the right home for almost all of the content — the discipline is cross-cutting.
 
-A **per-app** development-guidelines page (`docs/<app>/specs/NN-development.md`) is warranted only when an app has genuine deltas from the global rules (a different test runner, an extra language, a stricter limit). When it exists, it opens with a **Read first** pointer to the global page and documents only the deltas — never restating global rules. Per [§Layered structure in spec-creator](../spec-creator/SKILL.md). Confirm placement with the user if a per-app set already exists.
+A **per-package** development-guidelines page (`docs/<package>/specs/NN-development.md`) is warranted only when an app has genuine deltas from the global rules (a different test runner, an extra language, a stricter limit). When it exists, it opens with a **Read first** pointer to the global page and documents only the deltas — never restating global rules. Per [§Layered structure in spec-creator](../spec-creator/SKILL.md). Confirm placement with the user if a per-package set already exists.
 
 ### 2 — Resolve parameters
 
@@ -89,7 +89,7 @@ Build `development-guidelines.md` from the references, in this order:
    ### <Errors are data | Use exceptions>   ← <style>.md
    ### Make <invalid states unrepresentable | intent explicit>
                                             ← <style>.md
-## Limits and bounds                        ← <style>.md (meta-rule only; values live per-app)
+## Limits and bounds                        ← <style>.md (meta-rule only; values live per-package)
 ## Version control                          ← tiger-style.md shared core + jj/git variant (style-agnostic; per the VCS parameter)
 ## <Language> conventions                   ← base from <language>.md; emphases merged from <language>-<style>.md
    ### Formatting and linting               ← <language>.md
@@ -107,7 +107,7 @@ Adapt every template to the repo. The references are starting points, not boiler
 
 - For each language, merge its **base file** with the **overlay** for the selected style: the base supplies the toolchain/formatting/naming-case/testing/documentation; the overlay's `### Assertions in <lang>` (Tiger) or `### Error handling in <lang>` (Clean) slots under the defensive-coding/error-handling section, and the overlay's code-style and naming emphases merge into the matching `### Code style` and `### Naming` subsections.
 - Drop rows and rules for tooling the repo does not use.
-- Replace placeholder limit values with the repo's named constants where they exist; the meta-rule (every limit is a named constant) stays, concrete values move to per-app specs.
+- Replace placeholder limit values with the repo's named constants where they exist; the meta-rule (every limit is a named constant) stays, concrete values move to per-package specs.
 - Use the version-control variant matching the detected VCS (per the Version control parameter): jujutsu, git, or both when the user asked for the optional git guidelines alongside jj.
 - Keep the page in spec voice: present tense for what exists, past tense in Decisions, question form in Open questions. No marketing words, no emoji, no exclamation points.
 
@@ -123,7 +123,7 @@ Every spec page ends with `## Assumptions and open questions` (Assumptions / Dec
 Mandatory, and easy to skip:
 
 1. **Update `docs/README.md`** — add `docs/specs/development-guidelines.md` to the global-specs list (create the index if absent). A page the index does not reference is invisible.
-2. **If per-app**, update `docs/<app>/README.md` to point at the global specs, then list the per-app set, and confirm the page's **Read first** pointer resolves.
+2. **If per-package**, update `docs/<package>/README.md` to point at the global specs, then list the per-package set, and confirm the page's **Read first** pointer resolves.
 3. **Verify cross-links** — the architecture-principles page and the overview commonly link to the guidelines; check those references resolve, and add a link from `00-overview.md`'s detail-pages table if one is missing.
 4. **Run the spec-creator checklist** at [`../spec-creator/references/checklist.md`](../spec-creator/references/checklist.md) — the Voice, Closing block, and Cross-links sections apply directly.
 

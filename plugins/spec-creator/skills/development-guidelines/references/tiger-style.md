@@ -66,7 +66,7 @@ Validate at every boundary where data crosses from a place you do not control in
 
 Every limit is **declared as a named constant**, named with its units, and referenced everywhere it applies. No magic numbers.
 
-The *existence* of a limit is non-negotiable; concrete values are an app concern and live in the per-app specs, not here. Each limit names the domain it bounds — request body size, header size, frame payload, queue depth, retry count, per-user concurrency, token TTL, collection cardinality.
+The *existence* of a limit is non-negotiable; concrete values are an app concern and live in the per-package specs, not here. Each limit names the domain it bounds — request body size, header size, frame payload, queue depth, retry count, per-user concurrency, token TTL, collection cardinality.
 
 Reaching a limit is an **observable event**: log it structured, increment a counter, and where appropriate emit a warning event. Reaching a hard limit either rejects the input or backpressures the producer; it never silently drops.
 

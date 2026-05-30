@@ -1,6 +1,6 @@
 ---
 name: spec-creator
-description: Create, expand, or change formal design specifications for an app, package, or codebase. Triggers on "create/write a spec", "spec out this app", "document the design", "formalize the architecture", "promote to a global spec", "layer a per-app spec on a global one", using another project's specs as a template ("use ../foo/specs as a template"), or proposing/merging a change spec ("change spec", "RFC for X", "draft a change spec", "merge the change spec"). Output is a numbered, layered directory of markdown plus a JSON Schema sidecar (repo-wide globals + per-app specs); a change spec is a single document under docs/specs/changes/.
+description: Create, expand, or change formal design specifications for an app, package, or codebase. Triggers on "create/write a spec", "spec out this app", "document the design", "formalize the architecture", "promote to a global spec", "layer a per-package spec on a global one", using another project's specs as a template ("use ../foo/specs as a template"), or proposing/merging a change spec ("change spec", "RFC for X", "draft a change spec", "merge the change spec"). Output is a numbered, layered directory of markdown plus a JSON Schema sidecar (repo-wide globals + per-package specs); a change spec is a single document under docs/specs/changes/.
 ---
 
 # Spec Creator
@@ -19,8 +19,8 @@ This rule shapes every section. A `Routes` section lists routes that exist. A `P
 
 - User asks to create a new spec ("spec out X", "write design docs for Y").
 - User asks to extend an existing spec set with a new app or component.
-- User asks to **promote** content from a per-app spec to a repo-wide global spec ("make this cross-cutting", "this should apply to every app").
-- User asks to **layer** a per-app spec on top of an existing global spec ("add an editor-specific arch spec that builds on the global one").
+- User asks to **promote** content from a per-package spec to a repo-wide global spec ("make this cross-cutting", "this should apply to every app").
+- User asks to **layer** a per-package spec on top of an existing global spec ("add an editor-specific arch spec that builds on the global one").
 - User points at another project's specs as a template ("use ../kleya/specs as a template", "follow the same shape as the editor specs").
 
 Skip if the request is for a `README`, a runbook, a tutorial, an API reference, or any prose-first doc. Specs are about structural design — entities, lifecycles, contracts, conventions — not how-to walkthroughs.
@@ -34,10 +34,10 @@ The skill is a four-phase process. The phases are sequential; don't skip the inv
 Before writing anything, build the understanding:
 
 1. **Read any template the user pointed at.** If the user said "use ../foo/specs as a template", read every file in that directory top to bottom. Capture the file naming, header format, section conventions, and any sidecar files (JSON schemas, asset bundles).
-2. **Read existing notes.** Look in `docs/<app>/`, `docs/`, `README.md` files, `CHANGELOG.md`. Don't reinvent what's already documented; extend or formalize.
+2. **Read existing notes.** Look in `docs/<package>/`, `docs/`, `README.md` files, `CHANGELOG.md`. Don't reinvent what's already documented; extend or formalize.
 3. **Read the actual code.** Walk the package(s) the spec covers. Read entry points, key modules, route handlers, store/state files, configuration. Note what exists, what doesn't, and what's load-bearing.
-4. **Read existing specs in the same repo.** If `docs/specs/` or `docs/<other-app>/specs/` already exists, read them. Match the shape and the cross-link style.
-5. **Identify the layering.** Decide which content belongs at the **global** layer (`docs/specs/`) versus the **per-app** layer (`docs/<app>/specs/`). See [§Layered structure](#layered-structure) below.
+4. **Read existing specs in the same repo.** If `docs/specs/` or `docs/<other-package>/specs/` already exists, read them. Match the shape and the cross-link style.
+5. **Identify the layering.** Decide which content belongs at the **global** layer (`docs/specs/`) versus the **per-package** layer (`docs/<package>/specs/`). See [§Layered structure](#layered-structure) below.
 
 The investigation phase often reveals divergence (the code doesn't match a previous doc, or two apps disagree on the same convention). Flag these to the user before writing — the spec should describe one consistent reality.
 
@@ -83,7 +83,7 @@ Write one file at a time. Cross-link as you go. Keep an internal map of "claims 
 
 When the file set includes a `development-guidelines.md` page, delegate it to the companion **`development-guidelines` skill** instead of writing it by hand. It resolves the repo's languages and coding style and assembles the page from per-language templates, then hands back here for Phase 4.
 
-If the spec layers on a global spec (e.g., per-app architecture builds on `docs/specs/architecture-principles.md`), open with a one-paragraph **Read first** pointer rather than restating the global rules. See [§Layered structure](#layered-structure).
+If the spec layers on a global spec (e.g., per-package architecture builds on `docs/specs/architecture-principles.md`), open with a one-paragraph **Read first** pointer rather than restating the global rules. See [§Layered structure](#layered-structure).
 
 ### Phase 4 — Cross-link
 
@@ -91,9 +91,9 @@ This phase is mandatory and easy to skip — every iteration of this skill has m
 
 1. **Update `docs/README.md`** (creating it if absent) to index every spec file and directory you created or moved. This includes:
    - Any new **global** spec file (e.g., a new `docs/specs/foo.md`) — add it to the global-specs list.
-   - Any new **per-app** spec set (e.g., `docs/<app>/specs/`) — add the app to the per-app section.
-   - This is non-optional. A new spec that the index doesn't reference is invisible to anyone scanning the doc tree. If you wrote a new file at `docs/specs/<name>.md` or under `docs/<app>/specs/`, the very next edit is `docs/README.md`.
-2. **Update `docs/<app>/README.md`** for per-app specs — open with a pointer to the global specs at `docs/specs/`, then list the per-app spec set.
+   - Any new **per-package** spec set (e.g., `docs/<package>/specs/`) — add the app to the per-package section.
+   - This is non-optional. A new spec that the index doesn't reference is invisible to anyone scanning the doc tree. If you wrote a new file at `docs/specs/<name>.md` or under `docs/<package>/specs/`, the very next edit is `docs/README.md`.
+2. **Update `docs/<package>/README.md`** for per-package specs — open with a pointer to the global specs at `docs/specs/`, then list the per-package spec set.
 3. **Verify every internal link** (`(other-spec.md)`, `[…](../specs/foo.md)`) resolves to a real file.
 4. **Verify every `canonical-types.schema.json` entity** referenced in prose actually exists in the schema (and vice versa — every schema entity is described somewhere in prose).
 5. **Re-read the closing block** on every page. If you find yourself in step 5 and any page is missing an `Assumptions and open questions` section, add it before declaring done. The closing block is mandatory; even `(None at this stage.)` under a heading counts.
@@ -105,7 +105,7 @@ Do not declare the spec complete until all six steps are done. The checklist at 
 
 ### Naming
 
-- Per-app specs: numbered `NN-name.md`, two-digit prefix, kebab-case suffix. Number is reading order; pad with leading zero.
+- Per-package specs: numbered `NN-name.md`, two-digit prefix, kebab-case suffix. Number is reading order; pad with leading zero.
 - Global specs: kebab-case names, no numbering — they're standalone reference docs (`architecture-principles.md`, not `01-architecture-principles.md`).
 - JSON Schema sidecar: `canonical-types.schema.json` (Draft 2020-12).
 
@@ -121,7 +121,7 @@ Every spec file (markdown only — not the JSON Schema) opens with:
 
 The status is `Draft`, `Implemented`, or `Deprecated`. The date is the spec's last meaningful revision (today's date for new specs). The owner is the human accountable for the spec's correctness.
 
-For specs with explicit scope, add `· **Scope:** Repo-wide` (global) or `· **Scope:** apps/editor` (per-app). Scope is optional; include it on global specs and on per-app specs that share a name with a global one.
+For specs with explicit scope, add `· **Scope:** Repo-wide` (global) or `· **Scope:** apps/editor` (per-package). Scope is optional; include it on global specs and on per-package specs that share a name with a global one.
 
 ### Closing block
 
@@ -160,28 +160,31 @@ Each page type has a characteristic section set. **Full skeletons live in [`refe
 - **Per-component pages (`02-…`, `03-…`)** — pattern: **Responsibilities · Contract/API/Routes · Flow/Lifecycle · Implementation layout · closing block.**
 - **`architecture-principles.md`** (global) — how the code is organised: layering, monorepo layout, dependency graph, language conventions, stack baseline. Long file (200–400 lines is normal).
 - **`development-guidelines.md`** (global) — toolchain, code style, defensive coding, version control, testing pyramid, repo hygiene, definition of done, AI-agent rules. Long file. **Produced by the companion `development-guidelines` skill** — it detects the repo's languages, applies a coding style (Tiger Style or Clean Code), and assembles this page from per-language templates. Invoke it rather than writing this page from scratch; it returns to this skill's Phase 4 for the final cross-link pass.
-- **Per-app spec that shadows a global one** — open with a **Read first** pointer to the global page, then describe only the per-app deltas. Don't restate the global rules.
-- **`canonical-types.schema.json`** (sidecar) — JSON Schema Draft 2020-12, one `$def` per entity; per-app schemas `$ref` the global schema for shared types. The global schema holds only **truly shared** types (`Id`, `Timestamp`, `Url`, `Email`, `Bytes`, `Milliseconds`, `ErrorEnvelope`, `NonEmptyString`); a type goes global only when at least two apps reference it.
+- **Per-package spec that shadows a global one** — open with a **Read first** pointer to the global page, then describe only the per-package deltas. Don't restate the global rules.
+- **`canonical-types.schema.json`** (sidecar) — JSON Schema Draft 2020-12, one `$def` per entity; per-package schemas `$ref` the global schema for shared types. The global schema holds only **truly shared** types (`Id`, `Timestamp`, `Url`, `Email`, `Bytes`, `Milliseconds`, `ErrorEnvelope`, `NonEmptyString`); a type goes global only when at least two apps reference it.
 
 ## Layered structure
 
-Two layers, with strict rules:
+Two layers — **global** and **per-package** — with strict rules. The per-package layer has a default location and an optional co-located one:
 
 - **Global** (`docs/specs/`) — repo-wide, cross-cutting. Architecture principles, development guidelines, shared types schema.
-- **Per-app** (`docs/<app>/specs/`) — app-specific. Numbered detail pages, app schema.
+- **Per-package, default** (`docs/<package>/specs/`) — package-specific. Numbered detail pages, package schema. `<package>` is the app/package/workspace name. This is the default home for per-package specs.
+- **Per-package, co-located (optional)** (`<package-location>/docs/specs/`) — the same per-package specs may instead live inside the package directory (e.g. `apps/web/docs/specs/`, `packages/core/docs/specs/`). Use this when a package is self-contained and you want its specs to travel with it; otherwise prefer the default `docs/<package>/specs/`.
+
+A **single-project repo** uses only the global layer — specs in `docs/specs/`, plans in `docs/plans/`. Plans follow the same scheme as specs: repo-wide in `docs/plans/`, per-package in `docs/<package>/plans/` (or a co-located `<package-location>/docs/plans/`).
 
 Rules:
 
-1. **Per-app specs may reference global specs**; global specs do not reference per-app specs.
-2. **No duplicated content.** If two per-app specs say the same thing about a cross-cutting concern, promote to global and have both reference it.
-3. **Per-app specs that shadow a global topic open with a "Read first" pointer.** They state only the per-app deltas.
-4. **App-specific limits live in per-app specs**, even though the *meta-rule* for declaring limits lives in the global development guidelines. Concrete values are app concerns; rules about declaring values are repo concerns.
+1. **Per-package specs may reference global specs**; global specs do not reference per-package specs.
+2. **No duplicated content.** If two per-package specs say the same thing about a cross-cutting concern, promote to global and have both reference it.
+3. **Per-package specs that shadow a global topic open with a "Read first" pointer.** They state only the per-package deltas.
+4. **App-specific limits live in per-package specs**, even though the *meta-rule* for declaring limits lives in the global development guidelines. Concrete values are app concerns; rules about declaring values are repo concerns.
 
 ## Change specs
 
 A **canonical spec** describes what exists in the current branch. A **change spec** proposes a delta to it. The two are different document types with inverted rules, and this skill writes both.
 
-- **Canonical spec** — numbered, layered directory of pages. Body describes what is. Lives in `docs/specs/` and `docs/<app>/specs/`.
+- **Canonical spec** — numbered, layered directory of pages. Body describes what is. Lives in `docs/specs/` and `docs/<package>/specs/` (or a co-located `<package-location>/docs/specs/`).
 - **Change spec** — a single document proposing changes that do **not** yet exist. Body describes what will change, in future/imperative voice. Lives in `docs/specs/changes/`, named `YYYY-MM-DD-short_snake_case_title.md`.
 
 A change spec references the canonical pages it touches by path and heading, restates each affected section as the prose it should become once merged, carries an inline JSON Schema fragment for any new or changed entities, and lists the implementation pointers an agent needs. The goal is that an agent can take the change spec plus its references and implement the change.
@@ -221,7 +224,7 @@ A spec without a Decisions list is a spec that hasn't done enough thinking. If y
 
 - **Don't use MVP framing.** No "Goals (MVP)", "Non-goals (MVP)", "MVP cut summary", "at MVP", "deferred". The spec describes what the code does now.
 - **Don't speculate about future work** in a canonical spec's body. Future work belongs in Open questions, or in a **change spec** (see [§Change specs](#change-specs)) — a separate single document under `docs/specs/changes/` whose whole job is to propose a delta.
-- **Don't restate global content in per-app specs.** Use a "Read first" pointer.
+- **Don't restate global content in per-package specs.** Use a "Read first" pointer.
 - **Don't add fields to schemas that aren't in the code.** A schema field with `description: "Reserved for next iteration"` is a lie. If the field doesn't exist, leave it out and put the gap in Open questions.
 - **Don't write tutorials inside specs.** Specs define structure; tutorials and runbooks are separate doc types.
 - **Don't wrap the spec in code comments or quote blocks.** Markdown headings are the structural API; respect them.
@@ -230,15 +233,15 @@ A spec without a Decisions list is a spec that hasn't done enough thinking. If y
 
 ## Examples
 
-### Promotion (per-app → global)
+### Promotion (per-package → global)
 
 User: "The architecture page in `docs/editor/specs/06-architecture-principles.md` is mostly cross-cutting. Make it global."
 
-1. Read the per-app file.
+1. Read the per-package file.
 2. Identify cross-cutting paragraphs (hexagonal layering, monorepo layout, dependency graph, TS config, frontend stack).
-3. Identify per-app paragraphs (the editor's specific package boundaries, ports, file layout).
+3. Identify per-package paragraphs (the editor's specific package boundaries, ports, file layout).
 4. Create `docs/specs/architecture-principles.md` with the cross-cutting content, scoped `Repo-wide`.
-5. Rewrite `docs/editor/specs/06-architecture-principles.md` to a thin per-app version that opens with the **Read first** pointer and only covers the editor-specific deltas.
+5. Rewrite `docs/editor/specs/06-architecture-principles.md` to a thin per-package version that opens with the **Read first** pointer and only covers the editor-specific deltas.
 6. Update `docs/README.md` (creating it if needed) to index the new global spec.
 
 ### Adding a sibling app
@@ -247,7 +250,7 @@ User: "Add a spec for the website app at `apps/website` modelled on the editor s
 
 1. Read `docs/editor/specs/` end-to-end as the template.
 2. Read `apps/website/` source: routes, layouts, build config.
-3. Pick a numbered file set appropriate to the website's surface area (smaller than the editor's — 00-overview, 01-content-model, 02-routes-and-layouts, 03-build-pipeline, plus per-app architecture and development pointer pages).
+3. Pick a numbered file set appropriate to the website's surface area (smaller than the editor's — 00-overview, 01-content-model, 02-routes-and-layouts, 03-build-pipeline, plus per-package architecture and development pointer pages).
 4. Write each file describing what exists.
 5. Cross-link the global specs.
 6. Update `docs/README.md` to add the website specs.
