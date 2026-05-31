@@ -1,6 +1,10 @@
 ---
 name: using-jj-workspaces
 description: Use when starting isolated feature work, executing implementation plans, or dispatching sub-agents in a jj (jujutsu) repo. ALSO INTERCEPTS any git-worktree request (the `using-git-worktrees` skill, brainstorming Phase 4, subagent-driven-development, executing-plans, or "create a worktree" phrasing) when the repo is jj-managed — creating isolated jj workspaces as sibling directories with verified-clean baselines so parallel work (including multiple agents) doesn't collide.
+compatibility: Requires jj (jujutsu). Workspace mechanics are harness-agnostic; the sub-agent-per-workspace workflow additionally needs a harness that can dispatch sub-agents (Claude Code/OpenCode core, or Pi with a subagents extension).
+metadata:
+  author: antstanley
+  version: "0.1.0"
 ---
 
 # Using jj Workspaces
@@ -171,6 +175,16 @@ Ready to implement <feature>
 ```
 
 ## Sub-Agent Driven Development Workflow
+
+> **Preflight (harness portability).** This section assumes the parent session can
+> *dispatch sub-agents*. Workspace creation itself is just jj and works on any
+> harness, but the one-workspace-per-agent pattern only pays off where a dispatch
+> tool exists — `Task` on Claude Code/OpenCode (core), or `Agent` on Pi via a
+> subagents extension (e.g. `pi install npm:@tintinweb/pi-subagents`, then reload).
+> Gate on the capability (is a dispatch tool in your toolset?), not on the harness
+> name. If none is available, you can still create a single workspace for isolated
+> manual work — just don't expect parallel sub-agents. (spec-builder's
+> `references/portability.md` covers the sequential fallback in full.)
 
 When the parent session will dispatch N sub-agents in parallel, create one workspace per agent:
 

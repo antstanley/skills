@@ -1,6 +1,10 @@
 ---
 name: spec-builder
 description: Implement a spec-planner plan by dispatching one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gating every task through a semi-formal correctness review and a definition-of-done validation before it is merged and marked Done. Self-contained — workspace isolation is vendored, no other plugin required. Walks the dependency graph in waves, parallel by default (max 4 agents) or sequential. Triggers on "build this plan", "implement the plan", "execute the plan in docs/plans/...", "run the spec-builder", "build the tasks in parallel/sequentially", or handing a spec-planner plan folder over for implementation.
+compatibility: Needs a harness that can dispatch sub-agents — Claude Code or OpenCode (core Task tool), or Pi with a subagents extension (e.g. @tintinweb/pi-subagents). Without one, runs a sequential single-agent fallback (references/portability.md).
+metadata:
+  author: antstanley
+  version: "0.1.0"
 ---
 
 # Spec Builder
@@ -86,7 +90,23 @@ for manual review on those tasks. Say so up front so the user knows where the bu
 
 ## Workflow
 
-Five phases. The mechanics live in the three references — read them before the phase they back.
+Five phases. The mechanics live in the references — read them before the phase they back.
+
+### Preflight — confirm sub-agent dispatch is available
+
+This skill builds by dispatching a sub-agent per task. Before Phase 3, confirm the
+harness can do that — gate on the **capability**, not on which harness you are in
+(there is no reliable runtime harness-detection signal, and you don't need one):
+
+- Check your own toolset for a sub-agent dispatch tool — `Task` (Claude Code,
+  OpenCode) or `Agent` (Pi + a subagents extension) or an equivalent. Match on
+  capability, not one exact name.
+- **Present** → proceed with the parallel, gated build below.
+- **Absent** → you are most likely in Pi without a subagents extension. Do **not**
+  fake parallelism or let the builder grade its own work. Offer the user the
+  install path (`pi install npm:@tintinweb/pi-subagents`, then reload Pi) or the
+  sequential single-agent fallback that keeps both gates as separate passes — see
+  [`references/portability.md`](references/portability.md). State which mode ran.
 
 ### Phase 1 — Load the plan and resolve settings
 
@@ -152,6 +172,10 @@ user's to run; it is outside the per-task gates.
 
 - **Don't let a builder grade its own work.** Both gates are run by a different agent. This
   is the rule the whole skill exists to enforce.
+- **Don't fake parallelism when the harness can't dispatch sub-agents.** If no dispatch tool
+  is present (typically Pi without a subagents extension), take the documented fallback in
+  [`references/portability.md`](references/portability.md) and say which mode ran — don't
+  pretend gates were run by a separate agent when they weren't.
 - **Don't mark a task `Done` on one gate, or on the implementer's self-report.** Correct and
   complete, both proven, then merge.
 - **Don't lower the bar to force a green build.** A parked task honestly surfaced beats a
@@ -185,3 +209,6 @@ user's to run; it is outside the per-task gates.
 - [`references/build-loop.md`](references/build-loop.md) — The per-task lifecycle: implement,
   the two gates and their pass/fail rules, merge-and-mark-done, handling a failed gate
   (feedback, bounded retries, parking), and the invariants. Read before Phase 4.
+- [`references/portability.md`](references/portability.md) — Which harnesses can dispatch
+  sub-agents (Claude Code, OpenCode, Pi-with-extension), the capability gate, and the
+  sequential single-agent fallback when no dispatch tool is present. Read at Preflight.
