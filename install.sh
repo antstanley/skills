@@ -12,9 +12,10 @@
 # all five. Kiro reads only its own `.kiro/skills/`; Claude Code uses the
 # marketplace (or its own `.claude/skills/`).
 #
-# It does NOT move or restructure the repo: the skills stay where they live
-# (plugins/<plugin>/skills/<name>/), and each is symlinked (or copied) into the
-# target directory under its own name.
+# It installs from the generated flat `skills/` tree (real copies, evals/
+# excluded), which scripts/sync-skills.sh regenerates from the canonical
+# plugins/. Each skill is copied (or, with --symlink, linked) into the target
+# directory under its own name. Run scripts/sync-skills.sh if skills/ is missing.
 #
 # Usage:
 #   ./install.sh <harness> [--global | --project [DIR]] [--copy] [--dry-run] [--force]
@@ -143,26 +144,23 @@ install_one() {
 }
 
 # --- discover skills and install them into every destination -----------------
-# A skill is any plugins/<plugin>/skills/<name>/SKILL.md directory.
-linked=0
+# Install from the generated flat skills/ tree (real copies, evals/ excluded).
+# It is regenerated from the canonical plugins/ by scripts/sync-skills.sh.
 shopt -s nullglob
+sources=("$REPO_ROOT"/skills/*/SKILL.md)
+shopt -u nullglob
+[ ${#sources[@]} -gt 0 ] || die "skills/ is empty or missing — run scripts/sync-skills.sh first."
+
+linked=0
 for dest in "${dests[@]}"; do
   [ ${#dests[@]} -gt 1 ] && printf '%s\n' "-> $dest"
   [ "$dry_run" -eq 1 ] || mkdir -p "$dest"
-  seen=""
-  for skill_md in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
+  for skill_md in "${sources[@]}"; do
     skill_dir="$(dirname "$skill_md")"
     name="$(basename "$skill_dir")"
-    # The standard requires name == directory; guard against two plugins
-    # shipping a same-named skill (would collide at the destination).
-    case " $seen " in
-      *" $name "*) die "duplicate skill name '$name' — two source dirs map to $dest/$name" ;;
-    esac
-    seen="$seen $name"
     install_one "$skill_dir" "$name" "$dest"
   done
 done
-shopt -u nullglob
 
 printf '\nDone. %d skill(s) %s.\n' "$linked" \
   "$( [ "$dry_run" -eq 1 ] && echo 'would be installed' || echo installed )"

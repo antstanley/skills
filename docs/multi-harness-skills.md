@@ -127,7 +127,8 @@ Claude Code plugins and individual-skill installs keep working exactly as before
 
 A flat top-level `skills/` tree is **generated from it** by
 [`scripts/sync-skills.sh`](../scripts/sync-skills.sh) as real file copies (no
-symlinks), in the layout the standard expects:
+symlinks; internal `evals/` directories omitted), in the layout the standard
+expects:
 
 ```
 skills/                          # GENERATED — do not edit; run scripts/sync-skills.sh
@@ -156,9 +157,9 @@ skills/                          # GENERATED — do not edit; run scripts/sync-s
 
 ### 3b. Per-harness install
 
-A single `install.sh` (**shipped at the repo root**) installs every skill — each
-discovered as a `plugins/*/skills/*/SKILL.md` directory, so no repo restructure is
-required — into the requested harness's discovery directory:
+A single `install.sh` (**shipped at the repo root**) installs every skill from the
+generated `skills/` tree (real copies, `evals/` excluded) into the requested
+harness's discovery directory:
 
 ```sh
 # ./install.sh <harness> [--global | --project [DIR]] [--symlink] [--copy] [--dry-run] [--force]
@@ -172,10 +173,12 @@ required — into the requested harness's discovery directory:
 ```
 
 It **copies by default** (no symlinks); `--symlink` opts into links for live
-updates. Re-running refreshes the managed skill folders idempotently, leaves
-foreign same-named entries alone unless `--force`, and prints the Pi
-subagents-extension hint after a `pi`/`all` install. (It reads from the canonical
-`plugins/` tree, so it never depends on `skills/` being in sync.)
+updates. Sourcing from the evals-free `skills/` tree keeps both modes consistent
+(a symlink can't exclude a subdirectory, so linking the raw plugin dir would drag
+`evals/` along). Re-running refreshes the managed skill folders idempotently,
+leaves foreign same-named entries alone unless `--force`, and prints the Pi
+subagents-extension hint after a `pi`/`all` install. If `skills/` is missing, it
+asks you to run `scripts/sync-skills.sh` first.
 
 Mechanism per harness:
 
