@@ -5,7 +5,7 @@
 **Implements:** [02-run-stage.md](../../evaljudge/specs/02-run-stage.md) §The run backend (`local`), §Live invocation, §Safety / reproducibility
 **Depends on:** 02, 03
 **Produces:** the `local` Docker-free `RunBackend` — invokes a skill via one bounded `claude -p` in an isolated temp working directory seeded with the case's `files`, captures behavior via task 03, and classifies the outcome `completed`/`run_failed`/`timed_out`/`budget_exceeded`; every bound a named constant
-**Pointers:** new `benchmark/evaljudge/run/local.py`; bounded-`claude -p` shape from `benchmark/harness/scoring/conformance/judge.py` (`cli_judge`: `_shell_quote`, `subprocess.run`, `--output-format json` envelope, typed error on non-zero exit); temp-dir + `finally` cleanup pattern from the benchmark `local` backend
+**Pointers:** new `benchmark/evaljudge/run/local.py`; bounded-`claude -p` shape **mirrored from** `benchmark/harness/scoring/conformance/judge.py` `cli_judge` (`subprocess.run`, the `--output-format json` envelope parse, typed error on non-zero exit). Note `cli_judge`'s shell-quoting helper `_shell_quote` is module-private — do not import it; re-implement the one-line POSIX single-quote locally (or build the argv list without a shell). Temp-dir + `finally` cleanup pattern from the benchmark `local` backend.
 
 ## Steps
 

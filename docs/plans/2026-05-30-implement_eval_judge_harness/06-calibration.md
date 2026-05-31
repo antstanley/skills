@@ -5,7 +5,7 @@
 **Implements:** [03-judge-stage.md](../../evaljudge/specs/03-judge-stage.md) §Calibration
 **Depends on:** 05
 **Produces:** a small hand-authored human-labelled sample of `(expected_output, actual behavior) → human score` items, an agreement computation (exact-bucket agreement + Cohen's kappa over the three bands), and a resolved `PASS_THRESHOLD` justified by the reported agreement figure rather than picked by feel
-**Pointers:** new `benchmark/evaljudge/judge/calibration.py`; **reuse** `benchmark/harness/scoring/conformance/calibration.py` shape (`bucket_of`, `BANDS`, `cohens_kappa`, `compute_agreement`, the `MIN_CALIBRATION_*` bars, the `CalibrationItem`/`AgreementReport` records); sample drawn from real skill behavior (e.g. captured runs of `spec-creator`/`semi-formal-review` evals)
+**Pointers:** new `benchmark/evaljudge/judge/calibration.py`; **reuse** the calibration primitives — `bucket_of`, `cohens_kappa`, `compute_agreement`, `run_calibration`, `CalibrationItem`, `AgreementReport`, `MIN_CALIBRATION_SAMPLE_SIZE`, `MIN_CALIBRATION_AGREEMENT` are all re-exported from the package root `benchmark.harness.scoring.conformance`; the `BANDS`/`LOW_BAND_MAX`/`HIGH_BAND_MIN` constants are **not** in the package `__all__`, so import those from the submodule `benchmark.harness.scoring.conformance.calibration` (where they are defined). Sample drawn from real skill behavior (e.g. captured runs of `spec-creator`/`semi-formal-review` evals).
 
 ## Steps
 

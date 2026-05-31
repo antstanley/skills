@@ -13,7 +13,7 @@
 - [ ] Define the **redacted-case** view — a value object carrying only `skill`, `prompt`, and `files` — and a function that derives it from an `EvalCase`, so `expected_output` is structurally absent from what any backend receives (the isolation rule enforced by shape, not convention).
 - [ ] Implement working-directory capture: snapshot the seeded directory, run, snapshot again, diff into `FileChange` records (`created`/`modified`/`deleted`); pair with the response text to build the `EvalRun`.
 - [ ] Implement a `FakeRunBackend` returning a configured `EvalRun` for a given case (the hermetic test seam), including configurable non-`completed` statuses.
-- [ ] Add `benchmark/tests/test_evaljudge_run_backend.py`: assert the redacted-case view has no `expected_output` attribute/key (the isolation guard); the file-diff capture classifies created/modified/deleted correctly against a temp dir; the fake backend drives an `EvalRun` end to end.
+- [ ] Add `benchmark/tests/test_evaljudge_run_backend.py`: assert the redacted-case view has no `expectedOutput` attribute/key (the isolation guard); the file-diff capture classifies created/modified/deleted correctly against a temp dir; a case with a non-empty `files` seed (synthetic — every current fixture has `files: []`) lands those files in the working dir before capture; the fake backend drives an `EvalRun` end to end.
 
 ## Definition of done
 

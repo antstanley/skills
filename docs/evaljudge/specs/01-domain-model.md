@@ -4,6 +4,8 @@ The entities the eval-judge harness operates on, their IDs, and the lifecycle a 
 
 These records follow the repo-wide conventions: frozen dataclasses validated against the canonical schema on construction and on load, closed string sets over free strings, and named-constant ID prefixes ([`docs/specs/development-guidelines.md`](../../specs/development-guidelines.md) → Code style). They mirror the benchmark's domain-record discipline ([`docs/benchmark/specs/01-domain-model.md`](../../benchmark/specs/01-domain-model.md)).
 
+> **Naming convention — read before implementing.** The field bullets below are written in `snake_case` for prose readability (`file_changes`, `expected_output`, `raw_score`), but the **authoritative names are the camelCase keys in [`canonical-types.schema.json`](canonical-types.schema.json)** (`fileChanges`, `expectedOutput`, `rawScore`). This matches the benchmark's record discipline exactly: its `Record.to_dict` dumps each dataclass field under its own name (`out[f.name] = …`), so the **dataclass field names are the camelCase schema keys** (e.g. `ScoreReport.conformanceScore`, `failToPass`). The eval-judge records do the same — declare the dataclass fields in camelCase to match the schema, and read the snake_case in this page as the readable gloss, not the literal attribute name. Closed-set *values* keep the casing the schema's enums declare — `RunStatus`/`ChangeKind`/`Band` values are lowercase (`run_failed`, `created`, `partial`), `Verdict` values are uppercase (`PASS`, `FAIL`, `NOT_RUN`) — because those are data the records carry, not field names.
+
 ---
 
 ## ID scheme

@@ -8,7 +8,7 @@ This page records how the eval-judge harness is organised: where it lives, the t
 
 ## Package home
 
-The harness lives **under `benchmark/`**, as a sibling subpackage `benchmark/evaljudge/`. It is not a fork of the benchmark and does not extend its arms/suites; it lives there to **reuse the benchmark's conformance-judge machinery directly** ([`benchmark/harness/scoring/conformance/`](../../../../benchmark/harness/scoring/conformance/), an in-process import, not a cross-package copy) and to inherit one toolchain, one test suite, and one `scripts/check.sh` gate. The two harnesses answer different questions ([00-overview.md](00-overview.md) → Non-goals) but share the LLM-judge plumbing.
+The harness lives **under `benchmark/`**, as a sibling subpackage `benchmark/evaljudge/`. It is not a fork of the benchmark and does not extend its arms/suites; it lives there to **reuse the benchmark's conformance-judge machinery directly** ([`benchmark/harness/scoring/conformance/`](../../../benchmark/harness/scoring/conformance/), an in-process import, not a cross-package copy) and to inherit one toolchain, one test suite, and one `scripts/check.sh` gate. The two harnesses answer different questions ([00-overview.md](00-overview.md) → Non-goals) but share the LLM-judge plumbing.
 
 ```
 benchmark/
@@ -94,6 +94,8 @@ Nothing on this page overrides the global rules; the harness follows them:
 ## Schema
 
 The sidecar [`canonical-types.schema.json`](canonical-types.schema.json) is the hand-authored authority every record validates against (the schema-is-authority rule). It defines `EvalCase`, `EvalRun`, `EvalJudgment`, `EvalResult`, and `EvalReport`, plus the small shared shapes they use (`Slug`, `RecordId`, `Timestamp`, the closed enums).
+
+**Field naming — camelCase, matching the benchmark.** The schema keys are camelCase (`fileChanges`, `expectedOutput`, `rawScore`, `passRate`, `bySkill`, `changeKind`), and the dataclass field names are **identical** to them. This is not a free choice: the benchmark's `Record.to_dict` serializes each field under its own name (`out[f.name] = …`) with no snake↔camel translation layer, so reusing that discipline (which [01-domain-model.md](01-domain-model.md) commits to) requires the dataclass fields to *be* the camelCase schema keys — exactly as the benchmark's own records do (`ScoreReport.conformanceScore`, `TaskInstance.failToPass`). The snake_case names in [01-domain-model.md](01-domain-model.md)'s field bullets are a readability gloss, not the literal attribute names. A builder who named fields snake_case while reusing the `f.name`-based `to_dict` would emit snake_case keys that fail schema validation — the schema-equality and round-trip tests in the build's first task catch this, but it is called out here so it never reaches a test.
 
 Per the layering rule ([`docs/spec-creator` §Layered structure] and [development guidelines](../../specs/development-guidelines.md)), `Slug`/`RecordId`/`Timestamp` are **re-declared** in this app's schema rather than `$ref`-ed from the benchmark's schema: a type is promoted to a global `docs/specs/canonical-types.schema.json` only once two apps genuinely share it. The eval-judge and benchmark schemas independently using a `RecordId` shape is **duplication to watch**, not yet duplication to promote — flagged in Open questions so a future editor can decide whether to lift the shared primitives to the global schema.
 

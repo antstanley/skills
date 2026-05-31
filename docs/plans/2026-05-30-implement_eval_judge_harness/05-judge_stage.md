@@ -5,7 +5,7 @@
 **Implements:** [03-judge-stage.md](../../evaljudge/specs/03-judge-stage.md) §The rubric, §The bounded judge call, §Score → band → verdict
 **Depends on:** 01
 **Produces:** `score_eval(expected_output, EvalRun, *, judge) -> EvalJudgment` plus verdict derivation — builds the eval-conformance rubric prompt (expected behavior vs actual behavior), runs an injectable `JudgeCallable`, parses+clamps via the conformance judge's helpers, and maps the score to a `band` and `PASS`/`FAIL` through a named `PASS_THRESHOLD`
-**Pointers:** new `benchmark/evaljudge/judge/rubric.py`, `benchmark/evaljudge/judge/judge.py`, `benchmark/evaljudge/judge/__init__.py`; **import** from `benchmark.harness.scoring.conformance`: `JudgeCallable`, `clamp_score`, `SCORE_MIN`/`SCORE_MAX`, `parse_judge_response`, and the `bucket_of`/bands; pattern source `judge.py` (`build_rubric_prompt`, `cli_judge`)
+**Pointers:** new `benchmark/evaljudge/judge/rubric.py`, `benchmark/evaljudge/judge/judge.py`, `benchmark/evaljudge/judge/__init__.py`; **import** from `benchmark.harness.scoring.conformance`: `JudgeCallable`, `clamp_score`, `SCORE_MIN`/`SCORE_MAX`, `parse_judge_response`, `bucket_of` (all re-exported by the package `__init__`). The band-boundary constants `BANDS`/`LOW_BAND_MAX`/`HIGH_BAND_MIN` are **not** in the package `__all__` — import them from the submodule `benchmark.harness.scoring.conformance.calibration` if needed (or rely on the re-exported `bucket_of`, which already encapsulates the bands). Pattern source `judge.py` (`build_rubric_prompt`, `cli_judge`).
 
 ## Steps
 
