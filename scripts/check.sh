@@ -10,6 +10,9 @@ export PATH="$HOME/.local/bin:$PATH"
 
 cd "$(dirname "$0")/.."
 
+echo "==> skills/ in sync with plugins/"
+scripts/sync-skills.sh --check
+
 echo "==> uv sync"
 uv sync --frozen
 
