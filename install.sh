@@ -8,9 +8,9 @@
 # them into the discovery directories used by other harnesses.
 #
 # The neutral standard path `.agents/skills/` (project) and `~/.agents/skills/`
-# (global) is read by Codex, Cursor, Pi, and OpenCode — so one target covers all
-# four. Kiro reads only its own `.kiro/skills/`; Claude Code uses the marketplace
-# (or its own `.claude/skills/`).
+# (global) is read by Codex, Cursor, Pi, OpenCode, and Zed — so one target covers
+# all five. Kiro reads only its own `.kiro/skills/`; Claude Code uses the
+# marketplace (or its own `.claude/skills/`).
 #
 # It does NOT move or restructure the repo: the skills stay where they live
 # (plugins/<plugin>/skills/<name>/), and each is symlinked (or copied) into the
@@ -22,6 +22,7 @@
 #   <harness>            global target(s)                project target(s)
 #     agents             ~/.agents/skills               .agents/skills
 #     codex              ~/.agents/skills               .agents/skills
+#     zed                ~/.agents/skills               .agents/skills
 #     cursor             ~/.cursor/skills               .cursor/skills
 #     pi                 ~/.pi/agent/skills             .pi/skills
 #     opencode           ~/.config/opencode/skills      .opencode/skills
@@ -38,7 +39,7 @@
 #
 # Examples:
 #   ./install.sh all                 # ~/.agents/skills + ~/.kiro/skills (global)
-#   ./install.sh codex               # ~/.agents/skills (also serves Cursor/Pi/OpenCode)
+#   ./install.sh codex               # ~/.agents/skills (also serves Cursor/Pi/OpenCode/Zed)
 #   ./install.sh cursor --project ~/work/myrepo
 #   ./install.sh kiro --global
 #   ./install.sh claude --copy       # Claude also has the plugin marketplace
@@ -59,7 +60,7 @@ die() { printf 'install.sh: %s\n' "$1" >&2; exit 1; }
 # --- parse args --------------------------------------------------------------
 while [ $# -gt 0 ]; do
   case "$1" in
-    agents|codex|cursor|pi|opencode|kiro|claude|all)
+    agents|codex|zed|cursor|pi|opencode|kiro|claude|all)
       [ -z "$harness" ] || die "harness already set to '$harness'"
       harness="$1"; shift ;;
     --global)  scope="global"; shift ;;
@@ -75,13 +76,13 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-[ -n "$harness" ] || die "no harness given (agents|codex|cursor|pi|opencode|kiro|claude|all). Try --help."
+[ -n "$harness" ] || die "no harness given (agents|codex|zed|cursor|pi|opencode|kiro|claude|all). Try --help."
 
 # --- resolve destination directory(ies) --------------------------------------
 dests=()
 if [ "$scope" = "global" ]; then
   case "$harness" in
-    agents|codex) dests=("$HOME/.agents/skills") ;;
+    agents|codex|zed) dests=("$HOME/.agents/skills") ;;
     cursor)       dests=("$HOME/.cursor/skills") ;;
     pi)           dests=("$HOME/.pi/agent/skills") ;;
     opencode)     dests=("$HOME/.config/opencode/skills") ;;
@@ -92,7 +93,7 @@ if [ "$scope" = "global" ]; then
 else
   base="$(cd "$project_dir" 2>/dev/null && pwd)" || die "project dir not found: $project_dir"
   case "$harness" in
-    agents|codex) dests=("$base/.agents/skills") ;;
+    agents|codex|zed) dests=("$base/.agents/skills") ;;
     cursor)       dests=("$base/.cursor/skills") ;;
     pi)           dests=("$base/.pi/skills") ;;
     opencode)     dests=("$base/.opencode/skills") ;;
