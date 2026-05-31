@@ -1,10 +1,13 @@
 # Recommendation: Making these skills installable across coding harnesses
 
 **Goal:** distribute the skills in this repo to harnesses that implement the
-[Agent Skills standard](https://github.com/agentskills/agentskills) —
-specifically **Pi** ([pi.dev](https://pi.dev/docs/latest/skills)) and
-**OpenCode** ([opencode.ai](https://opencode.ai/docs/skills/)) — without
-abandoning the existing Claude Code plugin packaging.
+[Agent Skills standard](https://github.com/agentskills/agentskills) — **Pi**
+([pi.dev](https://pi.dev/docs/latest/skills)), **OpenCode**
+([opencode.ai](https://opencode.ai/docs/skills/)), **Codex**
+([developers.openai.com](https://developers.openai.com/codex/skills)), **Cursor**
+([cursor.com](https://cursor.com/docs/skills)), and **Kiro**
+([kiro.dev](https://kiro.dev/docs/skills/)) — without abandoning the existing
+Claude Code plugin packaging.
 
 Date: 2026-05-31.
 
@@ -18,11 +21,12 @@ Date: 2026-05-31.
    contain **no `${CLAUDE_PLUGIN_ROOT}` interpolation** or other hard
    Claude-Code path coupling. Packaging — not format — is the gap.
 
-2. **`.agents/skills/` is the universal path.** Both Pi and OpenCode discover
-   skills under the vendor-neutral `.agents/skills/` (project) and
+2. **`.agents/skills/` is the universal path.** Codex, Cursor, Pi, and OpenCode
+   all discover skills under the vendor-neutral `.agents/skills/` (project) and
    `~/.agents/skills/` (global) directories defined by the standard. Targeting
-   that one location covers both harnesses at once, and any future
-   standard-compliant harness for free.
+   that one location covers **four harnesses at once**, plus any future
+   standard-compliant harness for free. Only **Kiro** uses its own
+   `.kiro/skills/`; **Claude Code** uses the plugin marketplace (or `.claude/skills/`).
 
 3. **Recommended approach:** keep the Claude Code plugins as-is, add a flat
    canonical `skills/` tree as the single source of truth, and ship a tiny
@@ -67,23 +71,32 @@ The Claude-Code-specific surface is therefore just:
 
 ## 2. How each target discovers skills
 
-All three consume the identical `SKILL.md` format. They differ only in *where*
+All six consume the identical `SKILL.md` format. They differ only in *where*
 they look.
 
 | Harness | Project paths | Global paths |
 |---|---|---|
 | **Agent Skills standard** | `.agents/skills/<name>/SKILL.md` | `~/.agents/skills/<name>/SKILL.md` |
-| **OpenCode** | `.opencode/skills/`, `.claude/skills/`, **`.agents/skills/`** | `~/.config/opencode/skills/`, `~/.claude/skills/`, **`~/.agents/skills/`** |
+| **Codex** | **`.agents/skills/`** (cwd → repo root) | **`~/.agents/skills/`** (+ admin `/etc/codex/skills`) |
+| **Cursor** | **`.agents/skills/`**, `.cursor/skills/` (+ compat `.claude/skills/`, `.codex/skills/`) | **`~/.agents/skills/`**, `~/.cursor/skills/` (+ compat `~/.claude`, `~/.codex`) |
 | **Pi** | `.pi/skills/`, **`.agents/skills/`** (+ ancestors), npm-package `skills/`, settings `skills[]`, `--skill <path>` | `~/.pi/agent/skills/`, **`~/.agents/skills/`** |
+| **OpenCode** | `.opencode/skills/`, `.claude/skills/`, **`.agents/skills/`** | `~/.config/opencode/skills/`, `~/.claude/skills/`, **`~/.agents/skills/`** |
+| **Kiro** | `.kiro/skills/<name>/SKILL.md` | `~/.kiro/skills/<name>/SKILL.md` |
 | **Claude Code** | `.claude/skills/` + plugins | `~/.claude/skills/` + installed plugins |
 
-Three observations drive the design:
+Observations that drive the design:
 
-- **`.agents/skills/` is read by Pi *and* OpenCode** (project and global). One
-  target satisfies both.
-- **`.claude/skills/` is also read by OpenCode** (project and global) — Claude
-  Code and OpenCode already overlap, so a `.claude/skills/` install reaches both.
-- **Pi relaxes the name-must-match-directory rule**; OpenCode and the strict
+- **`.agents/skills/` is read by Codex, Cursor, Pi, *and* OpenCode** (project and
+  global). One target satisfies all four — this is the linchpin.
+- **`.claude/skills/` is also read by OpenCode and Cursor** — Claude Code's own
+  directory already reaches two more harnesses.
+- **Kiro is the only outlier**: it reads `.kiro/skills/` exclusively, so it needs
+  its own install target (the `install.sh` `all` mode fans out to both
+  `.agents/skills/` and `.kiro/skills/`).
+- **Codex and Cursor also ship a *plugin* distribution unit** (installable bundles
+  of skills/MCP/etc.), analogous to Claude Code's marketplace — a future option if
+  we want one-command installs instead of symlinks.
+- **Pi relaxes the name-must-match-directory rule**; the others and the strict
   standard do not. Keep names matching directories (we already do) so every
   consumer is happy.
 
@@ -142,11 +155,13 @@ required — into the requested harness's discovery directory:
 
 ```sh
 # ./install.sh <harness> [--global | --project [DIR]] [--copy] [--dry-run] [--force]
-#   pi        -> ~/.pi/agent/skills/<name>        (project: .pi/skills)
-#   opencode  -> ~/.config/opencode/skills/<name> (project: .opencode/skills)
-#   claude    -> ~/.claude/skills/<name>          (project: .claude/skills)
-#   agents    -> ~/.agents/skills/<name>          (project: .agents/skills)
-#   all       -> ~/.agents/skills/<name>          (the standard path Pi + OpenCode both read)
+#   agents/codex -> ~/.agents/skills/<name>          (project: .agents/skills)  — also serves Cursor/Pi/OpenCode
+#   cursor       -> ~/.cursor/skills/<name>          (project: .cursor/skills)
+#   pi           -> ~/.pi/agent/skills/<name>        (project: .pi/skills)
+#   opencode     -> ~/.config/opencode/skills/<name> (project: .opencode/skills)
+#   kiro         -> ~/.kiro/skills/<name>            (project: .kiro/skills)
+#   claude       -> ~/.claude/skills/<name>          (project: .claude/skills)
+#   all          -> ~/.agents/skills + ~/.kiro/skills  (covers all six harnesses)
 ```
 
 It is idempotent (refreshes its own symlinks), refuses to clobber non-symlink
@@ -223,13 +238,15 @@ because some skills assume Claude Code capabilities. Classification:
 `spec-builder` (and the parallel path of `using-jj-workspaces`) live or die on whether
 the host harness can **dispatch sub-agents**. The three targets differ:
 
-| Capability | Claude Code | OpenCode | Pi |
-|---|---|---|---|
-| Dispatch tool | `Task` (core) | `Task` (core) | `Agent` — **extension only** (`@tintinweb/pi-subagents` et al.) |
-| Isolated context | own window | child sessions | child sessions |
-| Parallel | yes | yes | yes (extension) |
-| Agent definitions | markdown frontmatter | markdown frontmatter / JSON | TS extension config |
-| Stable target for a portable skill? | yes | yes | **no** — varies by fork |
+| Capability | Claude Code | OpenCode | Cursor | Codex | Pi |
+|---|---|---|---|---|---|
+| Dispatch tool | `Task` (core) | `Task` (core) | core (since 2.4) | via plugins | `Agent` — **extension only** |
+| Isolated context | own window | child sessions | yes | yes | child sessions |
+| Parallel | yes | yes | yes | yes | yes (extension) |
+| Stable target for a portable skill? | yes | yes | yes | mostly | **no** — varies by fork |
+
+(Kiro is a spec-driven IDE; treat its sub-agent dispatch as unconfirmed and rely
+on the capability gate rather than assuming it.)
 
 Design consequences, now implemented in the skills:
 

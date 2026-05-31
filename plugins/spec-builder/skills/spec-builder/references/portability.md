@@ -15,6 +15,8 @@ you are unsure whether the current harness can dispatch sub-agents.
 |---|---|---|---|---|
 | **Claude Code** | `Task` (core) | yes — own context window | yes | The skill's native target. |
 | **OpenCode** | `Task` (core) | yes — child sessions | yes | Subagents defined in `~/.config/opencode/agents/` or `.opencode/agents/`; gated by `permission.task`. Maps almost 1:1 to Claude Code. |
+| **Cursor** | core subagents (since 2.4) | yes | yes | Native subagent support; gate on the dispatch tool as elsewhere. |
+| **Codex** | subagents via plugins | yes | yes | Sub-agent / plugin ecosystem; confirm a dispatch tool is present before relying on it. |
 | **Pi** | `Agent` — **extension only** | yes — child sessions | yes | Not in Pi core. Provided by a subagents extension, e.g. `@tintinweb/pi-subagents` (registers `Agent`, `get_subagent_result`, `steer_subagent`). Competing forks exist and may name the tool differently. |
 
 There is **no standard runtime API** for "which harness am I in." Do not try to
