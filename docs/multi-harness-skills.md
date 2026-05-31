@@ -108,16 +108,29 @@ Observations that drive the design:
 
 Adopt the superpowers model, scoped to our skills-only repo:
 
-> **One canonical, flat, standard-compliant `skills/` tree is the source of
-> truth. Every harness — including Claude Code — consumes it through its own
-> native mechanism via symlinks. Nothing is copied or forked.**
+> **`plugins/` is the canonical source of truth; each plugin (and each skill
+> within it) is self-contained so it can be installed on its own. `skills/` is a
+> generated, flat, standard-layout copy of every skill, and `install.sh` places
+> skills into each harness's discovery directory. No symlinks are committed, and
+> the default install copies rather than links.**
 
-### 3a. Canonical source of truth
+This reflects the project's constraints: (1) people install individual skills and
+plugins, so a plugin must never depend on a file outside its own directory — which
+rules out the "skills/ is canonical, plugins symlink up to it" layout (an upward
+symlink escapes the plugin root and dangles when a plugin is extracted alone); and
+(2) symlinks are avoided wherever possible.
 
-Create a flat top-level directory holding the real skill content:
+### 3a. Canonical source + generated flat tree
+
+`plugins/<plugin>/skills/<name>/` holds the **real** skill content (unchanged —
+Claude Code plugins and individual-skill installs keep working exactly as before).
+
+A flat top-level `skills/` tree is **generated from it** by
+[`scripts/sync-skills.sh`](../scripts/sync-skills.sh) as real file copies (no
+symlinks), in the layout the standard expects:
 
 ```
-skills/                         # canonical, agent-skills-standard layout
+skills/                          # GENERATED — do not edit; run scripts/sync-skills.sh
   reasoning-semiformally/  SKILL.md  references/...
   spec-creator/            SKILL.md  references/...
   spec-reviewer/           SKILL.md  references/...
@@ -128,37 +141,27 @@ skills/                         # canonical, agent-skills-standard layout
   semi-formal-review/      SKILL.md  references/...
   validate-done-certificate/ SKILL.md references/...
   using-jj-workspaces/     SKILL.md  references/...
+  README.md                # explains the tree is generated
 ```
 
-Two ways to reconcile this with the existing `plugins/` tree — pick one:
-
-- **Option A (recommended): `skills/` is canonical, plugins symlink in.**
-  Move the skill directories to `skills/` and replace each
-  `plugins/<p>/skills/<s>` with a symlink to `../../../skills/<s>`. Claude Code
-  plugins keep working unchanged; the flat tree becomes the portable artifact.
-  *Risk:* Claude Code's plugin loader must follow symlinks (it does for plugin
-  contents on macOS/Linux; verify on the install target).
-
-- **Option B (lowest risk to Claude Code): `plugins/` stays canonical, `skills/`
-  is generated.** Keep skills where they are; a build/install step symlinks each
-  `plugins/<p>/skills/<s>` into the flat `skills/<s>` tree (and onward into each
-  harness). No change to how Claude Code resolves anything today.
-
-Both end at the same place. **Option A** is cleaner long-term (the standard's
-flat layout is the primary artifact and Claude is the adapter); **Option B** is
-safer if you don't want to touch the working plugin install at all yet. Given
-the skills are pure markdown with no `${CLAUDE_PLUGIN_ROOT}` references,
-Option A's symlink risk is low — recommend A, fall back to B if the Claude Code
-plugin loader on the target doesn't traverse symlinks.
+- **Edit under `plugins/`, then run `scripts/sync-skills.sh`.** The script
+  regenerates `skills/` and guards against duplicate skill names.
+- **Drift is caught automatically.** `scripts/check.sh` (the pre-push + CI gate)
+  runs `scripts/sync-skills.sh --check`, which regenerates into a temp dir and
+  diffs — a stale `skills/` fails the build with a "run scripts/sync-skills.sh"
+  message, so `plugins/` stays the single source of truth.
+- **Cost:** the skill content is duplicated in git (~0.5 MB). That is the price of
+  a no-symlink, browsable, self-contained layout; the drift check keeps the copy
+  honest.
 
 ### 3b. Per-harness install
 
-A single `install.sh` (**shipped at the repo root**) symlinks every skill — each
+A single `install.sh` (**shipped at the repo root**) installs every skill — each
 discovered as a `plugins/*/skills/*/SKILL.md` directory, so no repo restructure is
 required — into the requested harness's discovery directory:
 
 ```sh
-# ./install.sh <harness> [--global | --project [DIR]] [--copy] [--dry-run] [--force]
+# ./install.sh <harness> [--global | --project [DIR]] [--symlink] [--copy] [--dry-run] [--force]
 #   agents/codex/zed -> ~/.agents/skills/<name>      (project: .agents/skills)  — also serves Cursor/Pi/OpenCode
 #   cursor       -> ~/.cursor/skills/<name>          (project: .cursor/skills)
 #   pi           -> ~/.pi/agent/skills/<name>        (project: .pi/skills)
@@ -168,15 +171,18 @@ required — into the requested harness's discovery directory:
 #   all          -> ~/.agents/skills + ~/.kiro/skills  (covers all seven harnesses)
 ```
 
-It is idempotent (refreshes its own symlinks), refuses to clobber non-symlink
-entries without `--force`, supports `--copy` for symlink-less environments, and
-prints the Pi subagents-extension hint after a `pi`/`all` install.
+It **copies by default** (no symlinks); `--symlink` opts into links for live
+updates. Re-running refreshes the managed skill folders idempotently, leaves
+foreign same-named entries alone unless `--force`, and prints the Pi
+subagents-extension hint after a `pi`/`all` install. (It reads from the canonical
+`plugins/` tree, so it never depends on `skills/` being in sync.)
 
 Mechanism per harness:
 
-- **Pi & OpenCode — preferred:** symlink each `skills/<name>` into
-  `~/.agents/skills/<name>` (global) or `<repo>/.agents/skills/` (project,
-  committed to the consuming repo). One target, both harnesses, standard path.
+- **Codex, Cursor, Pi, OpenCode, Zed — one target:** install into
+  `~/.agents/skills/<name>` (global) or `<repo>/.agents/skills/` (project). One
+  path, five harnesses.
+- **Kiro:** install into `~/.kiro/skills/<name>` (or `.kiro/skills/`).
 - **Pi — alternatives if you publish to npm:** Pi auto-discovers `skills/` inside
   npm packages, so `pi` users could also `npm i @antstanley/skills` and Pi finds
   them with zero install step. Worth doing if you want frictionless `pi` adoption.
@@ -185,22 +191,20 @@ Mechanism per harness:
   { "permission": { "skill": { "*": "allow" } } }
   ```
 - **Claude Code — unchanged:** keep `/plugin install` against the existing
-  `marketplace.json`. (Symlinking into `~/.claude/skills/` also works and is what
-  reaches OpenCode's `~/.claude/skills/` lookup, but the plugin path is the
-  idiomatic Claude distribution and should stay the headline install.)
+  `marketplace.json`.
 
-Symlinks (not copies) keep a single editable source; a `--copy` flag for
-environments without symlink support (some Windows setups — cf. superpowers'
-`node_modules` workaround).
+The installer **copies by default** (per the no-symlink preference); `--symlink`
+keeps a single editable source where that's wanted (it also helps on Windows
+setups that lack symlink support — cf. superpowers' `node_modules` workaround).
 
 ### 3c. Resulting repo shape
 
 ```
-skills/                     # canonical, portable (the artifact other harnesses consume)
-plugins/                    # Claude Code plugins (symlink/point into skills/)
+plugins/                    # CANONICAL: Claude Code plugins, self-contained, real skill files
 .claude-plugin/marketplace.json
-.agents/skills/             # optional: committed project-level install for this repo's own use
-install.sh                  # fan-out installer
+skills/                     # GENERATED from plugins/ (real copies, no symlinks) — flat standard tree
+scripts/sync-skills.sh      # regenerates skills/ (+ --check drift guard, run by check.sh)
+install.sh                  # fan-out installer into each harness's discovery dir
 docs/multi-harness-skills.md
 ```
 

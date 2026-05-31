@@ -1,0 +1,26 @@
+{
+  "skill_name": "spec-planner",
+  "evals": [
+    {
+      "id": 1,
+      "name": "plan-from-canonical-spec-set",
+      "prompt": "We have a canonical spec set for the journal app at docs/journal/specs/ (overview, domain model with Entry, app shell, editor + calendar runtime, persistence + export, and a per-app auth page covering a single-user passphrase lock). The repo's development guidelines are at docs/specs/development-guidelines.md. Plan the implementation — break the spec into a dependency-ordered graph of reviewable task packages and write the plan to docs/plans/.",
+      "expected_output": "A plan folder at docs/plans/YYYY-MM-DD-implement_journal_app/ (ISO date prefix, snake_case title) containing a plan.md plus one NN-snake_case_task.md file per task, numbered in implementation order. plan.md has Status: Draft, Date, Owner, Source spec: docs/journal/specs/; a 'Source and definition-of-done baseline' section pointing the per-task DoD at docs/specs/development-guidelines.md §Definition of done; a Task graph with BOTH a Mermaid graph TD block AND a dependency table (table marked as source of truth, each row linking to its task file, listing depends-on and edge kind, with every depends-on referencing a lower number); an Implementation order + milestones section; and the closing Assumptions/Decisions/Open questions block. Each task file is hybrid (header with Plan link + Status, then Implements/Depends on/Produces/Pointers, a Steps checklist, and a Definition of done checklist ending in a 'Reviewable:' line). The passphrase lock is numbered 01 and built first because later features are reviewed through it (review edges). Every spec section maps to a task file; docs/README.md gains a Plans section pointing at plan.md. Spec-page links resolve from the folder (../../). No spec prose restated, no MVP framing, no emoji.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "plan-from-change-spec",
+      "prompt": "Turn the change spec at docs/specs/changes/2026-05-21-add_tagging_to_entries.md into an implementation plan. It proposes a Tag entity, a tags object store, and a tag picker in the editor toolbar for the editor app at docs/editor/specs/. Expand its Implementation notes into a sequenced, reviewable task graph.",
+      "expected_output": "A plan folder at docs/plans/YYYY-MM-DD-implement_tagging/ whose plan.md Source spec is the change spec. The change spec's Proposed changes and Implementation notes are expanded into separate task files (e.g. 01-tag_type_and_parser.md, 02-tags_store_and_migration.md, 03-tag_picker_ui.md, 04-filter_by_tag.md), not merely copied. plan.md's Mermaid + dependency table shows the store/schema task as a data dependency of the UI tasks, with depends-on referencing lower numbers. Each task file names the change-spec section or canonical page it implements and carries a Definition of done tied to the repo guidelines plus a Reviewable line. The store/migration task is numbered before the UI that reads it. docs/README.md indexes the plan under Plans, pointed at plan.md. If the change is small enough that the change spec's own Implementation notes already suffice, the skill says so rather than padding a folder.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "plan-from-external-spec-with-auth-ordering",
+      "prompt": "We have a PRD (not a spec-creator spec) for a small SaaS dashboard: users sign up and log in, then see a billing page, a team-settings page, and a usage-analytics page — all of which require being logged in. There's no development-guidelines page yet. Plan the build and write it to docs/plans/, making sure the order produces reviewable work early.",
+      "expected_output": "Because there is no development-guidelines page, the skill establishes the definition-of-done baseline from repo signals or by asking the user, and records that source in plan.md's baseline section. A plan folder at docs/plans/YYYY-MM-DD-<snake_case>/ with auth (signup + login) as task 01, carrying outgoing REVIEW edges to billing, team-settings, and usage-analytics (none can be reviewed end to end without login). plan.md's Mermaid graph and dependency table agree and form a DAG. Each gated page is its own task file ordered after auth. Milestones end at reviewable states (M1: a user can sign up and log in to an empty shell; later milestones add the gated pages). The external source is noted as having no canonical schema, with any type ambiguity captured in plan.md's Open questions. Standard header and closing block; docs/README.md indexed, pointed at plan.md.",
+      "files": []
+    }
+  ]
+}

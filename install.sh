@@ -33,16 +33,20 @@
 #
 #   --global          install into the home-directory location(s) (default)
 #   --project [DIR]    install into DIR (default: current directory)
-#   --copy            copy skill directories instead of symlinking
+#   --symlink         symlink skill directories instead of copying (live updates,
+#                     but a moved/deleted repo leaves dangling links)
+#   --copy            copy skill directories (the default)
 #   --dry-run         print what would happen, change nothing
-#   --force           replace an existing non-symlink destination entry
+#   --force           overwrite a destination entry that isn't a managed skill
+#
+# Skills are copied by default; re-running refreshes the managed skill folders.
 #
 # Examples:
 #   ./install.sh all                 # ~/.agents/skills + ~/.kiro/skills (global)
 #   ./install.sh codex               # ~/.agents/skills (also serves Cursor/Pi/OpenCode/Zed)
 #   ./install.sh cursor --project ~/work/myrepo
 #   ./install.sh kiro --global
-#   ./install.sh claude --copy       # Claude also has the plugin marketplace
+#   ./install.sh opencode --symlink  # link instead of copy
 #
 set -euo pipefail
 
@@ -51,7 +55,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 harness=""
 scope="global"
 project_dir="$PWD"
-mode="symlink"
+mode="copy"
 dry_run=0
 force=0
 
@@ -67,11 +71,12 @@ while [ $# -gt 0 ]; do
     --project)
       scope="project"; shift
       if [ $# -gt 0 ] && [ "${1#--}" = "$1" ]; then project_dir="$1"; shift; fi ;;
+    --symlink) mode="symlink"; shift ;;
     --copy)    mode="copy"; shift ;;
     --dry-run) dry_run=1; shift ;;
     --force)   force=1; shift ;;
     -h|--help)
-      sed -n '2,52p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+      sed -n '2,50p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown argument: $1 (try --help)" ;;
   esac
 done
@@ -107,8 +112,8 @@ printf 'Installing skills from %s\n' "$REPO_ROOT"
 printf '  harness: %s   scope: %s   mode: %s\n' "$harness" "$scope" "$mode"
 printf '  target(s): %s\n\n' "${dests[*]}"
 
-# --- link one skill into one destination -------------------------------------
-link_one() {
+# --- install one skill into one destination ----------------------------------
+install_one() {
   skill_dir="$1"; name="$2"; dest="$3"
   target="$dest/$name"
 
@@ -116,13 +121,18 @@ link_one() {
     printf '  would %s  %s -> %s\n' "$mode" "$name" "$skill_dir"; return 0
   fi
 
-  if [ -e "$target" ] || [ -L "$target" ]; then
-    if [ -L "$target" ]; then
-      rm -f "$target"                      # refresh our own (or a stale) symlink
-    elif [ "$force" -eq 1 ]; then
+  # Refresh an existing entry that is ours to manage — our own symlink, or a
+  # skill folder (a directory holding a SKILL.md). Anything else (a foreign file
+  # or a non-skill directory of the same name) is left alone unless --force.
+  if [ -L "$target" ]; then
+    rm -f "$target"
+  elif [ -d "$target" ] && [ -f "$target/SKILL.md" ]; then
+    rm -rf "$target"
+  elif [ -e "$target" ]; then
+    if [ "$force" -eq 1 ]; then
       rm -rf "$target"
     else
-      printf '  skip  %s  (exists, not a symlink — use --force to replace)\n' "$name"
+      printf '  skip  %s  (exists, not a managed skill — use --force to replace)\n' "$name"
       return 0
     fi
   fi
@@ -149,13 +159,13 @@ for dest in "${dests[@]}"; do
       *" $name "*) die "duplicate skill name '$name' — two source dirs map to $dest/$name" ;;
     esac
     seen="$seen $name"
-    link_one "$skill_dir" "$name" "$dest"
+    install_one "$skill_dir" "$name" "$dest"
   done
 done
 shopt -u nullglob
 
-printf '\nDone. %d link(s) %s.\n' "$linked" \
-  "$( [ "$dry_run" -eq 1 ] && echo 'would be created' || echo created )"
+printf '\nDone. %d skill(s) %s.\n' "$linked" \
+  "$( [ "$dry_run" -eq 1 ] && echo 'would be installed' || echo installed )"
 
 case "$harness" in
   pi|all)

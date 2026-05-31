@@ -1,0 +1,33 @@
+{
+  "skill_name": "spec-builder",
+  "evals": [
+    {
+      "id": 1,
+      "name": "build-plan-parallel-default",
+      "prompt": "Build the plan in docs/plans/2026-05-22-implement_journal_app/. It has six tasks (01 passphrase lock, 02 entry store, 03 app shell, 04 editor, 05 export, 06 calendar) with a dependency table and a certificates/ subfolder. Implement it.",
+      "expected_output": "The skill resolves settings to the defaults (parallel, max 4 agents) and echoes them. It reads plan.md's dependency TABLE as the source of truth (not the Mermaid graph), builds the DAG, and sanity-checks it. Using the vendored workspaces.md method it detects the VCS backend (jj preferred when both jj and git exist, else git) and announces the choice; it establishes a clean base, an integration point (a jj revision or the spec-builder/integration git branch), and one workspace per task branched from the current integration point. It runs a wave scheduler: tasks 01 and 02 (no deps) dispatch concurrently up to the cap; each later task dispatches only once its Depends-on tasks are Done and merged. Each task gets a context-sized brief built from its own Implements/Produces/Pointers/Steps/Definition-of-done (NOT the whole spec or other tasks' files; the certificate body is withheld from the implementer). When a sub-agent reports done, the orchestrator runs gate 1 semi-formal-review (correctness → CORRECT/.../BUGGY) by a different agent than the implementer, then gate 2 validate-done-certificate (discharging certificates/NN against the diff → DONE/PARTIAL/NOT_DONE). Only when review is CORRECT/LIKELY_CORRECT AND validation is DONE does the task merge into the integration point, its task Status flip to Done with steps checked off, the certificate State set to Validated, and its workspace torn down. plan.md goes In progress on first dispatch and Done only when every task is Done. A final build summary reports per-task verdicts.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "build-sequential-with-failed-gate",
+      "prompt": "Implement docs/plans/2026-05-24-add_tagging/ sequentially, one task at a time. Max one agent.",
+      "expected_output": "execution_mode resolves to sequential (max_parallel_agents = 1); the skill echoes that. The wave scheduler dispatches exactly one ready task at a time and fully resolves it (including merge) before the next, using the same build loop. For each task: implement in an isolated workspace, then gate 1 then gate 2. When a gate fails — e.g. semi-formal-review returns BUGGY on a name-shadowing or regression finding, or validate-done-certificate returns NOT_DONE/PARTIAL on an UNSATISFIED obligation — the skill does NOT mark the task Done. It re-dispatches the same implementer in the same workspace, briefed with the specific verdict/evidence (the offending file:line, the unmet DoD item), re-runs the affected gate(s), and bounds retries (default 2). After the bound without both gates passing, it parks the task (stays In progress with a note, workspace left intact) and surfaces the diff and standing verdicts to the user rather than forcing a pass or looping. Tasks depending on a parked task are reported as blocked. The bar is never lowered to go green.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "no-plan-redirect-and-resume",
+      "prompt": "We have a spec at docs/journal/specs/ but no plan yet. Build it. (Also: later, resume docs/plans/2026-05-22-implement_journal_app/ where tasks 01-03 are already marked Done.)",
+      "expected_output": "For the spec-with-no-plan request, the skill declines to build straight from a spec and redirects to spec-planner to produce the dependency-ordered plan (with definitions of done) first, because decomposition and reviewability ordering are prerequisites for a reviewable build. For the resume request, it reads each task's Status, treats 01-03 (already Done) as preconditions already in the integration point rather than rebuilding them, restarts the wave scheduler from the current ready set (the first non-Done tasks whose dependencies are met), and continues the build loop and status bookkeeping from there. It does not re-dispatch or re-gate finished tasks.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "build-in-plain-git-repo",
+      "prompt": "Build docs/plans/2026-06-01-add_search/ in this repo. It's a plain git repo, not jj.",
+      "expected_output": "Backend detection (vendored workspaces.md) finds no jj repo and falls back to the git backend, announcing it. The integration point is a git branch (spec-builder/integration) created from a clean base; each task gets its own git worktree on a spec-builder/task-NN branch off the current integration tip (`git worktree add -b spec-builder/task-NN ../<repo>-task-NN spec-builder/integration`), with deps installed and the suite run green before the sub-agent starts. Merging a completed task advances the integration branch (`git merge --no-ff spec-builder/task-NN`); parallel tasks branching from the same tip may conflict on the second merge and are handled (not auto-resolved silently) with both gates re-run on the merged result. Teardown is `git worktree remove` + `git branch -d`. Everything else — the two gates, the wave scheduler, status bookkeeping — is identical to the jj path; no jj commands are used. If the repo were colocated (both .jj and .git), the skill would instead prefer jj.",
+      "files": []
+    }
+  ]
+}
