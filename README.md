@@ -88,9 +88,7 @@ skills into each harness's discovery directory:
 
 Skills are **copied** by default (use `--symlink` for live updates). One path —
 `~/.agents/skills/` — serves Codex, Cursor, Pi, OpenCode, and Zed at once; Kiro
-uses `~/.kiro/skills/`. See [docs/multi-harness-skills.md](docs/multi-harness-skills.md)
-for the full discovery-path matrix and the sub-agent portability notes (some
-skills orchestrate sub-agents and degrade gracefully where a harness can't).
+uses `~/.kiro/skills/`.
 
 ## Repo layout
 
@@ -129,7 +127,7 @@ omitted), produced from `plugins/` by `scripts/sync-skills.sh` — edit under
 │       ├── skills/semi-formal-review/           # gate 1 — correctness
 │       ├── skills/validate-done-certificate/    # gate 2 — completeness
 │       └── README.md
-└── .specs/spec.md                  # marketplace design spec
+└── .specs/                         # generated design specs & plans
 ```
 
 ## Adding a new plugin

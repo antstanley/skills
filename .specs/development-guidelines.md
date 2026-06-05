@@ -4,7 +4,7 @@
 
 The rules of the road for everyone — humans and agents — writing code in this repository. They cover the toolchain, the pervasive coding style, where and how to handle errors, limits, version control, the per-language conventions, testing, repository hygiene, the emphases that matter most for AI agents, and the definition of done. The body states the discipline the repo adopts; tooling or gates that are not yet wired up live in the closing Open questions, not the body.
 
-The repository is a Claude Code plugin marketplace ([.specs/spec.md](spec.md)); its only executable code today is the Python benchmark harness ([.specs/benchmark/specs/](benchmark/specs/)), so the per-language conventions below are Python's. Additional language sections are added here when another language enters the repo.
+The repository is a Claude Code plugin marketplace; its only executable code today is the Python benchmark harness ([.specs/benchmark/specs/](benchmark/specs/)), so the per-language conventions below are Python's. Additional language sections are added here when another language enters the repo.
 
 ---
 

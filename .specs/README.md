@@ -6,7 +6,6 @@ Design specifications and plans for the `antstanley/skills` marketplace repo.
 
 Repo-wide, cross-cutting design.
 
-- [Plugin Marketplace Design](spec.md) — how the repo is structured as a Claude Code plugin marketplace.
 - [Development Guidelines](development-guidelines.md) — rules of the road for writing code (Clean Code style; Python conventions; jj version control; definition of done).
 
 ## Per-app specs
@@ -49,4 +48,3 @@ Implementation plans (forward-looking; sequence work by dependency and reviewabi
 - [.specs/plans/2026-05-28-raise_recursive_arm_timeout_budget/](plans/2026-05-28-raise_recursive_arm_timeout_budget/plan.md) — *Done.* Raise the recursive-arm workflow timeout to 60 min and budget to $60 (1-task plan). Implemented + merged.
 - [.specs/plans/2026-05-28-add_lighter_precanned_arm/](plans/2026-05-28-add_lighter_precanned_arm/plan.md) — *Done.* Add the A5 lighter pre-canned arm — arm record + pre-canned non-recursive flow + container `_run_a5` dispatch + tests. Implemented + merged.
 - [.specs/plans/2026-05-29-tolerate_markdown_verdict_lines/](plans/2026-05-29-tolerate_markdown_verdict_lines/plan.md) — *Done.* Make gate-verdict extraction tolerate markdown emphasis (`**VERDICT:** DONE`) so live recursive certificates register as gate events (1-task plan). Implemented + merged.
-- [.specs/superpowers/plans/2026-05-18-plugin-marketplace.md](superpowers/plans/2026-05-18-plugin-marketplace.md) — plugin-marketplace migration plan.
