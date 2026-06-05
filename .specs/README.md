@@ -23,6 +23,7 @@ Proposed deltas to canonical specs (`Proposed → Accepted → Implemented → M
 
 Pending:
 
+- [changes/2026-06-05-kanban_plan_folder_layout.md](changes/2026-06-05-kanban_plan_folder_layout.md) — *Proposed.* Move the `spec-planner`/`spec-builder` plan folder from a flat layout (`NN-task.md` files + `certificates/` + per-task `Status:` field) to a kanban board of `backlog/` · `in-progress/` · `blocked/` · `done/` subfolders that task files and their co-located `NN-task-certificate.md` certificates move between, so folder location *is* status. `plan.md` references tasks by number (not path) so it never churns on a move; the orchestrator performs all moves on the main tree and recomputes `plan.md`'s `Status` from the folders. Touches both plugins' `SKILL.md`, every layout-bearing reference file, all four `evals.json`, both `plugin.json`, and both plugin READMEs; `semi-formal-review` untouched.
 - [benchmark/specs/changes/2026-05-27-add_swe_bench_pro_suite.md](benchmark/specs/changes/2026-05-27-add_swe_bench_pro_suite.md) — *Proposed.* Add the `swe-bench-pro-public` issue-fixing suite (reusing SWE-bench Pro's instances, `jefzda/sweap-images`, and oracle) back to the benchmark, on the `container` backend. Re-adds the suite the minimal canonical deferred; touches benchmark specs 00/01/02/03/04/05/06 and the canonical schema.
 
 Merged ([benchmark/specs/changes/merged/](benchmark/specs/changes/merged/)):
