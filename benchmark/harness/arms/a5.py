@@ -1,6 +1,6 @@
 """The A5 — Lighter pre-canned arm recipe (a single, non-recursive scripted call).
 
-Implements ``docs/benchmark/specs/02-arms.md`` §A5 — Lighter pre-canned: a lighter
+Implements ``.specs/benchmark/specs/02-arms.md`` §A5 — Lighter pre-canned: a lighter
 arm that produces the same OBSERVABLE artifacts a gated workflow arm does — a
 candidate code patch AND at least one discharged done-certificate carrying a real
 ``VERDICT:`` line — but WITHOUT running the full recursive ``spec-planner`` +
@@ -31,7 +31,7 @@ NO ``spec-*`` plugins, gates ON (so it emits gate events), NO spec provided, pla
 provisioning constants here are the recipe the ``container`` RunBackend reads to
 run ONE bounded ``claude -p`` call with a FIXED prompt (:data:`A5_INSTRUCTION`)
 that directly implements the feature AND writes one done-certificate (with a real
-``VERDICT:`` line) under ``docs/plans/.../certificates/`` — so the existing
+``VERDICT:`` line) under ``.specs/plans/.../certificates/`` — so the existing
 ``_capture_artifacts`` walk captures it and ``extract_gate_events`` finds ``>= 1``
 GateEvent. Everything is a named constant so the A5 invocation is auditable,
 reproducible, and HARD-BOUNDED by a SMALL budget cap + a SHORT timeout (the whole
@@ -81,12 +81,12 @@ A5_MAX_BUDGET_USD = 5.0
 A5_RUN_TIMEOUT_SECONDS = 600
 
 #: Container-relative path the pre-canned prompt is told to write its single
-#: done-certificate to. Under ``docs/plans/.../certificates/`` so the existing
+#: done-certificate to. Under ``.specs/plans/.../certificates/`` so the existing
 #: ``_capture_artifacts`` walk classifies it as a certificate (the ``cert_marker``
 #: ``/certificates/`` test in ``container._classify_artifacts``), and so it is
-#: EXCLUDED from the scored CODE diff (``docs/`` exclusion) exactly like a
+#: EXCLUDED from the scored CODE diff (``.specs/`` exclusion) exactly like a
 #: workflow arm's certificate.
-A5_CERTIFICATE_RELPATH = "docs/plans/a5-precanned/certificates/01-feature.md"
+A5_CERTIFICATE_RELPATH = ".specs/plans/a5-precanned/certificates/01-feature.md"
 
 #: The FIXED, pre-canned prompt. It instructs the single agent to (a) implement
 #: the feature in place AND (b) write ONE done-certificate carrying a real

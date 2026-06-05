@@ -2,9 +2,9 @@
 
 This module turns the per-Trial ``ScoreReport``s of a ``CampaignRun`` into the
 per-arm outcome statistics and the A1-vs-A0 ablation table defined in
-``docs/benchmark/specs/06-scoring-and-statistics.md`` (§Repetition and Pass@k,
+``.specs/benchmark/specs/06-scoring-and-statistics.md`` (§Repetition and Pass@k,
 §Confidence intervals and pairwise tests, §Reporting) and
-``docs/benchmark/specs/04-metrics.md`` (§Bucket 1 — Outcome).
+``.specs/benchmark/specs/04-metrics.md`` (§Bucket 1 — Outcome).
 
 The quantities, with their authority:
 

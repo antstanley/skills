@@ -1,6 +1,6 @@
 ---
 name: spec-builder
-description: Implement a spec-planner plan by dispatching one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gating every task through a semi-formal correctness review and a definition-of-done validation before it is merged and marked Done. Self-contained — workspace isolation is vendored, no other plugin required. Walks the dependency graph in waves, parallel by default (max 4 agents) or sequential. Triggers on "build this plan", "implement the plan", "execute the plan in docs/plans/...", "run the spec-builder", "build the tasks in parallel/sequentially", or handing a spec-planner plan folder over for implementation.
+description: Implement a spec-planner plan by dispatching one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gating every task through a semi-formal correctness review and a definition-of-done validation before it is merged and marked Done. Self-contained — workspace isolation is vendored, no other plugin required. Walks the dependency graph in waves, parallel by default (max 4 agents) or sequential. Triggers on "build this plan", "implement the plan", "execute the plan in .specs/plans/...", "run the spec-builder", "build the tasks in parallel/sequentially", or handing a spec-planner plan folder over for implementation.
 compatibility: Needs a harness that can dispatch sub-agents — Claude Code or OpenCode (core Task tool), or Pi with a subagents extension (e.g. @tintinweb/pi-subagents). Without one, runs a sequential single-agent fallback (references/portability.md).
 metadata:
   author: antstanley
@@ -63,7 +63,7 @@ order and a per-task definition of done. Missing those, send the user to spec-pl
 ## When to apply this skill
 
 - A spec-planner plan exists and the user asks to **build, implement, or execute** it —
-  "build the plan in docs/plans/…", "implement these tasks", "run the spec-builder".
+  "build the plan in .specs/plans/…", "implement these tasks", "run the spec-builder".
 - The user wants **sub-agent-driven implementation** of a planned feature with parallel or
   sequential execution and a concurrency cap.
 - A partially-built plan needs **resuming** — pick up from the first non-`Done` task whose

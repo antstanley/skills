@@ -1,6 +1,6 @@
 """The A4 — Parallel but unstructured arm recipe (naive N-way split).
 
-Implements ``docs/benchmark/specs/02-arms.md`` §A4 — Parallel but unstructured:
+Implements ``.specs/benchmark/specs/02-arms.md`` §A4 — Parallel but unstructured:
 *"A naive N-way decomposition of the problem across parallel agents, with no
 dependency-ordered DAG, no per-task definition of done, and no gates. Controls
 for the possibility that any A1 gain is merely the effect of running several

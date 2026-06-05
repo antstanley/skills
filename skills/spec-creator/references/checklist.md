@@ -16,7 +16,7 @@ Run through this list before declaring a spec done. The checklist enforces the *
 ## File structure
 
 - [ ] Per-package spec files are numbered `NN-name.md` (two-digit prefix, kebab-case suffix).
-- [ ] Global spec files (in `docs/specs/`) are **not** numbered.
+- [ ] Global spec files (in `.specs/`) are **not** numbered.
 - [ ] An overview (`00-overview.md`) exists for any spec set with two or more files.
 - [ ] A `canonical-types.schema.json` sidecar exists if the spec describes typed entities.
 
@@ -59,10 +59,10 @@ Run through this list before declaring a spec done. The checklist enforces the *
 
 - [ ] Every internal link `(some-spec.md)` resolves to a real file in the same directory.
 - [ ] Every cross-directory link uses a relative path that resolves (`../specs/foo.md` from a per-package spec).
-- [ ] **`docs/README.md` lists every new file you wrote.** Walk the diff: for each new path under `docs/`, confirm the index references it. Adding a new file without indexing it is the most common miss; check it twice. If the index didn't exist, you created it.
-- [ ] If this spec set is per-package, `docs/<package>/README.md` exists and opens with a pointer at the global specs at `docs/specs/`, then lists the per-package set.
+- [ ] **`.specs/README.md` lists every new file you wrote.** Walk the diff: for each new path under `.specs/`, confirm the index references it. Adding a new file without indexing it is the most common miss; check it twice. If the index didn't exist, you created it.
+- [ ] If this spec set is per-package, `.specs/<package>/README.md` exists and opens with a pointer at the global specs at `.specs/`, then lists the per-package set.
 - [ ] If this work **promoted** content from per-package to a new global spec, both:
-  - The new `docs/specs/<name>.md` is listed in `docs/README.md`'s global section, AND
+  - The new `.specs/<name>.md` is listed in `.specs/README.md`'s global section, AND
   - The per-package file's "Read first" pointer goes to the new global spec.
 - [ ] Deferred items (Open questions, planned-but-absent Decisions) were collected, and the user was **asked** whether to draft change specs for them. Change specs were created only if the user said yes.
 
@@ -90,17 +90,17 @@ Run through this list before declaring a spec done. The checklist enforces the *
 
 ## Change specs
 
-Apply this section instead of "Branch reality" when the document is a **change spec** (a single file under `docs/specs/changes/`). See [`change-specs.md`](change-specs.md).
+Apply this section instead of "Branch reality" when the document is a **change spec** (a single file under `.specs/changes/`). See [`change-specs.md`](change-specs.md).
 
-- [ ] File is a single markdown document at `docs/specs/changes/YYYY-MM-DD-short_snake_case_title.md` (ISO date prefix, snake_case title).
+- [ ] File is a single markdown document at `.specs/changes/YYYY-MM-DD-short_snake_case_title.md` (ISO date prefix, snake_case title).
 - [ ] Header is `**Status:** … · **Date:** … · **Owner:** … · **Target:** …`; Status is one of `Proposed`, `Accepted`, `Implemented`, `Merged`.
-- [ ] An `Affected spec pages` table lists every canonical page the change touches, each linked with a path that resolves from `docs/specs/changes/`.
+- [ ] An `Affected spec pages` table lists every canonical page the change touches, each linked with a path that resolves from `.specs/changes/`.
 - [ ] Each `Proposed changes` block names the exact canonical section it changes, is marked Add / Modify / Remove, and is written in canonical voice (the prose it will become on merge).
 - [ ] New or changed entities appear as an inline JSON Schema `$defs` fragment under `Type changes`, using Draft 2020-12 and `$ref`-ing the global shared types.
 - [ ] A `Merge plan` spells out the mechanical steps to fold the change into the canonical spec.
 - [ ] The closing `Assumptions / Decisions / Open questions` block is present; undecided design lives in Open questions, not as hedged body prose.
-- [ ] `docs/README.md` lists the change spec under a Change specs section.
-- [ ] On **merge**: every `Proposed changes` block has landed on its canonical page, the schema fragment is folded in, the file has moved to `docs/specs/changes/merged/`, `Status` is `Merged` with a `**Merged:**` date, and `docs/README.md` no longer lists it as pending.
+- [ ] `.specs/README.md` lists the change spec under a Change specs section.
+- [ ] On **merge**: every `Proposed changes` block has landed on its canonical page, the schema fragment is folded in, the file has moved to `.specs/changes/merged/`, `Status` is `Merged` with a `**Merged:**` date, and `.specs/README.md` no longer lists it as pending.
 
 ---
 

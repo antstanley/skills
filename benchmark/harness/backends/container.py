@@ -1,7 +1,7 @@
 """The ``container`` RunBackend: run an arm in a provisioned run container.
 
 This is the containerised mirror of :mod:`benchmark.harness.backends.local`
-(``docs/benchmark/specs/05-harness-architecture.md`` §Run container;
+(``.specs/benchmark/specs/05-harness-architecture.md`` §Run container;
 ``02-arms.md`` §A0 — Baseline). Where the ``local`` backend runs the scripted
 fixture solver in a temp directory, this backend runs a REAL agent arm in a
 fresh Docker container, and implements exactly the path ``local`` refuses (the
@@ -54,7 +54,7 @@ branches):
   with ``--plugin-dir``, whether to HAND IN a frozen given-spec (A2/A3 skip
   ``spec-creator``), whether ``spec-builder``'s two gates run (A3 disables
   them), and the orchestrating prompt. The candidate patch EXCLUDES the workflow
-  artifacts (``docs/``); the spec/plan/certificate files are captured into the
+  artifacts (``.specs/``); the spec/plan/certificate files are captured into the
   ``ArtifactBundle``, and the captured certificates are parsed into
   ``GateEvent``s (A1/A2 discharge them; A3 leaves none). Routing by SLUG — not
   by "any Arm with plugins" — is what keeps A2/A3 (plugin arms too) out of the
@@ -63,7 +63,7 @@ branches):
   path (``_run_a5``): a SINGLE bounded ``claude -p`` call (NO plugins, NO
   ``spec-*`` mount, NO sub-agent recursion) with a FIXED prompt that implements
   the feature AND writes one done-certificate carrying a real ``VERDICT:`` line.
-  Like the workflow arms, A5's candidate patch EXCLUDES ``docs/`` and the captured
+  Like the workflow arms, A5's candidate patch EXCLUDES ``.specs/`` and the captured
   certificate is parsed into a ``GateEvent`` (so ``last_gate_events`` is
   populated), but A5 runs ONE scripted call under a SMALL budget cap + a SHORT
   timeout instead of a recursive build — it is the fast, bounded gate-emission
@@ -102,7 +102,6 @@ from benchmark.harness.arms.a1 import (
     A1_PLAN_SUBDIR,
     A1_PLUGIN_DIR_NAMES,
     A1_SLUG,
-    A1_SPEC_SUBDIR,
     HOST_PLUGIN_MARKETPLACE_DIR,
     a1_prompt,
 )
@@ -230,13 +229,13 @@ _SPEC_BUILDER_INTEGRATION_BRANCH = "spec-builder/integration"
 
 #: ``git pathspec`` magic that EXCLUDES the workflow-artifact subtree from the
 #: candidate-patch diff, so the spec/plan/certificate files written under
-#: ``docs/`` never enter the scored CODE diff (they are captured into the bundle
+#: ``.specs/`` never enter the scored CODE diff (they are captured into the bundle
 #: instead). Built from :data:`A1_ARTIFACT_DIR` so the exclusion and the capture
 #: agree on one directory name.
 _ARTIFACT_EXCLUDE_PATHSPEC = f":(exclude){A1_ARTIFACT_DIR}/"
 
 #: Sentinel printed by the artifact-listing command between the file path and its
-#: contents, and between files, so a single ``docs/`` walk yields path+content
+#: contents, and between files, so a single ``.specs/`` walk yields path+content
 #: pairs without a second ``docs exec`` per file. Chosen to not occur in markdown.
 _ARTIFACT_FIELD_SEP = "\x1f"  # ASCII unit separator
 _ARTIFACT_RECORD_SEP = "\x1e"  # ASCII record separator
@@ -465,13 +464,13 @@ class ContainerRunBackend:
         sub-agent recursion) with the FIXED ``A5_INSTRUCTION``
         (:mod:`benchmark.harness.arms.a5`) prompt, which implements the feature in
         place AND writes one done-certificate carrying a real ``VERDICT:`` line under
-        ``docs/plans/.../certificates/``. The run is HARD-BOUNDED by the SMALL
+        ``.specs/plans/.../certificates/``. The run is HARD-BOUNDED by the SMALL
         :data:`~benchmark.harness.arms.a5.A5_MAX_BUDGET_USD` cap and the SHORT
         :data:`~benchmark.harness.arms.a5.A5_RUN_TIMEOUT_SECONDS` timeout — A5
         does not recurse, so it finishes well inside them, which is exactly why
         it is a reliable gate-emission witness where the recursive arms are not.
 
-        Like the workflow arms, the candidate patch EXCLUDES the ``docs/``
+        Like the workflow arms, the candidate patch EXCLUDES the ``.specs/``
         artifact subtree (the certificate is captured into the bundle, not scored
         as code), the captured artifacts are split into spec/plan/certificate
         buckets, and the certificates are parsed into :class:`GateEvent` records
@@ -1096,7 +1095,7 @@ class ContainerRunBackend:
         """Write the frozen given-spec into the container BEFORE the workflow runs.
 
         A2/A3 hand in a ready-made spec instead of authoring one. The spec is
-        written at :data:`GIVEN_SPEC_CONTAINER_RELPATH` (under ``docs/specs/``,
+        written at :data:`GIVEN_SPEC_CONTAINER_RELPATH` (under ``.specs/``,
         where ``spec-creator`` would have written), so it is captured into the
         bundle's ``specArtifacts`` and EXCLUDED from the scored code diff exactly
         like an authored spec, and so dropping ``spec-creator`` is transparent to
@@ -1235,7 +1234,7 @@ class ContainerRunBackend:
         patch is the diff of THAT TIP against the base commit tag, staging any
         uncommitted working-tree changes first so a working-tree-only result is
         still captured. Either way the diff EXCLUDES the workflow-artifact subtree
-        (``docs/``) via a git exclude pathspec, so the spec/plan/certificate files
+        (``.specs/``) via a git exclude pathspec, so the spec/plan/certificate files
         never enter the scored CODE diff — they are captured into the bundle.
         """
         pathspec = (
@@ -1307,19 +1306,21 @@ class ContainerRunBackend:
     def _capture_artifacts(
         self, container_id: str
     ) -> tuple[list[str], list[str], list[str]]:
-        """Read the workflow artifacts under ``docs/`` into spec/plan/cert lists.
+        """Read the workflow artifacts under ``.specs/`` into spec/plan/cert lists.
 
-        Walks the ``docs/`` subtree ONCE, emitting ``<path><FS><contents>``
+        Walks the ``.specs/`` subtree ONCE, emitting ``<path><FS><contents>``
         records separated by a record separator, then classifies each file by its
-        path: ``docs/specs/...`` -> spec, ``docs/plans/.../certificates/...`` ->
-        certificate, other ``docs/plans/...`` -> plan. Each captured entry is a
+        path: ``.specs/plans/.../certificates/...`` -> certificate,
+        other ``.specs/plans/...`` -> plan, any other ``.specs/...`` file (the
+        canonical spec pages and the ``.specs/README.md`` index) -> spec. Each
+        captured entry is a
         ``"<relpath>\\n<contents>"`` string so a reviewer can inspect both the
         path and the content from the bundle without re-running A1. Returns
         ``(specArtifacts, planArtifacts, certificateArtifacts)``; empty lists when
         the workflow produced none (an honest partial outcome).
         """
         artifact_dir = f"{IMAGE_WORKDIR}/{A1_ARTIFACT_DIR}"
-        # find every file under docs/, print "<relpath><FS><contents><RS>".
+        # find every file under .specs/, print "<relpath><FS><contents><RS>".
         command = (
             f"cd {IMAGE_WORKDIR}; "
             f"if [ -d {A1_ARTIFACT_DIR} ]; then "
@@ -1349,7 +1350,7 @@ class ContainerRunBackend:
         specs: list[str] = []
         plans: list[str] = []
         certs: list[str] = []
-        spec_prefix = f"{A1_ARTIFACT_DIR}/{A1_SPEC_SUBDIR}/"
+        artifact_root = f"{A1_ARTIFACT_DIR}/"
         plan_prefix = f"{A1_ARTIFACT_DIR}/{A1_PLAN_SUBDIR}/"
         cert_marker = f"/{A1_CERTIFICATE_DIR_NAME}/"
         for record in raw.split(_ARTIFACT_RECORD_SEP):
@@ -1364,12 +1365,13 @@ class ContainerRunBackend:
                 certs.append(entry)
             elif relpath.startswith(plan_prefix):
                 plans.append(entry)
-            elif relpath.startswith(spec_prefix):
+            elif relpath.startswith(artifact_root):
+                # Any other file under the .specs/ root is a canonical spec page,
+                # including the .specs/README.md index — .specs/ IS the spec root.
                 specs.append(entry)
             else:
-                # Other docs/ files (e.g. docs/README.md) count as plan-adjacent
-                # workflow output; keep them with the plan bucket so nothing the
-                # workflow wrote under docs/ is silently dropped from the bundle.
+                # Defensive: the walk only emits files under .specs/, so this is
+                # unreachable; keep stray output with plans rather than drop it.
                 plans.append(entry)
         return specs, plans, certs
 

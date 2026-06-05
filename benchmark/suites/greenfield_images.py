@@ -1,6 +1,6 @@
 """Two-image build for the ``greenfield-features`` suite.
 
-Implements ``docs/benchmark/specs/05-harness-architecture.md`` §Run container
+Implements ``.specs/benchmark/specs/05-harness-architecture.md`` §Run container
 and the integrity rule: per instance we build **two** Docker images from the
 same skeleton ``base/`` tree —
 

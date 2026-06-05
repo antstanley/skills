@@ -129,7 +129,7 @@ omitted), produced from `plugins/` by `scripts/sync-skills.sh` — edit under
 │       ├── skills/semi-formal-review/           # gate 1 — correctness
 │       ├── skills/validate-done-certificate/    # gate 2 — completeness
 │       └── README.md
-└── docs/specs/spec.md                  # marketplace design spec
+└── .specs/spec.md                  # marketplace design spec
 ```
 
 ## Adding a new plugin

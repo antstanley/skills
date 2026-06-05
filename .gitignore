@@ -11,3 +11,6 @@ wheels/
 
 # Claude Code scheduler runtime state (not project content)
 .claude/scheduled_tasks.lock
+
+# macOS Finder metadata
+.DS_Store

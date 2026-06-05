@@ -1,7 +1,7 @@
 """ScoreReport.gateEscape is populated by the driver pipeline (not downstream).
 
 Implements the negative-and-positive shape of
-``docs/benchmark/specs/06-scoring-and-statistics.md`` §The test oracle:
+``.specs/benchmark/specs/06-scoring-and-statistics.md`` §The test oracle:
 
 - gated trials (A1, A2) have ``ScoreReport.gateEscape == not report.resolved``
   written onto every report the driver returns;

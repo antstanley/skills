@@ -1,8 +1,8 @@
 """Per-arm outcome statistics and the A1−A0 ablation table.
 
-Implements ``docs/benchmark/specs/06-scoring-and-statistics.md`` (§Repetition
+Implements ``.specs/benchmark/specs/06-scoring-and-statistics.md`` (§Repetition
 and Pass@k, §Confidence intervals and pairwise tests, §Reporting) and
-``docs/benchmark/specs/04-metrics.md`` (§Bucket 1 — Outcome) over the
+``.specs/benchmark/specs/04-metrics.md`` (§Bucket 1 — Outcome) over the
 ``CampaignRun`` the driver emits. Pure stdlib ``math`` — no scipy/numpy.
 
 Every statistical formula is named, cited to a textbook source in a comment, and

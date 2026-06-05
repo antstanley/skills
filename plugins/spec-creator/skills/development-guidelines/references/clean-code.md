@@ -80,7 +80,7 @@ Magic numbers are replaced with **named constants** that state their meaning. An
 
 > Heading on the page: `## Repository hygiene`. Adapt paths to the repo's actual layout.
 
-- **`docs/`** is the canonical home for specs and decisions.
+- **`.specs/`** is the canonical home for specs and decisions.
 - **Local, untracked operator data** lives in a gitignored directory; never commit environment-specific config or secrets.
 - **The pre-push hook** runs format-check, lint, and the fast test tier. CI re-runs the same plus the slow tier. (Clean Code leans on the test suite, rather than assertions, as its safety net — keep it fast and green.)
 - **Generated code is checked in** and grep-able; a CI job regenerates and fails the build if the checked-in output drifts.

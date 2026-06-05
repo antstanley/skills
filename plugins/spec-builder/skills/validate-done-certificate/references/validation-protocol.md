@@ -16,7 +16,7 @@ read them once; this file does not restate them.
 
 ## Inputs
 
-- **The certificate** — `docs/plans/<plan>/certificates/NN-<task>.md` for a spec-planner
+- **The certificate** — `.specs/plans/<plan>/certificates/NN-<task>.md` for a spec-planner
   plan, or wherever the task's certificate lives.
 - **The task file** — `NN-<task>.md`: its `Produces`, `Pointers`, and the
   `## Definition of done` checklist the certificate's obligations mirror one-to-one.

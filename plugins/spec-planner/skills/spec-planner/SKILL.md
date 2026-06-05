@@ -1,6 +1,6 @@
 ---
 name: spec-planner
-description: Build an implementation plan from a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. Triggers on "plan the implementation", "create an implementation plan", "plan out this spec", "break this spec into tasks", "build a task plan", "sequence the work", "how should we build this", "turn this change spec into a plan", or "what's the build order for X". Consumes a canonical spec set, a change spec, or an external/framework spec; produces a plan folder at docs/plans/YYYY-MM-DD-snake_case_title/ (a plan.md task graph plus one hybrid task file per package).
+description: Build an implementation plan from a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. Triggers on "plan the implementation", "create an implementation plan", "plan out this spec", "break this spec into tasks", "build a task plan", "sequence the work", "how should we build this", "turn this change spec into a plan", or "what's the build order for X". Consumes a canonical spec set, a change spec, or an external/framework spec; produces a plan folder at .specs/plans/YYYY-MM-DD-snake_case_title/ (a plan.md task graph plus one hybrid task file per package).
 ---
 
 # Spec Planner
@@ -49,8 +49,8 @@ Five phases, sequential. The value of a plan comes from understanding the spec a
 
 ### Phase 1 — Read the spec and establish the rules of the road
 
-1. **Read the source specification end to end.** For a canonical spec set, read `docs/README.md` then every page in scope and the schema sidecar. For a change spec, read it and the canonical pages it targets. For an external spec, read the whole document and note its structure.
-2. **Establish the definition-of-done baseline.** Find the repo's development guidelines — `docs/specs/development-guidelines.md` (the page the `development-guidelines` skill produces) is the first choice; its `Definition of done` and `Limits and bounds` sections set the per-task bar. If absent, fall back to repo signals (`CONTRIBUTING.md`, CI config, test setup) and, failing that, **ask the user** what "done" means for a task here. Record the source in the plan's header note.
+1. **Read the source specification end to end.** For a canonical spec set, read `.specs/README.md` then every page in scope and the schema sidecar. For a change spec, read it and the canonical pages it targets. For an external spec, read the whole document and note its structure.
+2. **Establish the definition-of-done baseline.** Find the repo's development guidelines — `.specs/development-guidelines.md` (the page the `development-guidelines` skill produces) is the first choice; its `Definition of done` and `Limits and bounds` sections set the per-task bar. If absent, fall back to repo signals (`CONTRIBUTING.md`, CI config, test setup) and, failing that, **ask the user** what "done" means for a task here. Record the source in the plan's header note.
 3. **Learn what already exists.** A plan must not re-plan finished work. Walk the code the spec describes; where the spec set has drifted from the code, delegate to **spec-reviewer** (R2 for a canonical spec, R3 for a change spec) to enumerate what is already implemented. spec-reviewer ships with the **spec-creator** plugin — when it is not installed, do the equivalent code read by hand (it is the same enumeration, not an optional step). Built work becomes a precondition in the plan, not a task.
 4. **Surface ambiguity early.** Anything the spec leaves undecided that blocks sequencing (an unspecified auth model when half the features are gated) is flagged to the user now and captured for the Open questions block.
 
@@ -72,7 +72,7 @@ The essentials:
 
 ### Phase 4 — Write the plan
 
-A plan is a **folder**, not a single file. Create `docs/plans/YYYY-MM-DD-snake_case_title/` (ISO date prefix — today's date — then a lowercase snake_case short title, e.g. `docs/plans/2026-05-22-add_auth_flow/`). Inside it:
+A plan is a **folder**, not a single file. Create `.specs/plans/YYYY-MM-DD-snake_case_title/` (ISO date prefix — today's date — then a lowercase snake_case short title, e.g. `.specs/plans/2026-05-22-add_auth_flow/`). Inside it:
 
 - **`plan.md`** — the overview: header, summary, the source/DoD baseline, the task graph, the implementation order and milestones, and the closing block. It carries no task bodies — it links to them.
 - **One file per task package**, named `NN-snake_case_task.md` — a two-digit number prefix (assigned in **implementation order**, so the files sort the way the work is sequenced) plus a short snake_case description, e.g. `01-passphrase_lock.md`, `02-entry_store.md`. The number is the task's id everywhere else in the plan (the dependency table, the Mermaid graph). Numbers are append-only once the plan is shared — a task added later takes the next free number and records its true position in the order table, rather than renumbering and breaking cross-references.
@@ -92,8 +92,8 @@ Once the task files exist, delegate to **done-certificates** to author one certi
 
 Mandatory, and easy to skip:
 
-1. **Update `docs/README.md`** (creating it if absent) — add a **Plans** section listing the plan folder under `docs/plans/`, pointed at its `plan.md`. A plan the index does not reference is invisible.
-2. **Verify every link resolves.** Spec-page links resolve from the plan folder (so `../../specs/foo.md` for a global page, `../../<package>/specs/NN-name.md` for a per-package page — note the extra `../` now that the plan sits one directory deeper). Each dependency-table row links to a real task file in the folder, and each task file's `Plan:` link points back at `plan.md`.
+1. **Update `.specs/README.md`** (creating it if absent) — add a **Plans** section listing the plan folder under `.specs/plans/`, pointed at its `plan.md`. A plan the index does not reference is invisible.
+2. **Verify every link resolves.** Spec-page links resolve from the plan folder (so `../../foo.md` for a global page — now at the `.specs/` root — and `../../<package>/specs/NN-name.md` for a per-package page, which keeps its `specs/` segment). Each dependency-table row links to a real task file in the folder, and each task file's `Plan:` link points back at `plan.md`.
 3. **Verify the graph is coherent** — the Mermaid edges and the dependency table agree, every task number in the table has a matching `NN-…md` file and vice versa, and the DAG has no cycle.
 4. **Verify coverage** — every in-scope spec section maps to at least one task file, and every task file names the spec section it implements. Gaps go in `plan.md`'s Open questions, flagged to the user.
 5. **Verify the done certificates** (when included) — every task file has a matching `certificates/NN-…md`, the obligations are one-to-one with the task's `Definition of done`, and the certificate ↔ task links resolve both ways. See the checklist's *Done certificates* section.
@@ -116,7 +116,7 @@ A task's `Definition of done` is a *claim*; a **done certificate** is the *proto
 
 **When to author.** On by default (Phase 4.5). In an **interactive session, prompt first** — a single yes/no defaulting to yes ("Author a done certificate per task? (default: yes)"); honour an explicit "no". In a **non-interactive run**, include them without prompting unless the request said to skip. An outright "add done certificates" is just an explicit yes.
 
-**Mechanics.** Delegate to done-certificates after Phase 4. It writes **one certificate per task** into the plan folder's `certificates/` subfolder (`docs/plans/YYYY-MM-DD-title/certificates/NN-…md`, mirroring the task numbers), obligations drawn from each task's DoD with evidence/checks named but status and verdict left blank, and adds a two-way `**Certificate:**` link to each task header. spec-planner owns the plan and its Phase 5 cross-link pass; done-certificates owns the `certificates/` subfolder; a separate validating agent (neither skill) discharges each certificate as its task is built.
+**Mechanics.** Delegate to done-certificates after Phase 4. It writes **one certificate per task** into the plan folder's `certificates/` subfolder (`.specs/plans/YYYY-MM-DD-title/certificates/NN-…md`, mirroring the task numbers), obligations drawn from each task's DoD with evidence/checks named but status and verdict left blank, and adds a two-way `**Certificate:**` link to each task header. spec-planner owns the plan and its Phase 5 cross-link pass; done-certificates owns the `certificates/` subfolder; a separate validating agent (neither skill) discharges each certificate as its task is built.
 
 If certificates are skipped, the Phase 5 *Done certificates* checklist section does not apply — note in `plan.md` that they were not authored so a later pass can add them.
 

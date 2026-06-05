@@ -1,12 +1,12 @@
 """Arm-agnostic telemetry capture from a ``claude`` agent result.
 
 This is the SINGLE, first-class capture path that turns a ``claude -p
---output-format json`` result (``docs/benchmark/specs/04-metrics.md`` §Bucket 2 —
+--output-format json`` result (``.specs/benchmark/specs/04-metrics.md`` §Bucket 2 —
 Cost and efficiency; sources: ``usage.input_tokens``/``output_tokens``,
 ``total_cost_usd``, ``num_turns``) plus a measured wall clock into a populated
 :class:`~benchmark.harness.domain.Telemetry`. It lives in
 ``benchmark/harness/telemetry/`` per
-``docs/benchmark/specs/05-harness-architecture.md`` §Implementation layout.
+``.specs/benchmark/specs/05-harness-architecture.md`` §Implementation layout.
 
 Arm-agnostic by design
 -----------------------

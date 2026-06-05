@@ -44,16 +44,16 @@ def _components_spec(*names: str) -> str:
         f"## Component {i}: {name}\n### Contract\nsome contract."
         for i, name in enumerate(names, start=1)
     )
-    return _entry("docs/specs/02-components.md", f"# Components\n\n{body}\n")
+    return _entry(".specs/02-components.md", f"# Components\n\n{body}\n")
 
 
 def _task_file(stem: str, implements: str) -> str:
     """A synthetic per-task plan file with an ``Implements`` line."""
     body = (
         f"# Task {stem}\n\n## Structure\n\n"
-        f"**Implements:** `docs/specs/02-components.md` § {implements}\n"
+        f"**Implements:** `.specs/02-components.md` § {implements}\n"
     )
-    return _entry(f"docs/plans/p/{stem}.md", body)
+    return _entry(f".specs/plans/p/{stem}.md", body)
 
 
 def _plan_index(rows: list[tuple[str, str]]) -> str:
@@ -71,7 +71,7 @@ def _plan_index(rows: list[tuple[str, str]]) -> str:
     ]
     for task, deps in rows:
         lines.append(f"| {task} | [{task}]({task}.md) | {deps} | build | x |")
-    return _entry("docs/plans/p/plan.md", "\n".join(lines) + "\n")
+    return _entry(".specs/plans/p/plan.md", "\n".join(lines) + "\n")
 
 
 # --- plan coverage: known-answer on a synthetic plan ------------------------

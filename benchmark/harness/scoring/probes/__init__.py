@@ -1,7 +1,7 @@
 """Gate-efficacy probes: injected defects + catch/escape accounting.
 
-Implements ``docs/benchmark/specs/06-scoring-and-statistics.md`` §Gate-efficacy
-probes and the two gate metrics of ``docs/benchmark/specs/04-metrics.md``
+Implements ``.specs/benchmark/specs/06-scoring-and-statistics.md`` §Gate-efficacy
+probes and the two gate metrics of ``.specs/benchmark/specs/04-metrics.md``
 §Bucket 3, for the GATED arms (A1, A2):
 
 - **Injected defects + catch rate** (:mod:`benchmark.harness.scoring.probes.defects`):

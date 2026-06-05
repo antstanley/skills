@@ -243,13 +243,13 @@ def _capture_entry(relpath: str, body: str) -> str:
 
 _GATES_ON_CAPTURE = [
     _capture_entry(
-        "docs/plans/2026-05-27-x/certificates/01-tokenizer.md",
+        ".specs/plans/2026-05-27-x/certificates/01-tokenizer.md",
         "# Done Certificate — Task 01\n\n"
         "**Status:** Validated 2026-05-27\n\n"
         "## Conclusion\n\nVERDICT: DONE\nState: Validated 2026-05-27\n",
     ),
     _capture_entry(
-        "docs/plans/2026-05-27-x/certificates/02-normalizer.md",
+        ".specs/plans/2026-05-27-x/certificates/02-normalizer.md",
         "# Done Certificate — Task 02\n\n"
         "## Semi-formal review\n\nVERDICT: CORRECT confidence 0.9\n\n"
         "## Conclusion\n\nVERDICT: PARTIAL\nState: Validated 2026-05-27\n",
@@ -258,13 +258,13 @@ _GATES_ON_CAPTURE = [
 
 _GATES_OFF_CAPTURE = [
     _capture_entry(
-        "docs/plans/2026-05-27-x/certificates/01-tokenizer.md",
+        ".specs/plans/2026-05-27-x/certificates/01-tokenizer.md",
         "# Done Certificate — Task 01\n\n"
         "**Status:** Pending validation\n\n"
         "**Verdict:** (blank — to be filled by validating agent)\n",
     ),
     _capture_entry(
-        "docs/plans/2026-05-27-x/certificates/02-normalizer.md",
+        ".specs/plans/2026-05-27-x/certificates/02-normalizer.md",
         "# Done Certificate — Task 02\n\n"
         "**Status:** Pending validation\n\n"
         "**Verdict:** (blank — to be filled by validating agent)\n",
@@ -299,7 +299,7 @@ def test_gate_events_extracted_from_a_gates_on_capture() -> None:
 #: the parser is exercised against the bytes the live gate actually emits.
 _LIVE_BOLD_VERDICT_CAPTURE = [
     _capture_entry(
-        "docs/plans/2026-05-29-x/certificates/01-tokenizer.md",
+        ".specs/plans/2026-05-29-x/certificates/01-tokenizer.md",
         "# Done Certificate — Task 01\n\n"
         "**Status:** Validated 2026-05-29\n\n"
         "## Verdict\n\n**VERDICT:** DONE\n\n"
@@ -328,7 +328,7 @@ def test_bare_verdict_line_still_yields_one_pass_event() -> None:
     still yields exactly one validate PASS GateEvent."""
     cap = [
         _capture_entry(
-            "docs/plans/p/certificates/01-x.md",
+            ".specs/plans/p/certificates/01-x.md",
             "## Conclusion\n\nVERDICT: DONE\nState: Validated 2026-05-29\n",
         ),
     ]
@@ -344,7 +344,7 @@ def test_italic_emphasis_verdict_line_maps_to_partial() -> None:
     validate verdict PARTIAL onto the closed enum's PARTIAL."""
     cap = [
         _capture_entry(
-            "docs/plans/p/certificates/02-y.md",
+            ".specs/plans/p/certificates/02-y.md",
             "## Verdict\n\n*VERDICT:* PARTIAL\n",
         ),
     ]
@@ -370,11 +370,11 @@ def test_review_verdict_mapping_onto_the_closed_enum() -> None:
     """BUGGY -> FAIL, CONCERNS -> PARTIAL, NOT_DONE -> FAIL (all in the enum)."""
     cap = [
         _capture_entry(
-            "docs/plans/p/certificates/03-x.md",
+            ".specs/plans/p/certificates/03-x.md",
             "## review\nVERDICT: BUGGY\n## Conclusion\nVERDICT: NOT_DONE\n",
         ),
         _capture_entry(
-            "docs/plans/p/certificates/04-y.md",
+            ".specs/plans/p/certificates/04-y.md",
             "## review\nVERDICT: CONCERNS\n",
         ),
     ]
@@ -393,7 +393,7 @@ def test_unverified_validate_verdict_is_the_manual_pause_signal() -> None:
     the metric structurally always-zero."""
     cap = [
         _capture_entry(
-            "docs/plans/p/certificates/05-ui-dashboard.md",
+            ".specs/plans/p/certificates/05-ui-dashboard.md",
             "# Done Certificate — Task 05\n\n"
             "## Conclusion\n\nVERDICT: UNVERIFIED\n"
             "State: parked for human sign-off (UI-bound task)\n",

@@ -87,7 +87,7 @@ When the status is IMPLEMENTED, the next step is the lifecycle move: the change 
 
 ## Worked Example
 
-**Input:** The change spec `docs/specs/changes/2026-05-21-add_tagging_to_entries.md`. Its `Type changes` fragment adds a `Tag` entity (`id`, `name`, `createdAt`) and adds `tagIds` to `Entry`. Its `Implementation notes` read: (1) add the `tags` store in `src/db/schema.ts` (bump version, `onupgradeneeded`); (2) add the `Tag` type + parser in `src/domain/tag.ts`; (3) wire the tag picker into the editor toolbar at `src/ui/Toolbar.svelte:40`. The code has `src/domain/tag.ts` (Tag type with all three fields) and a `tags` store in `src/db/schema.ts` (version bumped), but `Entry` has no `tagIds` field and `Toolbar.svelte` has no tag picker.
+**Input:** The change spec `.specs/changes/2026-05-21-add_tagging_to_entries.md`. Its `Type changes` fragment adds a `Tag` entity (`id`, `name`, `createdAt`) and adds `tagIds` to `Entry`. Its `Implementation notes` read: (1) add the `tags` store in `src/db/schema.ts` (bump version, `onupgradeneeded`); (2) add the `Tag` type + parser in `src/domain/tag.ts`; (3) wire the tag picker into the editor toolbar at `src/ui/Toolbar.svelte:40`. The code has `src/domain/tag.ts` (Tag type with all three fields) and a `tags` store in `src/db/schema.ts` (version bumped), but `Entry` has no `tagIds` field and `Toolbar.svelte` has no tag picker.
 
 **Correct output:**
 

@@ -1,9 +1,9 @@
 # Plan templates
 
-A plan is a **folder**, not a single file. Repo-wide plans live under the top-level `docs/plans/`; a plan that targets one package lives under `docs/<package>/plans/` by default (or a co-located `<package-location>/docs/plans/`), where `<package>` is the app/package/workspace name. The folder is named `YYYY-MM-DD-snake_case_title/` — an ISO date prefix (the date drafted) then a lowercase snake_case short title, e.g. `docs/plans/2026-05-22-add_auth_flow/`. Inside it:
+A plan is a **folder**, not a single file. Repo-wide plans live under the top-level `.specs/plans/`; a plan that targets one package lives under `.specs/<package>/plans/` by default (or a co-located `<package-location>/.specs/plans/`), where `<package>` is the app/package/workspace name. The folder is named `YYYY-MM-DD-snake_case_title/` — an ISO date prefix (the date drafted) then a lowercase snake_case short title, e.g. `.specs/plans/2026-05-22-add_auth_flow/`. Inside it:
 
 ```
-docs/plans/2026-05-22-add_auth_flow/
+.specs/plans/2026-05-22-add_auth_flow/
 ├── plan.md                     ← overview: graph, order, closing block
 ├── 01-passphrase_lock.md       ← one file per task package, NN- in implementation order
 ├── 02-entry_store.md
@@ -59,7 +59,7 @@ shape from this paragraph alone.>
   precondition, not a task. Cite the spec-reviewer pass or the code read that
   established it, or "(Greenfield — nothing exists yet.)">
 - **Definition of done.** <Where each task's DoD comes from — normally
-  `docs/specs/development-guidelines.md` §Definition of done and §Limits and bounds.
+  `.specs/development-guidelines.md` §Definition of done and §Limits and bounds.
   If derived from repo signals or agreed with the user, say so. This baseline is
   inherited by every task; task files add only task-specific acceptance on top.>
 

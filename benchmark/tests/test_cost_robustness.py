@@ -1,7 +1,7 @@
 """Cost-matched %Resolved, parallel speedup, and robustness columns: KNOWN answers.
 
 Verifies ``benchmark.harness.stats.cost_robustness`` against authority in
-``docs/benchmark/specs/04-metrics.md`` (§Bucket 2 cost-matched %Resolved and
+``.specs/benchmark/specs/04-metrics.md`` (§Bucket 2 cost-matched %Resolved and
 parallel speedup; §Bucket 4 — Robustness) on SYNTHETIC inputs whose values are
 hand-computed in each test. No live API, no Docker, no network.
 

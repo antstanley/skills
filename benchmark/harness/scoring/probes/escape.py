@@ -1,8 +1,8 @@
 """False-``Done`` escape-rate accounting over organic gated trials.
 
 Implements the **false-``Done`` escape rate** of
-``docs/benchmark/specs/04-metrics.md`` §Bucket 3 and the **false-``Done``
-escapes** half of ``docs/benchmark/specs/06-scoring-and-statistics.md``
+``.specs/benchmark/specs/04-metrics.md`` §Bucket 3 and the **false-``Done``
+escapes** half of ``.specs/benchmark/specs/06-scoring-and-statistics.md``
 §Gate-efficacy probes, for the GATED arms (A1, A2).
 
 Definition: across organic gated trials, the fraction of ``Done`` tasks whose

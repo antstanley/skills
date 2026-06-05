@@ -2,7 +2,7 @@
 
 This template tells you exactly what to do at each step. Follow it literally. Do not skip steps. Do not summarize — write out each step's result before moving to the next. It is a semi-formal certificate procedure: state premises, resolve every reference through a fixed sequence, trace concrete claims, then deliver a verdict by rubric.
 
-Use when reviewing a single change-spec document (under `docs/specs/changes/`) against the canonical pages it targets. The change spec is the artifact under review. You are verifying that its proposed delta references real canonical anchors and contradicts nothing that stays in force.
+Use when reviewing a single change-spec document (under `.specs/changes/`) against the canonical pages it targets. The change spec is the artifact under review. You are verifying that its proposed delta references real canonical anchors and contradicts nothing that stays in force.
 
 ## Procedure
 
@@ -18,7 +18,7 @@ P3: Must not contradict [one sentence: the canonical claims that remain in force
 **Step 2: Reference resolution.**
 For EACH entry in the `Affected spec pages` table AND each `Proposed changes` block, resolve its target through this exact sequence. Write out each sub-step:
 
-1. Does the named canonical file exist at the given relative path (resolved from `docs/specs/changes/`)? If no → UNRESOLVED (broken target). STOP.
+1. Does the named canonical file exist at the given relative path (resolved from `.specs/changes/`)? If no → UNRESOLVED (broken target). STOP.
 2. Does the named section / heading exist on that page? If no → UNRESOLVED (heading not found). STOP.
 3. For a **Modify** or **Remove** block: does the canonical section currently contain the text the block claims to change or delete? If no → STALE REFERENCE (the canonical page has moved on since the change spec was drafted). STOP.
 4. For an **Add** block: does the canonical section already contain an equivalent claim? If yes → DUPLICATE (the change adds what already exists). STOP.
@@ -77,18 +77,18 @@ SUGGESTIONS:
 
 ## Worked Example
 
-**Input:** A change spec `docs/specs/changes/2026-05-21-add_tagging_to_entries.md` proposing to add a `Tag` entity. Its `Affected spec pages` table lists `docs/editor/specs/01-domain-model.md` (Entities, Relationships) and `docs/editor/specs/04-persistence.md` (object stores). The canonical `01-domain-model.md` has an `## Entities` heading and a `## Relationships` heading. The canonical `04-persistence.md` was recently renamed to `04-persistence-and-export.md` and the change spec still points at the old name.
+**Input:** A change spec `.specs/changes/2026-05-21-add_tagging_to_entries.md` proposing to add a `Tag` entity. Its `Affected spec pages` table lists `.specs/editor/specs/01-domain-model.md` (Entities, Relationships) and `.specs/editor/specs/04-persistence.md` (object stores). The canonical `01-domain-model.md` has an `## Entities` heading and a `## Relationships` heading. The canonical `04-persistence.md` was recently renamed to `04-persistence-and-export.md` and the change spec still points at the old name.
 
 **Correct output:**
 
 ```
-P1: The change spec targets docs/editor/specs/01-domain-model.md (Entities, Relationships) and docs/editor/specs/04-persistence.md (object stores).
+P1: The change spec targets .specs/editor/specs/01-domain-model.md (Entities, Relationships) and .specs/editor/specs/04-persistence.md (object stores).
 P2: The intended delta is to add a Tag entity, an Entry*—*Tag relationship, and a tags object store.
 P3: Must not contradict the existing Entry entity definition or the current object-store list.
 
 REFERENCE RESOLUTION:
 - 01-domain-model.md → Entities (Add):
-  1. File exists at docs/editor/specs/01-domain-model.md? YES.
+  1. File exists at .specs/editor/specs/01-domain-model.md? YES.
   2. Heading "## Entities" exists? YES.
   3. Add block — does Entities already define Tag? NO.
   4. → RESOLVED.
@@ -97,7 +97,7 @@ REFERENCE RESOLUTION:
   3. Modify block claims to change the Entry relationships line — does that line exist? YES.
   → RESOLVED.
 - 04-persistence.md → object stores (Add):
-  1. File exists at docs/editor/specs/04-persistence.md? NO — the canonical page is 04-persistence-and-export.md.
+  1. File exists at .specs/editor/specs/04-persistence.md? NO — the canonical page is 04-persistence-and-export.md.
   → UNRESOLVED (broken target).
 
 COVERAGE: every Affected-pages entry has a matching Proposed-changes block; no unlisted targets.
@@ -125,7 +125,7 @@ VERDICT: INCONSISTENT
 CONFIDENCE: high
 SUMMARY: The delta is internally sound, but the persistence block targets a renamed page (04-persistence.md → 04-persistence-and-export.md), so it cannot merge as written.
 SUGGESTIONS:
-- Update the Affected spec pages table, the persistence Proposed-changes block heading, and the Merge plan to point at docs/editor/specs/04-persistence-and-export.md.
+- Update the Affected spec pages table, the persistence Proposed-changes block heading, and the Merge plan to point at .specs/editor/specs/04-persistence-and-export.md.
 - Re-verify the "object stores" heading exists on the renamed page before re-running the review.
 ```
 

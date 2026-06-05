@@ -4,7 +4,7 @@ Verifies :func:`benchmark.harness.stats.build_ablation_report`,
 :func:`benchmark.harness.stats.ablation_metric_results`,
 :func:`benchmark.harness.stats.apply_holm_bonferroni_per_family`,
 :func:`benchmark.harness.stats.render_ablation_report` against the spec in
-``docs/benchmark/specs/06-scoring-and-statistics.md`` §Confidence intervals
+``.specs/benchmark/specs/06-scoring-and-statistics.md`` §Confidence intervals
 and pairwise tests:
 
 * Each pairwise comparison (A1−A0, A1−A2, A2−A3, A1−A4) carries a cost-matched

@@ -35,7 +35,7 @@ task land before the next starts.
 
 ## Reading the plan into a schedule
 
-1. **Locate the plan folder.** `docs/plans/YYYY-MM-DD-<title>/` for a repo-wide plan, or `docs/<package>/plans/YYYY-MM-DD-<title>/` (or a co-located `<package-location>/docs/plans/…`) for a package-scoped one. If the user named a plan,
+1. **Locate the plan folder.** `.specs/plans/YYYY-MM-DD-<title>/` for a repo-wide plan, or `.specs/<package>/plans/YYYY-MM-DD-<title>/` (or a co-located `<package-location>/.specs/plans/…`) for a package-scoped one. If the user named a plan,
    use it; if several exist, list them and ask which. The folder holds `plan.md`, the
    `NN-<task>.md` files, and (when authored) `certificates/NN-<task>.md`.
 2. **Parse the dependency table in `plan.md` — it is the source of truth**, not the Mermaid

@@ -2,7 +2,7 @@
 
 Feeds representative ``claude -p --output-format json`` result dicts to
 :func:`benchmark.harness.telemetry.telemetry_from_agent_result` and asserts the
-5-field guarantee (``docs/benchmark/specs/04-metrics.md`` §Bucket 2) without any
+5-field guarantee (``.specs/benchmark/specs/04-metrics.md`` §Bucket 2) without any
 API spend: all five Telemetry fields present, correctly mapped, non-negative,
 and gracefully defaulted when source fields are absent or non-numeric.
 """

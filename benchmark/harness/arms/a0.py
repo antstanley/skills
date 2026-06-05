@@ -1,6 +1,6 @@
 """The A0 — Baseline arm recipe (a plain agent on the fixed model).
 
-Implements ``docs/benchmark/specs/02-arms.md`` §A0 — Baseline: *"A plain Claude
+Implements ``.specs/benchmark/specs/02-arms.md`` §A0 — Baseline: *"A plain Claude
 Code agent on the fixed model, no ``spec-*`` plugins. It receives the
 TaskInstance's ``problemStatement`` and produces a patch."* A0 is the floor
 against which every workflow arm's pairwise delta is read.

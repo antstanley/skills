@@ -1,6 +1,6 @@
 # benchmark — the spec-workflow benchmark harness
 
-Run instructions for the harness. The design lives in [`docs/benchmark/specs/`](../docs/benchmark/specs/); the build plan and certificates in [`docs/plans/2026-05-27-spec_workflow_benchmark/`](../docs/plans/2026-05-27-spec_workflow_benchmark/). This page is the *how to run it* companion.
+Run instructions for the harness. The design lives in [`.specs/benchmark/specs/`](../.specs/benchmark/specs/); the build plan and certificates in [`.specs/plans/2026-05-27-spec_workflow_benchmark/`](../.specs/plans/2026-05-27-spec_workflow_benchmark/). This page is the *how to run it* companion.
 
 ## Package layout
 
@@ -145,7 +145,7 @@ BENCHMARK_RUN_CONTAINER_LIVE=1 uv run pytest -s -v benchmark/tests/test_live_con
 
 Prerequisites (all three, or the test SKIPs cleanly): **Docker ≥ 25** with a reachable daemon, an **authenticated `claude` CLI on `PATH`** (the A0 run side and the live gate probe both invoke it), and a **small real budget** (it spends the recursive-workflow + probe API cost — a few dollars, bounded by the existing per-probe caps). Unset / not `1`, or Docker/CLI missing, and the test reports SKIPPED — `scripts/check.sh` and CI stay green, never touching Docker.
 
-**Evidence refresh is conditional and operator-run.** A green live run MAY regenerate the `benchmark/tests/_a*_live_evidence/` bundles, but that is an explicit operator action, not a CI step — whether to promote a fresh witness to the committed evidence is an open question (auto-vs-manual promotion; see [plan.md](../docs/plans/2026-05-28-add_live_container_verification/plan.md)).
+**Evidence refresh is conditional and operator-run.** A green live run MAY regenerate the `benchmark/tests/_a*_live_evidence/` bundles, but that is an explicit operator action, not a CI step — whether to promote a fresh witness to the committed evidence is an open question (auto-vs-manual promotion; see [plan.md](../.specs/plans/2026-05-28-add_live_container_verification/plan.md)).
 
 ### 4 · Rendering the ablation report
 
@@ -183,11 +183,11 @@ The output is Markdown: five arm rows × every metric column (Pass@1 with Wilson
 - **System `python3` is 3.9.** Always invoke `uv run` after `export PATH="$HOME/.local/bin:$PATH"`. A `uv: command not found` is the usual symptom of a missed `PATH` export.
 - **Docker daemon down.** Container backends raise a clear `ContainerRunError`. Start the daemon (`sudo systemctl start docker`) and ensure non-sudo access (member of the `docker` group, or socket permissions).
 - **In-container `claude` 401 "Please run /login".** The host OAuth token expired; re-login (`claude` once, or `/login` in Claude Code) and retry. The credential copy is taken at run start, so long live runs need a host token valid for the run's duration.
-- **A1 under-builds on a single orchestrator turn.** Known limitation (see [task 08](../docs/plans/2026-05-27-spec_workflow_benchmark/08-arm_a1_pipeline.md) Open questions): the single `claude -p` ends its turn after ~1 plan task on the seed. The harness mechanism is correct; the headline A1−A0 delta is bounded by this until the orchestration is tuned (continuation loop / higher turn budget).
+- **A1 under-builds on a single orchestrator turn.** Known limitation (see [task 08](../.specs/plans/2026-05-27-spec_workflow_benchmark/08-arm_a1_pipeline.md) Open questions): the single `claude -p` ends its turn after ~1 plan task on the seed. The harness mechanism is correct; the headline A1−A0 delta is bounded by this until the orchestration is tuned (continuation loop / higher turn budget).
 - **Stale Docker images.** If a `:scoring` or `:run` greenfield image was built before a Dockerfile change (e.g. before `pytest` was baked into the scoring image), per-selector scoring runs will fail silently. `docker rmi -f $(docker images -q 'greenfield-*')` and let the next run rebuild.
 
 ## Related docs
 
-- Design specs: [`docs/benchmark/specs/`](../docs/benchmark/specs/) — start at [`00-overview.md`](../docs/benchmark/specs/00-overview.md).
-- Build plan + certificates: [`docs/plans/2026-05-27-spec_workflow_benchmark/`](../docs/plans/2026-05-27-spec_workflow_benchmark/).
-- Repo-wide development guidelines: [`docs/specs/development-guidelines.md`](../docs/specs/development-guidelines.md).
+- Design specs: [`.specs/benchmark/specs/`](../.specs/benchmark/specs/) — start at [`00-overview.md`](../.specs/benchmark/specs/00-overview.md).
+- Build plan + certificates: [`.specs/plans/2026-05-27-spec_workflow_benchmark/`](../.specs/plans/2026-05-27-spec_workflow_benchmark/).
+- Repo-wide development guidelines: [`.specs/development-guidelines.md`](../.specs/development-guidelines.md).

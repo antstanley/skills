@@ -1,6 +1,6 @@
 """Cost-matched %Resolved, parallel speedup, and the robustness columns.
 
-Implements ``docs/benchmark/specs/04-metrics.md`` §Bucket 2 (cost-matched
+Implements ``.specs/benchmark/specs/04-metrics.md`` §Bucket 2 (cost-matched
 %Resolved, parallel speedup) and §Bucket 4 — Robustness (merge-conflict rate,
 manual-pause rate, gate-retry depth, regression rate).
 

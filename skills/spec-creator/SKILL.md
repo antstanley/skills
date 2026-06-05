@@ -1,6 +1,6 @@
 ---
 name: spec-creator
-description: Create, expand, or change formal design specifications for an app, package, or codebase. Triggers on "create/write a spec", "spec out this app", "document the design", "formalize the architecture", "promote to a global spec", "layer a per-package spec on a global one", using another project's specs as a template ("use ../foo/specs as a template"), or proposing/merging a change spec ("change spec", "RFC for X", "draft a change spec", "merge the change spec"). Output is a numbered, layered directory of markdown plus a JSON Schema sidecar (repo-wide globals + per-package specs); a change spec is a single document under docs/specs/changes/.
+description: Create, expand, or change formal design specifications for an app, package, or codebase. Triggers on "create/write a spec", "spec out this app", "document the design", "formalize the architecture", "promote to a global spec", "layer a per-package spec on a global one", using another project's specs as a template ("use ../foo/specs as a template"), or proposing/merging a change spec ("change spec", "RFC for X", "draft a change spec", "merge the change spec"). Output is a numbered, layered directory of markdown plus a JSON Schema sidecar (repo-wide globals + per-package specs); a change spec is a single document under .specs/changes/.
 ---
 
 # Spec Creator
@@ -34,10 +34,10 @@ The skill is a four-phase process. The phases are sequential; don't skip the inv
 Before writing anything, build the understanding:
 
 1. **Read any template the user pointed at.** If the user said "use ../foo/specs as a template", read every file in that directory top to bottom. Capture the file naming, header format, section conventions, and any sidecar files (JSON schemas, asset bundles).
-2. **Read existing notes.** Look in `docs/<package>/`, `docs/`, `README.md` files, `CHANGELOG.md`. Don't reinvent what's already documented; extend or formalize.
+2. **Read existing notes.** Look in `.specs/<package>/`, `.specs/`, `README.md` files, `CHANGELOG.md`. Don't reinvent what's already documented; extend or formalize.
 3. **Read the actual code.** Walk the package(s) the spec covers. Read entry points, key modules, route handlers, store/state files, configuration. Note what exists, what doesn't, and what's load-bearing.
-4. **Read existing specs in the same repo.** If `docs/specs/` or `docs/<other-package>/specs/` already exists, read them. Match the shape and the cross-link style.
-5. **Identify the layering.** Decide which content belongs at the **global** layer (`docs/specs/`) versus the **per-package** layer (`docs/<package>/specs/`). See [§Layered structure](#layered-structure) below.
+4. **Read existing specs in the same repo.** If `.specs/` or `.specs/<other-package>/specs/` already exists, read them. Match the shape and the cross-link style.
+5. **Identify the layering.** Decide which content belongs at the **global** layer (`.specs/`) versus the **per-package** layer (`.specs/<package>/specs/`). See [§Layered structure](#layered-structure) below.
 
 The investigation phase often reveals divergence (the code doesn't match a previous doc, or two apps disagree on the same convention). Flag these to the user before writing — the spec should describe one consistent reality.
 
@@ -70,7 +70,7 @@ Always include if applicable:
 - An **architecture / package layout** page.
 - A **development guidelines** page.
 
-For the global layer (`docs/specs/`), the typical set is:
+For the global layer (`.specs/`), the typical set is:
 - `architecture-principles.md`
 - `development-guidelines.md`
 - `canonical-types.schema.json` (shared types only — `Id`, `Timestamp`, `Url`, common envelopes)
@@ -83,17 +83,17 @@ Write one file at a time. Cross-link as you go. Keep an internal map of "claims 
 
 When the file set includes a `development-guidelines.md` page, delegate it to the companion **`development-guidelines` skill** instead of writing it by hand. It resolves the repo's languages and coding style and assembles the page from per-language templates, then hands back here for Phase 4.
 
-If the spec layers on a global spec (e.g., per-package architecture builds on `docs/specs/architecture-principles.md`), open with a one-paragraph **Read first** pointer rather than restating the global rules. See [§Layered structure](#layered-structure).
+If the spec layers on a global spec (e.g., per-package architecture builds on `.specs/architecture-principles.md`), open with a one-paragraph **Read first** pointer rather than restating the global rules. See [§Layered structure](#layered-structure).
 
 ### Phase 4 — Cross-link
 
 This phase is mandatory and easy to skip — every iteration of this skill has missed at least one of the steps below when not made explicit. Treat each as a checkbox before declaring the spec done.
 
-1. **Update `docs/README.md`** (creating it if absent) to index every spec file and directory you created or moved. This includes:
-   - Any new **global** spec file (e.g., a new `docs/specs/foo.md`) — add it to the global-specs list.
-   - Any new **per-package** spec set (e.g., `docs/<package>/specs/`) — add the app to the per-package section.
-   - This is non-optional. A new spec that the index doesn't reference is invisible to anyone scanning the doc tree. If you wrote a new file at `docs/specs/<name>.md` or under `docs/<package>/specs/`, the very next edit is `docs/README.md`.
-2. **Update `docs/<package>/README.md`** for per-package specs — open with a pointer to the global specs at `docs/specs/`, then list the per-package spec set.
+1. **Update `.specs/README.md`** (creating it if absent) to index every spec file and directory you created or moved. This includes:
+   - Any new **global** spec file (e.g., a new `.specs/foo.md`) — add it to the global-specs list.
+   - Any new **per-package** spec set (e.g., `.specs/<package>/specs/`) — add the app to the per-package section.
+   - This is non-optional. A new spec that the index doesn't reference is invisible to anyone scanning the doc tree. If you wrote a new file at `.specs/<name>.md` or under `.specs/<package>/specs/`, the very next edit is `.specs/README.md`.
+2. **Update `.specs/<package>/README.md`** for per-package specs — open with a pointer to the global specs at `.specs/`, then list the per-package spec set.
 3. **Verify every internal link** (`(other-spec.md)`, `[…](../specs/foo.md)`) resolves to a real file.
 4. **Verify every `canonical-types.schema.json` entity** referenced in prose actually exists in the schema (and vice versa — every schema entity is described somewhere in prose).
 5. **Re-read the closing block** on every page. If you find yourself in step 5 and any page is missing an `Assumptions and open questions` section, add it before declaring done. The closing block is mandatory; even `(None at this stage.)` under a heading counts.
@@ -149,11 +149,11 @@ Each page type has a characteristic section set. **Full skeletons live in [`refe
 
 Two layers — **global** and **per-package** — with strict rules. The per-package layer has a default location and an optional co-located one:
 
-- **Global** (`docs/specs/`) — repo-wide, cross-cutting. Architecture principles, development guidelines, shared types schema.
-- **Per-package, default** (`docs/<package>/specs/`) — package-specific. Numbered detail pages, package schema. `<package>` is the app/package/workspace name. This is the default home for per-package specs.
-- **Per-package, co-located (optional)** (`<package-location>/docs/specs/`) — the same per-package specs may instead live inside the package directory (e.g. `apps/web/docs/specs/`, `packages/core/docs/specs/`). Use this when a package is self-contained and you want its specs to travel with it; otherwise prefer the default `docs/<package>/specs/`.
+- **Global** (`.specs/`) — repo-wide, cross-cutting. Architecture principles, development guidelines, shared types schema.
+- **Per-package, default** (`.specs/<package>/specs/`) — package-specific. Numbered detail pages, package schema. `<package>` is the app/package/workspace name. This is the default home for per-package specs.
+- **Per-package, co-located (optional)** (`<package-location>/.specs/`) — the same per-package specs may instead live inside the package directory (e.g. `apps/web/.specs/`, `packages/core/.specs/`). Use this when a package is self-contained and you want its specs to travel with it; otherwise prefer the default `.specs/<package>/specs/`.
 
-A **single-project repo** uses only the global layer — specs in `docs/specs/`, plans in `docs/plans/`. Plans follow the same scheme as specs: repo-wide in `docs/plans/`, per-package in `docs/<package>/plans/` (or a co-located `<package-location>/docs/plans/`).
+A **single-project repo** uses only the global layer — specs in `.specs/`, plans in `.specs/plans/`. Plans follow the same scheme as specs: repo-wide in `.specs/plans/`, per-package in `.specs/<package>/plans/` (or a co-located `<package-location>/.specs/plans/`).
 
 Rules:
 
@@ -166,12 +166,12 @@ Rules:
 
 A **canonical spec** describes what exists in the current branch. A **change spec** proposes a delta to it. The two are different document types with inverted rules, and this skill writes both.
 
-- **Canonical spec** — numbered, layered directory of pages. Body describes what is. Lives in `docs/specs/` and `docs/<package>/specs/` (or a co-located `<package-location>/docs/specs/`).
-- **Change spec** — a single document proposing changes that do **not** yet exist. Body describes what will change, in future/imperative voice. Lives in `docs/specs/changes/`, named `YYYY-MM-DD-short_snake_case_title.md`.
+- **Canonical spec** — numbered, layered directory of pages. Body describes what is. Lives in `.specs/` and `.specs/<package>/specs/` (or a co-located `<package-location>/.specs/`).
+- **Change spec** — a single document proposing changes that do **not** yet exist. Body describes what will change, in future/imperative voice. Lives in `.specs/changes/`, named `YYYY-MM-DD-short_snake_case_title.md`.
 
 A change spec references the canonical pages it touches by path and heading, restates each affected section as the prose it should become once merged, carries an inline JSON Schema fragment for any new or changed entities, and lists the implementation pointers an agent needs. The goal is that an agent can take the change spec plus its references and implement the change.
 
-When the change ships in code, the change spec is **merged** into the canonical spec: each proposed block is applied to its canonical page, the schema fragment folds into the canonical schema, and the change spec moves to `docs/specs/changes/merged/` with its `Status` flipped to `Merged`. It is preserved as dated history, not deleted.
+When the change ships in code, the change spec is **merged** into the canonical spec: each proposed block is applied to its canonical page, the schema fragment folds into the canonical schema, and the change spec moves to `.specs/changes/merged/` with its `Status` flipped to `Merged`. It is preserved as dated history, not deleted.
 
 This is the one place the "describes-what-exists" rule is suspended — and only inside a change spec's body, never in a canonical page. Do not edit canonical pages to describe a change until that change has shipped; that is what the change spec is for.
 
@@ -184,7 +184,7 @@ Spec voice is declarative present tense describing what exists; past tense in De
 ## What NOT to do
 
 - **Don't use MVP framing.** No "Goals (MVP)", "Non-goals (MVP)", "MVP cut summary", "at MVP", "deferred". The spec describes what the code does now.
-- **Don't speculate about future work** in a canonical spec's body. Future work belongs in Open questions, or in a **change spec** (see [§Change specs](#change-specs)) — a separate single document under `docs/specs/changes/` whose whole job is to propose a delta.
+- **Don't speculate about future work** in a canonical spec's body. Future work belongs in Open questions, or in a **change spec** (see [§Change specs](#change-specs)) — a separate single document under `.specs/changes/` whose whole job is to propose a delta.
 - **Don't restate global content in per-package specs.** Use a "Read first" pointer.
 - **Don't add fields to schemas that aren't in the code.** A schema field with `description: "Reserved for next iteration"` is a lie. If the field doesn't exist, leave it out and put the gap in Open questions.
 - **Don't write tutorials inside specs.** Specs define structure; tutorials and runbooks are separate doc types.

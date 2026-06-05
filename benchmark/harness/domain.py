@@ -1,8 +1,8 @@
 """Typed in-code records for every benchmark entity.
 
-Each entity defined in ``docs/benchmark/specs/01-domain-model.md`` is mirrored
+Each entity defined in ``.specs/benchmark/specs/01-domain-model.md`` is mirrored
 here as a frozen dataclass whose field names, types, and enums match the
-canonical JSON Schema (``docs/benchmark/specs/canonical-types.schema.json``)
+canonical JSON Schema (``.specs/benchmark/specs/canonical-types.schema.json``)
 exactly. The schema is the single authority: every record validates against its
 ``$def`` both when constructed and when loaded, and ``to_dict``/``from_dict``
 round-trip (construct -> dump -> load -> equal).
@@ -37,7 +37,7 @@ from jsonschema import ValidationError as _JsonSchemaValidationError
 #: The canonical schema, the authority for every record shape.
 CANONICAL_SCHEMA_PATH = (
     Path(__file__).resolve().parents[2]
-    / "docs"
+    / ".specs"
     / "benchmark"
     / "specs"
     / "canonical-types.schema.json"

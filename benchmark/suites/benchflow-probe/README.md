@@ -2,7 +2,7 @@
 
 This directory is a **substrate probe**, not a benchmark suite. It exists so a
 reviewer can confirm, on a clean checkout, that the BenchFlow `bench` SDK named
-in [`docs/benchmark/specs/05-harness-architecture.md`](../../../docs/benchmark/specs/05-harness-architecture.md)
+in [`.specs/benchmark/specs/05-harness-architecture.md`](../../../.specs/benchmark/specs/05-harness-architecture.md)
 §Substrate is wired and that its task-authoring gate works:
 
 ```

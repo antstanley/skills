@@ -1,7 +1,7 @@
 """The full five-arm ablation table (the M4 capstone).
 
-Implements ``docs/benchmark/specs/06-scoring-and-statistics.md`` §Reporting and
-``docs/benchmark/specs/02-arms.md`` §The pairwise deltas. The output is the
+Implements ``.specs/benchmark/specs/06-scoring-and-statistics.md`` §Reporting and
+``.specs/benchmark/specs/02-arms.md`` §The pairwise deltas. The output is the
 campaign-level **ablation table**:
 
 * one row per arm (A0..A4), one column per metric (Pass@1, Pass@k, cost-matched

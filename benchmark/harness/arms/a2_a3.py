@@ -1,6 +1,6 @@
 """The A2 / A3 arm recipes — plan + build from a HANDED-IN spec.
 
-Implements ``docs/benchmark/specs/02-arms.md`` §A2 — Plan + build (spec handed
+Implements ``.specs/benchmark/specs/02-arms.md`` §A2 — Plan + build (spec handed
 in) and §A3 — Build without gates. Both arms are configuration variants of A1
 (``benchmark/harness/arms/a1.py``): they share A1's plugin mount set, model,
 budget cap, artifact layout, and workflow driver, and differ ONLY in the two
@@ -72,7 +72,6 @@ from benchmark.harness.arms.a1 import (
     A1_ARTIFACT_DIR,
     A1_MAX_BUDGET_USD,
     A1_MODEL,
-    A1_SPEC_SUBDIR,
 )
 from benchmark.harness.domain import (
     GATE_EVENT_ID_PREFIX,
@@ -134,12 +133,12 @@ A2_A3_PLUGIN_DIR_NAMES: tuple[str, ...] = (
 # --- given-spec provenance (the resolved Open question) ---------------------
 
 #: The path, INSIDE the run container under :data:`A1_ARTIFACT_DIR`, the frozen
-#: given-spec is written to BEFORE the workflow runs — the ``docs/specs/``
+#: given-spec is written to BEFORE the workflow runs — the ``.specs/``
 #: location ``spec-creator`` would have written to. ``spec-planner`` reads the
 #: spec from here, so dropping ``spec-creator`` is transparent to the rest of
 #: the pipeline. Kept under the artifact dir so it is captured into the bundle's
 #: ``specArtifacts`` and EXCLUDED from the scored code diff, exactly like A1.
-GIVEN_SPEC_CONTAINER_RELPATH = f"{A1_ARTIFACT_DIR}/{A1_SPEC_SUBDIR}/given_spec.md"
+GIVEN_SPEC_CONTAINER_RELPATH = f"{A1_ARTIFACT_DIR}/given_spec.md"
 
 #: The DOCUMENTED quality bar the frozen given-spec asset is authored to. Both
 #: A2 and A3 read the SAME asset, so this bar is shared and spec variance cannot
@@ -210,7 +209,7 @@ _A2_A3_PREAMBLE = (
     "end. Do not ask questions; this is a batch run with no user to prompt — "
     "make every default decision yourself and proceed.\n\n"
     "A ready-made specification has ALREADY been written for you at "
-    f"{GIVEN_SPEC_CONTAINER_RELPATH} (under docs/specs/). Do NOT author a new "
+    f"{GIVEN_SPEC_CONTAINER_RELPATH} (under .specs/). Do NOT author a new "
     "spec and do NOT run spec-creator — the spec authoring stage is "
     "deliberately skipped for this run. Treat that file as the authoritative "
     "spec.\n\n"
@@ -223,7 +222,7 @@ A2_INSTRUCTION = (
     "1. Use the spec-planner skill to decompose the GIVEN spec at "
     f"{GIVEN_SPEC_CONTAINER_RELPATH} into a dependency-ordered plan of task "
     "packages, each with a definition of done, and author one done-certificate "
-    "per task. Write the plan folder under docs/plans/.\n"
+    "per task. Write the plan folder under .specs/plans/.\n"
     "2. Use the spec-builder skill to build every task in the plan in an "
     "isolated workspace, gating EACH task through BOTH gates — the semi-formal "
     "correctness review AND the validate-done-certificate completeness gate — "
@@ -233,7 +232,7 @@ A2_INSTRUCTION = (
     "the /workspace working tree — that working tree is the integration tip "
     "whose CODE will be scored.\n\n"
     "When you finish, the package stubs under /workspace must be fully "
-    "implemented and the plan/certificate artifacts must exist under docs/."
+    "implemented and the plan/certificate artifacts must exist under .specs/."
 )
 
 #: A3 stages: identical to A2 EXCEPT spec-builder runs WITHOUT its two gates —
@@ -245,7 +244,7 @@ A3_INSTRUCTION = (
     "1. Use the spec-planner skill to decompose the GIVEN spec at "
     f"{GIVEN_SPEC_CONTAINER_RELPATH} into a dependency-ordered plan of task "
     "packages, each with a definition of done. Write the plan folder under "
-    "docs/plans/.\n"
+    ".specs/plans/.\n"
     "2. Use the spec-builder skill to build every task in the plan in an "
     "isolated workspace, but DISABLE spec-builder's two gates for this run: do "
     "NOT run the semi-formal-review correctness gate and do NOT run the "
@@ -256,7 +255,7 @@ A3_INSTRUCTION = (
     "into the /workspace working tree — that working tree is the integration "
     "tip whose CODE will be scored.\n\n"
     "When you finish, the package stubs under /workspace must be fully "
-    "implemented and the plan artifacts must exist under docs/."
+    "implemented and the plan artifacts must exist under .specs/."
 )
 
 

@@ -1,6 +1,6 @@
 """The A1 — Full pipeline arm recipe (``spec-creator → spec-planner → spec-builder``).
 
-Implements ``docs/benchmark/specs/02-arms.md`` §A1 — Full pipeline: *"spec-creator
+Implements ``.specs/benchmark/specs/02-arms.md`` §A1 — Full pipeline: *"spec-creator
 authors a spec from the problem statement, spec-planner decomposes it into a task
 graph with definitions of done and done-certificates, and spec-builder builds each
 task in an isolated workspace behind both gates, merging into an integration
@@ -99,15 +99,16 @@ A1_MAX_BUDGET_USD = 60.0
 A1_FEASIBILITY_PROBE_MAX_BUDGET_USD = 5.0
 
 #: Directory prefix (under the workspace) the workflow writes its artifacts into:
-#: specs at ``docs/specs/``, plans + certificates at ``docs/plans/...``. The
+#: specs at ``.specs/``, plans + certificates at ``.specs/plans/...``. The
 #: candidate-patch extractor EXCLUDES this whole subtree so workflow artifacts
 #: never leak into the scored CODE diff (they are captured into the bundle
 #: instead). A single named constant so the exclusion and the capture agree.
-A1_ARTIFACT_DIR = "docs"
+A1_ARTIFACT_DIR = ".specs"
 
-#: Sub-paths under :data:`A1_ARTIFACT_DIR` that hold each artifact class. Used to
-#: classify captured files into spec / plan / certificate buckets of the bundle.
-A1_SPEC_SUBDIR = "specs"
+#: Layout under :data:`A1_ARTIFACT_DIR` (the spec root), used to classify captured
+#: files into spec / plan / certificate buckets. Canonical spec pages live at the
+#: artifact-dir root itself (e.g. ``.specs/02-components.md``); plans nest under
+#: ``plans/`` and done-certificates under ``plans/.../certificates/``.
 A1_PLAN_SUBDIR = "plans"
 A1_CERTIFICATE_DIR_NAME = "certificates"
 
@@ -115,7 +116,7 @@ A1_CERTIFICATE_DIR_NAME = "certificates"
 #: instructs the single headless agent to (a) author a spec with spec-creator,
 #: (b) plan it with spec-planner, (c) build every task with spec-builder behind
 #: BOTH gates, merging into the working tree (the integration tip). The workflow
-#: writes its spec/plan/certificate artifacts under ``docs/`` (excluded from the
+#: writes its spec/plan/certificate artifacts under ``.specs/`` (excluded from the
 #: scored code diff); the CODE implementation lands in the package stubs.
 A1_INSTRUCTION = (
     "You are driving the full spec-driven workflow to implement a feature in "
@@ -125,10 +126,10 @@ A1_INSTRUCTION = (
     "prompt — make every default decision yourself and proceed.\n\n"
     "Carry out these three stages in order, using the named skills:\n"
     "1. Use the spec-creator skill to author a formal spec for the feature "
-    "described below. Write the spec under docs/specs/.\n"
+    "described below. Write the spec under .specs/.\n"
     "2. Use the spec-planner skill to decompose that spec into a dependency-"
     "ordered plan of task packages, each with a definition of done, and author "
-    "one done-certificate per task. Write the plan folder under docs/plans/.\n"
+    "one done-certificate per task. Write the plan folder under .specs/plans/.\n"
     "3. Use the spec-builder skill to build every task in the plan in an "
     "isolated workspace, gating each through the semi-formal correctness review "
     "AND the validate-done-certificate completeness gate before merging it. "
@@ -137,7 +138,7 @@ A1_INSTRUCTION = (
     "{timing_directive}\n\n"
     "When you finish, the package stubs under /workspace must be fully "
     "implemented and the spec/plan/certificate artifacts must exist under "
-    "docs/. The feature to build:\n\n"
+    ".specs/. The feature to build:\n\n"
     "{problem_statement}"
 )
 

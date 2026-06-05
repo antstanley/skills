@@ -34,10 +34,10 @@ passphrase`" may write code that passes that one named test rather than the gene
 behavior. The builder gets the *definition of done* (the claim); the validator holds the
 *certificate* (the proof). This keeps the two genuinely independent.
 
-Resolve spec-section links from the plan folder (from a repo-wide plan, `../../specs/…` for a
+Resolve spec-section links from the plan folder (from a repo-wide plan, `../../…` for a
 global page and `../../<package>/specs/…` for a per-package page; from a plan under
-`docs/<package>/plans/`, the package's own spec is `../../specs/…` and a global page
-`../../../specs/…`) and include the relevant text in the brief so
+`.specs/<package>/plans/`, the package's own spec is `../../specs/…` and a global page
+`../../../…`) and include the relevant text in the brief so
 the sub-agent need not go hunting.
 
 ---

@@ -1,7 +1,7 @@
 """Stats tests: outcome metrics and the A1−A0 ablation table on KNOWN answers.
 
 Verifies ``benchmark/harness/stats`` against the authority in
-``docs/benchmark/specs/06-scoring-and-statistics.md`` and ``04-metrics.md``:
+``.specs/benchmark/specs/06-scoring-and-statistics.md`` and ``04-metrics.md``:
 
 - the Wilson 95% interval at 0/10, 5/10, 10/10 to textbook values;
 - Pass@1 vs Pass@k where they DIFFER (resolved on one trial only);

@@ -1,6 +1,6 @@
 """Tests for the bundled ``greenfield-features`` suite (task 12).
 
-Asserts the spec contract from ``docs/benchmark/specs/03-task-suites.md`` and
+Asserts the spec contract from ``.specs/benchmark/specs/03-task-suites.md`` and
 ``05-harness-architecture.md``:
 
 - every instance loads as a validated ``TaskInstance`` with ``goldPatch=None``,

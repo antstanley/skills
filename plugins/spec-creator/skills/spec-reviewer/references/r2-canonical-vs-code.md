@@ -82,12 +82,12 @@ DIVERGENCES:
 
 ## Worked Example
 
-**Input:** `docs/editor/specs/01-domain-model.md` claims three entities: `Entry` (with fields `id`, `body`, `createdAt`, `updatedAt`), `Workspace`, and `Tag`. The code in `src/domain/` defines `entry.ts` (fields `id`, `body`, `createdAt` — no `updatedAt`) and `workspace.ts`. There is no `tag.ts`. The code also defines `src/domain/draft.ts` (a `Draft` entity) that the spec does not mention.
+**Input:** `.specs/editor/specs/01-domain-model.md` claims three entities: `Entry` (with fields `id`, `body`, `createdAt`, `updatedAt`), `Workspace`, and `Tag`. The code in `src/domain/` defines `entry.ts` (fields `id`, `body`, `createdAt` — no `updatedAt`) and `workspace.ts`. There is no `tag.ts`. The code also defines `src/domain/draft.ts` (a `Draft` entity) that the spec does not mention.
 
 **Correct output:**
 
 ```
-P1: The spec page docs/editor/specs/01-domain-model.md claims entities Entry (id, body, createdAt, updatedAt), Workspace, and Tag.
+P1: The spec page .specs/editor/specs/01-domain-model.md claims entities Entry (id, body, createdAt, updatedAt), Workspace, and Tag.
 P2: The implementing code lives in src/domain/ (entry.ts, workspace.ts, draft.ts).
 P3: The spec rule under test: the body describes only what exists in the current branch.
 

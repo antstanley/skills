@@ -1,6 +1,6 @@
 """The bundled ``local-fixture`` suite: a Docker-free, hermetic instance.
 
-See ``docs/benchmark/specs/03-task-suites.md`` §Suite: ``local-fixture`` and
+See ``.specs/benchmark/specs/03-task-suites.md`` §Suite: ``local-fixture`` and
 ``changes/2026-05-27-local_backends.md``. The fixture is a tiny repository at a
 fixed commit, a hidden ``pytest`` suite, and a known ``goldPatch`` that makes
 the hidden tests pass. It exists to exercise the run -> score -> aggregate

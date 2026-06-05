@@ -1,7 +1,7 @@
 """Intra-trial workflow timing — captured-cert parsing + parallel-speedup math.
 
 Covers Task 02 — capture intra-trial workflow timing
-(``docs/plans/2026-05-28-close_group_a_spec_code_gaps/02-capture_intra_trial_workflow_timing.md``):
+(``.specs/plans/2026-05-28-close_group_a_spec_code_gaps/02-capture_intra_trial_workflow_timing.md``):
 
 * :func:`extract_task_wall_clocks` reads ``Elapsed: <seconds>s`` lines from the
   captured ``"<relpath>\\n<contents>"`` certificate entries and returns
@@ -126,16 +126,16 @@ def test_extract_task_wall_clocks_reads_elapsed_lines() -> None:
     """Each certificate's ``Elapsed: <seconds>s`` line surfaces as one entry."""
     entries = [
         _capture_entry(
-            "docs/plans/2026-05-28-feature/certificates/01-tokenizer.md",
+            ".specs/plans/2026-05-28-feature/certificates/01-tokenizer.md",
             "# Done Certificate — 01\n\nState: Validated …\n"
             "Elapsed: 90.0s\n\nVERDICT: DONE\n",
         ),
         _capture_entry(
-            "docs/plans/2026-05-28-feature/certificates/02-normalizer.md",
+            ".specs/plans/2026-05-28-feature/certificates/02-normalizer.md",
             "# Done Certificate — 02\n\nElapsed: 110s\n\nVERDICT: DONE\n",
         ),
         _capture_entry(
-            "docs/plans/2026-05-28-feature/certificates/03-frequency.md",
+            ".specs/plans/2026-05-28-feature/certificates/03-frequency.md",
             "# 03\nElapsed: 50.5 seconds\nVERDICT: DONE\n",
         ),
     ]
@@ -151,11 +151,11 @@ def test_extract_task_wall_clocks_skips_certs_without_elapsed() -> None:
     """A certificate without an Elapsed line silently contributes no entry."""
     entries = [
         _capture_entry(
-            "docs/plans/p/certificates/01-a.md",
+            ".specs/plans/p/certificates/01-a.md",
             "# 01\n\nVERDICT: DONE\n",  # no Elapsed: line
         ),
         _capture_entry(
-            "docs/plans/p/certificates/02-b.md",
+            ".specs/plans/p/certificates/02-b.md",
             "# 02\n\nElapsed: 42s\n",
         ),
     ]

@@ -4,7 +4,7 @@
     {
       "id": 1,
       "name": "discharge-authored-certificate",
-      "prompt": "Task 01 of the journal plan has been implemented and passed semi-formal review. Validate it against its done certificate at docs/plans/2026-05-22-implement_journal_app/certificates/01-passphrase_lock.md.",
+      "prompt": "Task 01 of the journal plan has been implemented and passed semi-formal review. Validate it against its done certificate at .specs/plans/2026-05-22-implement_journal_app/certificates/01-passphrase_lock.md.",
       "expected_output": "The skill opens the certificate, confirms its obligations O1..On map one-to-one onto the task's Definition of done (On is the Reviewable item), and reads the premises. For each obligation it collects exactly the named evidence (reads the named file:line, runs the named test and observes the result, produces the named trace) and runs the named checks (resolving each named call via the 5-step sequence to defeat shadowing). It sets each Status to SATISFIED only with evidence in hand, UNSATISFIED when the evidence refutes the claim, or UNVERIFIED when evidence could not be produced — never SATISFIED by assumption; the Reviewable obligation is exercised, not assumed. It traces each named downstream caller (PRESERVED/REGRESSION), then DERIVES VERDICT (DONE/PARTIAL/NOT_DONE), CONFIDENCE, and a one-line SUMMARY by the rubric, writing them and State: Validated YYYY-MM-DD into the certificate's Conclusion. A DONE verdict with any non-SATISFIED obligation is rejected as malformed. The validator is distinct from the implementer; the certificate protocol text is not rewritten.",
       "files": []
     },

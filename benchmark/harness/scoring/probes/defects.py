@@ -1,8 +1,8 @@
 """Injected-defect taxonomy, generation, and catch-rate accounting.
 
-Implements the **gate catch rate** of ``docs/benchmark/specs/04-metrics.md``
+Implements the **gate catch rate** of ``.specs/benchmark/specs/04-metrics.md``
 §Bucket 3 and the **injected defects** half of
-``docs/benchmark/specs/06-scoring-and-statistics.md`` §Gate-efficacy probes.
+``.specs/benchmark/specs/06-scoring-and-statistics.md`` §Gate-efficacy probes.
 
 A probe takes a KNOWN-bad patch — a small, classified mutation of a correct
 solution — injects it into a gated build, and records whether a gate flagged it

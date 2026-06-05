@@ -4,28 +4,28 @@
     {
       "id": 1,
       "name": "change-spec-stale-reference",
-      "prompt": "Review the change spec at docs/specs/changes/2026-05-21-add_tagging_to_entries.md against the canonical spec before we accept it. It adds a Tag entity and a tags object store. Note: docs/editor/specs/04-persistence.md was renamed to 04-persistence-and-export.md last week.",
-      "expected_output": "The skill confirms it is applying Template R1 (change spec vs canonical), reads the change spec and the canonical pages it targets, and runs the reference-resolution sequence on each Affected-spec-pages entry and Proposed-changes block. It catches that the persistence block targets docs/editor/specs/04-persistence.md, which no longer exists (renamed to 04-persistence-and-export.md), classifying it UNRESOLVED (broken target). The consistency trace and schema check on the domain-model blocks pass. The verdict is INCONSISTENT with a SUMMARY naming the renamed page, and SUGGESTIONS to update the Affected table, the persistence block heading, and the Merge plan to the new path. It does not edit the change spec itself unprompted.",
+      "prompt": "Review the change spec at .specs/changes/2026-05-21-add_tagging_to_entries.md against the canonical spec before we accept it. It adds a Tag entity and a tags object store. Note: .specs/editor/specs/04-persistence.md was renamed to 04-persistence-and-export.md last week.",
+      "expected_output": "The skill confirms it is applying Template R1 (change spec vs canonical), reads the change spec and the canonical pages it targets, and runs the reference-resolution sequence on each Affected-spec-pages entry and Proposed-changes block. It catches that the persistence block targets .specs/editor/specs/04-persistence.md, which no longer exists (renamed to 04-persistence-and-export.md), classifying it UNRESOLVED (broken target). The consistency trace and schema check on the domain-model blocks pass. The verdict is INCONSISTENT with a SUMMARY naming the renamed page, and SUGGESTIONS to update the Affected table, the persistence block heading, and the Merge plan to the new path. It does not edit the change spec itself unprompted.",
       "files": []
     },
     {
       "id": 2,
       "name": "spec-code-divergence-audit",
-      "prompt": "Does the implementation match the spec? Check docs/editor/specs/01-domain-model.md against the code in src/domain/. The spec claims Entry (id, body, createdAt, updatedAt), Workspace, and Tag entities.",
+      "prompt": "Does the implementation match the spec? Check .specs/editor/specs/01-domain-model.md against the code in src/domain/. The spec claims Entry (id, body, createdAt, updatedAt), Workspace, and Tag entities.",
       "expected_output": "The skill confirms it is applying Template R2 (canonical vs code), maps the page to src/domain/, and runs the forward claim-resolution pass and the reverse coverage pass. It reports Entry as a MISMATCH (spec claims updatedAt; the type lacks it), Tag as MISSING impl (body describes an entity no code backs), Workspace as CONFORMS, and any code entity not in the spec (e.g. a Draft type) as UNSPEC'D. Divergence classification routes each: the missing Tag is flagged as a divergence per spec-creator's core principle (move to Open question or draft a change spec, do not leave asserted in the body), the unspec'd entity is offered as a new body section, the mismatch asks which side is the source of truth. Verdict DIVERGES with a DIVERGENCES list naming each by anchor. The skill suggests edits but hands authoring back to spec-creator.",
       "files": []
     },
     {
       "id": 3,
       "name": "full-review-r2-then-r1",
-      "prompt": "Do a full review of the editor spec set in docs/editor/specs/ — check it against the code, and also validate the pending change spec under docs/specs/changes/ before we merge it.",
+      "prompt": "Do a full review of the editor spec set in .specs/editor/specs/ — check it against the code, and also validate the pending change spec under .specs/changes/ before we merge it.",
       "expected_output": "The skill states it will run both modes, R2 first (confirm the canonical base is accurate against the code) then R1 (check the pending change spec against that base), and explains the ordering — a change spec built on a stale canonical page is worth catching first. For each canonical page it runs R2's forward and reverse passes and lists any divergences; for the change spec it runs R1's reference-resolution, consistency trace, and schema check. Each mode ends with its own fixed verdict block. Where R2 finds the canonical base already diverges from code in a section the change spec also touches, the skill calls that out as affecting the R1 result. All suggestions are concrete (path/heading/file:line anchors); no canonical page or change spec is rewritten without the user accepting, and accepted edits are handed to spec-creator.",
       "files": []
     },
     {
       "id": 4,
       "name": "change-spec-partial-implementation",
-      "prompt": "Has the change spec at docs/specs/changes/2026-05-21-add_tagging_to_entries.md been implemented yet? It adds a Tag entity, a tagIds field on Entry, a tags object store, and a tag picker in the editor toolbar. Check the code.",
+      "prompt": "Has the change spec at .specs/changes/2026-05-21-add_tagging_to_entries.md been implemented yet? It adds a Tag entity, a tagIds field on Entry, a tags object store, and a tag picker in the editor toolbar. Check the code.",
       "expected_output": "The skill confirms it is applying Template R3 (change spec vs code) and extracts the code-level expectations from the change spec's Type changes fragment and Implementation notes (Tag type, Entry.tagIds, tags store + version bump, toolbar tag picker), not from the Proposed-changes prose alone. It runs the implementation-resolution sequence on each expectation against the code: Tag type PRESENT (IMPLEMENTED), tags store PRESENT (IMPLEMENTED), Entry.tagIds ABSENT, toolbar tag picker ABSENT. Status determination tallies 2 of 4 and returns PARTIAL. The gap list names each ABSENT expectation with the specific code to add (tagIds on the Entry type/parser; tag picker wired into Toolbar.svelte) anchored to file:line, and cites where each came from in the change spec. Verdict block has IMPLEMENTATION STATUS: PARTIAL, COMPLETION: 2 of 4, and NEXT STEPS listing the code changes — plus a note that the change spec stays at Accepted until R3 returns IMPLEMENTED, at which point it can be flipped to Implemented and merged. The skill does not write the missing code or change the status.",
       "files": []
     }

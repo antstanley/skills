@@ -13,7 +13,7 @@ Read this when the user asks to propose, draft, or write up a change to an exist
 | Subject | What exists now | What will change |
 | Shape | Numbered directory of pages + schema sidecar | A **single** markdown document |
 | Tense in body | Present ("the editor exposes…") | Future / imperative ("the editor will expose…", "add…") |
-| Location | `docs/specs/`, `docs/<package>/specs/` | `docs/specs/changes/` |
+| Location | `.specs/`, `.specs/<package>/specs/` | `.specs/changes/` |
 | Naming | `NN-name.md`, kebab-case | `YYYY-MM-DD-short_snake_case_title.md` |
 | Lifecycle | `Draft` → `Implemented` → `Deprecated` | `Proposed` → `Accepted` → `Implemented` → `Merged` |
 | Aspirational content | Only in the closing block | Throughout the body — that is the point |
@@ -25,8 +25,8 @@ The "describes-what-exists" rule is **inverted** for change specs. A change spec
 ## Naming and location
 
 ```
-docs/specs/changes/YYYY-MM-DD-short_snake_case_title.md
-docs/specs/changes/merged/        ← merged change specs move here
+.specs/changes/YYYY-MM-DD-short_snake_case_title.md
+.specs/changes/merged/        ← merged change specs move here
 ```
 
 - **Date prefix** is the date the change spec was first drafted, ISO `YYYY-MM-DD`. It does not change as the spec moves through its lifecycle.
@@ -71,11 +71,11 @@ A change spec is a single document with this section set. Drop sections that do 
 
 | Canonical page | Nature of change |
 |---|---|
-| [`docs/editor/specs/01-domain-model.md`](../../editor/specs/01-domain-model.md) | Add `Tag` entity and its relationship to `Entry` |
-| [`docs/editor/specs/04-persistence.md`](../../editor/specs/04-persistence.md) | New `tags` object store and index |
-| [`canonical-types.schema.json`](../../editor/specs/canonical-types.schema.json) | Add `Tag` `$def`; add `tagIds` to `Entry` |
+| [`.specs/editor/specs/01-domain-model.md`](../editor/specs/01-domain-model.md) | Add `Tag` entity and its relationship to `Entry` |
+| [`.specs/editor/specs/04-persistence.md`](../editor/specs/04-persistence.md) | New `tags` object store and index |
+| [`canonical-types.schema.json`](../editor/specs/canonical-types.schema.json) | Add `Tag` `$def`; add `tagIds` to `Entry` |
 
-Link each affected page with a relative path that resolves from `docs/specs/changes/`. If the change adds a brand-new page to the canonical set, say so here ("Adds `docs/editor/specs/06-tagging.md`").
+Link each affected page with a relative path that resolves from `.specs/changes/`. If the change adds a brand-new page to the canonical set, say so here ("Adds `.specs/editor/specs/06-tagging.md`").
 
 ---
 
@@ -83,14 +83,14 @@ Link each affected page with a relative path that resolves from `docs/specs/chan
 
 One subsection per affected page. Reference the exact canonical section being changed, then give the delta written **in canonical voice** — the prose as it should read once merged. Mark each block as Add / Modify / Remove.
 
-### `docs/editor/specs/01-domain-model.md` → Entities (Add)
+### `.specs/editor/specs/01-domain-model.md` → Entities (Add)
 
 > A `Tag` (`tag_`) is a user-defined label applied to entries. It carries:
 > - `id` — `tag_<uuid7>`
 > - `name` — non-empty string, unique per workspace
 > - `createdAt` — timestamp
 
-### `docs/editor/specs/01-domain-model.md` → Relationships (Modify)
+### `.specs/editor/specs/01-domain-model.md` → Relationships (Modify)
 
 > `Entry *—* Tag`: an entry references many tags by id; a tag applies to many entries.
 
@@ -142,9 +142,9 @@ The mechanical steps to fold this change spec into the canonical spec once the c
 
 1. Apply each `Proposed changes` block to its canonical page; bump that page's `**Date:**` to the merge date.
 2. Fold the `Type changes` `$defs` into the canonical `canonical-types.schema.json`.
-3. If a new canonical page was named in `Affected spec pages`, create it and index it in `docs/README.md`.
-4. Flip this file's `**Status:**` to `Merged`, add a `**Merged:** YYYY-MM-DD` field to its header, and move it to `docs/specs/changes/merged/`.
-5. Update `docs/README.md`: remove the file from the pending list, leave the merged area pointing at `changes/merged/`.
+3. If a new canonical page was named in `Affected spec pages`, create it and index it in `.specs/README.md`.
+4. Flip this file's `**Status:**` to `Merged`, add a `**Merged:** YYYY-MM-DD` field to its header, and move it to `.specs/changes/merged/`.
+5. Update `.specs/README.md`: remove the file from the pending list, leave the merged area pointing at `changes/merged/`.
 
 ---
 
@@ -170,8 +170,8 @@ When the user says the change has shipped ("we implemented the tagging change, m
 
 1. Read the change spec and confirm its `Status` is `Implemented` (or move it there).
 2. Walk the `Merge plan` step by step. The `Proposed changes` blocks are the source of truth for the canonical edits.
-3. Verify after merge: every block landed on its canonical page, the schema folds in cleanly, internal links still resolve, and `docs/README.md` is updated.
-4. Move the file to `docs/specs/changes/merged/`, flip `Status` to `Merged`, stamp `**Merged:**`.
+3. Verify after merge: every block landed on its canonical page, the schema folds in cleanly, internal links still resolve, and `.specs/README.md` is updated.
+4. Move the file to `.specs/changes/merged/`, flip `Status` to `Merged`, stamp `**Merged:**`.
 
 The canonical spec now describes the new reality; the change spec is preserved as dated history of how it got there.
 
@@ -179,5 +179,5 @@ The canonical spec now describes the new reality; the change spec is preserved a
 
 ## Cross-linking
 
-- `docs/README.md` gains a **Change specs** section: a list of pending change specs under `docs/specs/changes/`, and a pointer to `docs/specs/changes/merged/` for history. A pending change spec the index does not reference is invisible.
-- Every link inside the change spec to a canonical page must resolve from `docs/specs/changes/` (so `../../editor/specs/…` for a per-package page, `../foo.md` for a global page).
+- `.specs/README.md` gains a **Change specs** section: a list of pending change specs under `.specs/changes/`, and a pointer to `.specs/changes/merged/` for history. A pending change spec the index does not reference is invisible.
+- Every link inside the change spec to a canonical page must resolve from `.specs/changes/` (so `../editor/specs/…` for a per-package page, `../foo.md` for a global page).

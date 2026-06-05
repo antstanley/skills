@@ -1,11 +1,11 @@
 """Tests for the A1 — Full pipeline arm (creator -> planner -> builder).
 
-A1 is the system under test (``docs/benchmark/specs/02-arms.md`` §A1). The
+A1 is the system under test (``.specs/benchmark/specs/02-arms.md`` §A1). The
 ``container`` RunBackend dispatches an ``Arm`` with a non-empty ``pluginsEnabled``
 to a NEW A1 path: it read-only mounts the host ``spec-*`` plugins, loads them with
 ``--plugin-dir``, and drives ONE orchestrating ``claude -p`` through the whole
 pipeline to an integration tip. The candidate patch is the CODE diff of that tip
-against the base commit, EXCLUDING the workflow artifacts (``docs/``), which are
+against the base commit, EXCLUDING the workflow artifacts (``.specs/``), which are
 captured into the ``ArtifactBundle`` instead.
 
 These tests assert:
@@ -13,7 +13,7 @@ These tests assert:
 - the A1 arm record is the configured full-pipeline arm (plugins, gates on, no
   spec, structured parallel execution);
 - the A1 path is selected for an A1-style plugin arm (and NOT for A0/agent);
-- ARTIFACT/PATCH SEPARATION — the docs/ workflow artifacts are excluded from the
+- ARTIFACT/PATCH SEPARATION — the .specs/ workflow artifacts are excluded from the
   code diff and classified into the spec/plan/certificate buckets — proven on a
   SYNTHETIC integration tip with NO API and NO Docker (a real git repo + the same
   exclude pathspec the backend uses, plus the pure ``_classify_artifacts``);
@@ -194,11 +194,11 @@ def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 
 def _build_synthetic_integration_tip(repo: Path) -> None:
-    """A synthetic integration tip: a base commit + CODE change + docs/ artifacts.
+    """A synthetic integration tip: a base commit + CODE change + .specs/ artifacts.
 
     Mirrors what the A1 path's container holds after the workflow: the package
     code is implemented (the scored change) AND the workflow wrote its spec/plan/
-    certificate files under ``docs/``. No API, no Docker — just a real git repo.
+    certificate files under ``.specs/``. No API, no Docker — just a real git repo.
     """
     _git(repo, "init", "-q")
     _git(repo, "config", "user.email", "t@t")
@@ -210,13 +210,14 @@ def _build_synthetic_integration_tip(repo: Path) -> None:
     _git(repo, "commit", "-q", "-m", "base")
     # The CODE change (what should be scored).
     (repo / "pkg" / "core.py").write_text("def f():\n    return 42\n")
-    # The workflow artifacts under docs/ (what must be EXCLUDED from the diff).
-    specs = repo / A1_ARTIFACT_DIR / "specs"
+    # The workflow artifacts under .specs/ (what must be EXCLUDED from the diff).
+    # .specs/ is the spec root: canonical spec pages live at its top level.
+    spec_root = repo / A1_ARTIFACT_DIR
     plans = repo / A1_ARTIFACT_DIR / "plans" / "2026-05-27-feature"
     certs = plans / "certificates"
-    specs.mkdir(parents=True)
+    spec_root.mkdir(parents=True)
     certs.mkdir(parents=True)
-    (specs / "00-overview.md").write_text("# spec\n")
+    (spec_root / "00-overview.md").write_text("# spec\n")
     (plans / "plan.md").write_text("# plan\n")
     (plans / "01-task.md").write_text("# task 1\n")
     (certs / "01-task.md").write_text("# certificate 1\n")
@@ -224,7 +225,7 @@ def _build_synthetic_integration_tip(repo: Path) -> None:
 
 
 def _diff_excluding_artifacts(repo: Path) -> str:
-    """The same CODE-only diff the backend extracts: ``docs/`` excluded."""
+    """The same CODE-only diff the backend extracts: ``.specs/`` excluded."""
     _git(repo, "add", "-A")
     result = _git(
         repo,
@@ -238,7 +239,7 @@ def _diff_excluding_artifacts(repo: Path) -> str:
 
 
 def test_workflow_artifacts_are_excluded_from_the_code_diff(tmp_path: Path) -> None:
-    """The candidate (code) diff carries the CODE change but NO docs/ artifacts."""
+    """The candidate (code) diff carries the CODE change but NO .specs/ artifacts."""
     repo = tmp_path / "tip"
     repo.mkdir()
     _build_synthetic_integration_tip(repo)
@@ -257,32 +258,33 @@ def test_workflow_artifacts_are_excluded_from_the_code_diff(tmp_path: Path) -> N
 
 
 def test_classify_artifacts_sorts_into_spec_plan_certificate_buckets() -> None:
-    """``_classify_artifacts`` buckets a docs/ walk by path: spec/plan/cert."""
+    """``_classify_artifacts`` buckets a .specs/ walk by path: spec/plan/cert."""
     fs = container_mod._ARTIFACT_FIELD_SEP
     rs = container_mod._ARTIFACT_RECORD_SEP
     records = [
-        f"docs/specs/00-overview.md{fs}# spec body",
-        f"docs/plans/2026-05-27-x/plan.md{fs}# plan body",
-        f"docs/plans/2026-05-27-x/01-task.md{fs}# task body",
-        f"docs/plans/2026-05-27-x/certificates/01-task.md{fs}# cert body",
-        f"docs/README.md{fs}# index",
+        f".specs/00-overview.md{fs}# spec body",
+        f".specs/plans/2026-05-27-x/plan.md{fs}# plan body",
+        f".specs/plans/2026-05-27-x/01-task.md{fs}# task body",
+        f".specs/plans/2026-05-27-x/certificates/01-task.md{fs}# cert body",
+        f".specs/README.md{fs}# index",
     ]
     raw = rs.join(records) + rs
 
     specs, plans, certs = ContainerRunBackend._classify_artifacts(raw)
 
-    assert any("docs/specs/00-overview.md" in s and "# spec body" in s for s in specs)
+    assert any(".specs/00-overview.md" in s and "# spec body" in s for s in specs)
     assert any("plan.md" in p for p in plans)
     assert any("01-task.md" in p for p in plans)
-    # The README under docs/ is kept (with the plan bucket), never dropped.
-    assert any("docs/README.md" in p for p in plans)
+    # The README at the .specs/ root is a spec-bucket artifact (.specs/ IS the
+    # spec root), captured and never dropped.
+    assert any(".specs/README.md" in s for s in specs)
     # The certificate goes to the certificate bucket, NOT the plan bucket.
     assert any("certificates/01-task.md" in c for c in certs)
     assert not any("certificates/" in p for p in plans)
 
 
 def test_classify_artifacts_handles_empty_walk() -> None:
-    """No docs/ artifacts -> three empty lists (an honest partial outcome)."""
+    """No .specs/ artifacts -> three empty lists (an honest partial outcome)."""
     specs, plans, certs = ContainerRunBackend._classify_artifacts("")
     assert specs == []
     assert plans == []

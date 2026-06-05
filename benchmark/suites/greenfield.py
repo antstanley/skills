@@ -1,6 +1,6 @@
 """The ``greenfield-features`` suite: Commit0-style build-from-spec instances.
 
-See ``docs/benchmark/specs/03-task-suites.md`` §Suite: ``greenfield-features``
+See ``.specs/benchmark/specs/03-task-suites.md`` §Suite: ``greenfield-features``
 and ``05-harness-architecture.md`` §Run container. Each instance is a prose
 specification of a MULTI-COMPONENT feature/small library, starting from a
 skeleton repo at a fixed commit; resolution is decided by a WITHHELD acceptance
@@ -399,7 +399,7 @@ def load_given_spec(slug: str) -> str:
     """Return the frozen given-spec markdown handed to arms A2 and A3 for ``slug``.
 
     This is the ready-made spec the A2/A3 recipes write into the run container
-    under ``docs/specs/`` BEFORE the workflow runs (replacing the spec-creator
+    under ``.specs/`` BEFORE the workflow runs (replacing the spec-creator
     stage). It is authored ONCE per instance to a fixed, documented quality bar
     (``benchmark.harness.arms.a2_a3.GIVEN_SPEC_QUALITY_BAR``) and is consumed
     identically by both arms, so spec variance does not leak into the deltas.

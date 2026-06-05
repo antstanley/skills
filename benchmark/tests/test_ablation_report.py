@@ -1,8 +1,8 @@
 """Ablation report tests: five-arm table, four delta rows, Holm-Bonferroni math.
 
 Verifies ``benchmark.harness.stats.ablation_report`` against authority in
-``docs/benchmark/specs/06-scoring-and-statistics.md`` §Reporting and
-``docs/benchmark/specs/02-arms.md`` §The pairwise deltas:
+``.specs/benchmark/specs/06-scoring-and-statistics.md`` §Reporting and
+``.specs/benchmark/specs/02-arms.md`` §The pairwise deltas:
 
 - the table includes every arm (A0..A4) and every metric column;
 - the four delta rows reference the correct arm pair (A1−A0, A1−A2, A2−A3,
@@ -486,15 +486,14 @@ def test_plan_metrics_populated_when_plan_artifacts_supplied() -> None:
     # parse: one component heading in the spec, one task file with an
     # Implements line pointing at it, and a plan.md index with a dep table.
     spec_entry = (
-        "docs/specs/02-components.md\n"
-        "# Spec\n\n## Component 1: tokenizer\n\nDoes things.\n"
+        ".specs/02-components.md\n# Spec\n\n## Component 1: tokenizer\n\nDoes things.\n"
     )
     task_entry = (
-        "docs/plans/p/01-tokenizer.md\n"
-        "**Implements:** `docs/specs/02-components.md` § Component 1: tokenizer\n"
+        ".specs/plans/p/01-tokenizer.md\n"
+        "**Implements:** `.specs/02-components.md` § Component 1: tokenizer\n"
     )
     plan_entry = (
-        "docs/plans/p/plan.md\n"
+        ".specs/plans/p/plan.md\n"
         "| Task | File | Depends on | Edge | Produces |\n"
         "| --- | --- | --- | --- | --- |\n"
         "| 01 | [01](01-tokenizer.md) | — | seed | the tokenizer |\n"

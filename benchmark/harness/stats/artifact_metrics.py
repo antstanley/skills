@@ -1,6 +1,6 @@
 """Plan-coverage and DAG-validity metrics over captured plan artifacts.
 
-Implements ``docs/benchmark/specs/04-metrics.md`` §Bucket 3 for the two
+Implements ``.specs/benchmark/specs/04-metrics.md`` §Bucket 3 for the two
 plan-artifact metrics that apply to the PLAN-PRODUCING arms (A1, A2, A3):
 
 - **Plan coverage** — the fraction of in-scope spec sections mapped to at least
@@ -19,10 +19,10 @@ captured bundle they are deterministic.
 Section -> task mapping (documented)
 ------------------------------------
 The benchmark's specs put each public component's contract under a
-``## Component N: <name>`` heading in ``docs/specs/02-components.md`` (see the
+``## Component N: <name>`` heading in ``.specs/02-components.md`` (see the
 greenfield suite). Those component sections are the IN-SCOPE spec sections: each
 is a contract a plan task must implement. Each plan task file carries an
-``**Implements:** `docs/specs/...` § <section>`` line naming the section it
+``**Implements:** `.specs/...` § <section>`` line naming the section it
 builds (see the captured A1 plan, e.g. ``01-tokenizer.md`` ->
 ``§ Component 1: tokenizer``). A section is COVERED when at least one task's
 ``Implements`` line references it. We match on the component's stable identity
@@ -52,7 +52,7 @@ _COMPONENT_HEADING_RE = re.compile(
 )
 
 #: A plan TASK file's ``Implements`` line, naming the spec section it builds:
-#: ``**Implements:** `docs/specs/...` § <section text>``. The section text is
+#: ``**Implements:** `.specs/...` § <section text>``. The section text is
 #: everything after the section marker (``§`` or ``Section``).
 _IMPLEMENTS_RE = re.compile(
     r"\*\*Implements:\*\*.*?(?:§|Section)\s*(.+?)\s*$", re.MULTILINE

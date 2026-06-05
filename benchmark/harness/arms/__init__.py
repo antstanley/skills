@@ -24,7 +24,6 @@ from benchmark.harness.arms.a1 import (
     A1_PLUGIN_DIR_NAMES,
     A1_PLUGINS_ENABLED,
     A1_SLUG,
-    A1_SPEC_SUBDIR,
     HOST_PLUGIN_MARKETPLACE_DIR,
     a1_prompt,
 )
@@ -82,7 +81,6 @@ __all__ = [
     "A1_PLUGINS_ENABLED",
     "A1_PLUGIN_DIR_NAMES",
     "A1_SLUG",
-    "A1_SPEC_SUBDIR",
     "A2",
     "A2_A3_MAX_BUDGET_USD",
     "A2_A3_MODEL",

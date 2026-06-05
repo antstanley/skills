@@ -6,7 +6,7 @@ Run through this before declaring a plan done. It enforces the core principle (r
 
 ## Folder and document structure
 
-- [ ] The plan is a **folder** at `docs/plans/YYYY-MM-DD-snake_case_title/` — or `docs/<package>/plans/…` (or a co-located `<package-location>/docs/plans/…`) for a per-package plan — with an ISO date prefix and lowercase snake_case title, not a single file.
+- [ ] The plan is a **folder** at `.specs/plans/YYYY-MM-DD-snake_case_title/` — or `.specs/<package>/plans/…` (or a co-located `<package-location>/.specs/plans/…`) for a per-package plan — with an ISO date prefix and lowercase snake_case title, not a single file.
 - [ ] The folder contains a `plan.md` plus one `NN-snake_case_task.md` file per task package.
 - [ ] `plan.md` header is `**Status:** … · **Date:** … · **Owner:** … · **Source spec:** …`; Status is one of `Draft`, `Accepted`, `In progress`, `Done`.
 - [ ] `plan.md` has a `Source and definition-of-done baseline` section naming the spec, what is already built, and where the per-task DoD comes from.
@@ -59,8 +59,8 @@ Run through this before declaring a plan done. It enforces the core principle (r
 
 ## Cross-links
 
-- [ ] **`docs/README.md` lists the plan** under a Plans section, pointed at the folder's `plan.md` (the index was created if absent). A plan the index does not reference is invisible.
-- [ ] Every link to a spec page resolves from the plan folder — from a repo-wide plan, `../../specs/foo.md` for a global page and `../../<package>/specs/NN-name.md` for a per-package page; from a per-package plan at `docs/<package>/plans/…`, the package's own spec is `../../specs/…` and a global page `../../../specs/…`.
+- [ ] **`.specs/README.md` lists the plan** under a Plans section, pointed at the folder's `plan.md` (the index was created if absent). A plan the index does not reference is invisible.
+- [ ] Every link to a spec page resolves from the plan folder — from a repo-wide plan, `../../foo.md` for a global page and `../../<package>/specs/NN-name.md` for a per-package page; from a per-package plan at `.specs/<package>/plans/…`, the package's own spec is `../../specs/…` and a global page `../../../…`.
 - [ ] `file:line` pointers in task files point at real paths in the current branch.
 
 ---

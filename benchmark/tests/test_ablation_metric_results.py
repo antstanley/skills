@@ -1,7 +1,7 @@
 """Universal MetricResult emission for every ablation column.
 
 Verifies :func:`benchmark.harness.stats.ablation_metric_results` against
-``docs/benchmark/specs/04-metrics.md`` §Implementation layout — each metric
+``.specs/benchmark/specs/04-metrics.md`` §Implementation layout — each metric
 is a named MetricResult keyed by (campaign, arm, suite, metricName), carrying
 ``value``/``ciLow``/``ciHigh``, and the universe of (Arm, Suite) records
 covers every applicable column in :data:`METRIC_COLUMNS`.
@@ -182,15 +182,14 @@ def _plan_artifacts_for_a1_a2_a3() -> tuple[dict[str, list[str]], dict[str, list
     Reused across tests so plan_coverage / dag_validity have data to read.
     """
     spec_entry = (
-        "docs/specs/02-components.md\n"
-        "# Spec\n\n## Component 1: tokenizer\n\nDoes things.\n"
+        ".specs/02-components.md\n# Spec\n\n## Component 1: tokenizer\n\nDoes things.\n"
     )
     task_entry = (
-        "docs/plans/p/01-tokenizer.md\n"
-        "**Implements:** `docs/specs/02-components.md` § Component 1: tokenizer\n"
+        ".specs/plans/p/01-tokenizer.md\n"
+        "**Implements:** `.specs/02-components.md` § Component 1: tokenizer\n"
     )
     plan_entry = (
-        "docs/plans/p/plan.md\n"
+        ".specs/plans/p/plan.md\n"
         "| Task | File | Depends on | Edge | Produces |\n"
         "| --- | --- | --- | --- | --- |\n"
         "| 01 | [01](01-tokenizer.md) | — | seed | the tokenizer |\n"

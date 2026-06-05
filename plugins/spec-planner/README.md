@@ -2,7 +2,7 @@
 
 Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done.
 
-Triggers on phrases like "plan the implementation", "break this spec into tasks", "what's the build order", "sequence the work", or "turn this change spec into a plan". The output is a plan **folder** at `docs/plans/YYYY-MM-DD-snake_case_title/` containing a `plan.md` (a Mermaid + dependency-table task graph where the table is the source of truth, the implementation order and milestones, and the standard `Assumptions / Decisions / Open questions` block) plus one markdown file per task package (`NN-snake_case_task.md`, numbered in build order) in hybrid form — structure, a step checklist, and a definition of done.
+Triggers on phrases like "plan the implementation", "break this spec into tasks", "what's the build order", "sequence the work", or "turn this change spec into a plan". The output is a plan **folder** at `.specs/plans/YYYY-MM-DD-snake_case_title/` containing a `plan.md` (a Mermaid + dependency-table task graph where the table is the source of truth, the implementation order and milestones, and the standard `Assumptions / Decisions / Open questions` block) plus one markdown file per task package (`NN-snake_case_task.md`, numbered in build order) in hybrid form — structure, a step checklist, and a definition of done.
 
 The plan's two load-bearing rules: every task package is an independently **reviewable** slice with a clear **definition of done** (drawn from the repo's own development guidelines), and the implementation order is biased so the work produces reviewable pieces early — if a feature is gated behind auth, auth is built first so the gated feature can be reviewed end to end.
 
