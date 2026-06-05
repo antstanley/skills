@@ -6,7 +6,7 @@ The **spec-workflow benchmark** (`.specs/benchmark/`) is a harness that measures
 
 This document is the entry point for the benchmark's design. It states the problem, the goals, the system shape, and the scope. Detail pages are linked from each section.
 
-The harness is implemented and running. The benchmark package under `benchmark/` covers every component this spec set defines — driver, backends (`local` and `container`), arms A0–A4, the greenfield-features and local-fixture suites, the scoring and conformance and probes layers, and the full five-arm ablation report. `Status: Built` records that the build has shipped; the implementation history is in [`.specs/plans/2026-05-27-spec_workflow_benchmark/`](../../plans/2026-05-27-spec_workflow_benchmark/plan.md).
+The harness is implemented and running. The benchmark package under `benchmark/` covers every component this spec set defines — driver, backends (`local` and `container`), arms A0–A5, the greenfield-features and local-fixture suites, the scoring and conformance and probes layers, and the full five-arm (A0–A4) ablation report. `Status: Built` records that the build has shipped; the implementation history is in [`.specs/plans/2026-05-27-spec_workflow_benchmark/`](../../plans/2026-05-27-spec_workflow_benchmark/plan.md).
 
 ---
 
@@ -21,7 +21,7 @@ Existing code benchmarks answer a narrower question. The established long-horizo
 ## Goals
 
 1. Measure the end-to-end value of the full `spec-*` pipeline against a plain single-agent baseline on the same model and the same tasks.
-2. Attribute that value to individual workflow stages — spec authoring, the two review gates, and structured-vs-merely-parallel execution — through a fixed set of ablation arms ([02-arms.md](02-arms.md)). Planning runs in every workflow arm; the closed five-arm set does not isolate it with a single-variable pair (a known limitation, [02-arms.md](02-arms.md) → Open questions).
+2. Attribute that value to individual workflow stages — spec authoring, the two review gates, and structured-vs-merely-parallel execution — through a fixed set of ablation arms ([02-arms.md](02-arms.md)). Planning runs in every workflow arm; the closed six-arm set does not isolate it with a single-variable pair (a known limitation, [02-arms.md](02-arms.md) → Open questions).
 3. Report outcomes against a hidden test oracle that the workflow's own gates never see, so the workflow cannot overfit the metric ([06-scoring-and-statistics.md](06-scoring-and-statistics.md)).
 4. Report cost alongside outcome, so a token-hungry workflow is judged on cost-matched resolution, not raw resolution.
 5. Measure artifacts the workflow produces — spec conformance, plan coverage, and gate efficacy — that a black-box outcome score cannot observe ([04-metrics.md](04-metrics.md)).
@@ -76,7 +76,7 @@ A **Campaign** fixes a model and runs every **Arm** over every **Suite** for a s
 | Page | Topic |
 |---|---|
 | [01-domain-model.md](01-domain-model.md) | Entities, IDs, lifecycles — Campaign, Trial, Arm, TaskInstance, ArtifactBundle, GateEvent, ScoreReport, MetricResult |
-| [02-arms.md](02-arms.md) | The five ablation arms and the pairwise deltas each isolates |
+| [02-arms.md](02-arms.md) | The six ablation arms and the pairwise deltas each isolates |
 | [03-task-suites.md](03-task-suites.md) | The greenfield feature suite and the local-fixture verification suite |
 | [04-metrics.md](04-metrics.md) | The four metric buckets: outcome, cost, process/artifact quality, robustness |
 | [05-harness-architecture.md](05-harness-architecture.md) | The driver, containerization, the BenchFlow substrate, the scoring-isolation rule |
@@ -89,7 +89,7 @@ A **Campaign** fixes a model and runs every **Arm** over every **Suite** for a s
 
 | Area | Design | Notes |
 |---|---|---|
-| Arms | Five: A0 baseline, A1 full pipeline, A2 plan+build, A3 gates on/off, A4 structured-vs-parallel | [02-arms.md](02-arms.md). All five are in scope from the first campaign. |
+| Arms | Six: A0 baseline, A1 full pipeline, A2 plan+build, A3 gates on/off, A4 structured-vs-parallel, A5 lighter pre-canned | [02-arms.md](02-arms.md). A0–A4 are the pairwise-delta arms the ablation report compares; A5 is an out-of-band gate-emission witness and cost-curve point. All ship from the first campaign. |
 | Suites | `greenfield-features` (newly authored), plus the `local-fixture` verification suite | [03-task-suites.md](03-task-suites.md). |
 | Oracle | Hidden `fail-to-pass` / `pass-to-pass`, plus a conformance judge | [06-scoring-and-statistics.md](06-scoring-and-statistics.md). The workflow's gates never see it. |
 | Substrate | BenchFlow `bench` SDK; Docker per trial | [05-harness-architecture.md](05-harness-architecture.md). jj and git both available in-container. |

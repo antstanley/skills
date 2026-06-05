@@ -81,7 +81,7 @@ Carries:
 
 - `id`, `createdAt`.
 - `model` — the fixed base model id (e.g. `claude-opus-4-7`).
-- `arms` — the Arm slugs included (all five by default).
+- `arms` — the Arm slugs included (the five ablation arms `A0`–`A4` by default; `A5` is the out-of-band pre-canned arm, included only when explicitly requested — [02-arms.md](02-arms.md)).
 - `suites` — the Suite slugs included.
 - `trialsPerInstance` — repetition count for Pass@k and nondeterminism.
 - `backend` — `container` (default) or `local`; the run/scoring backend the campaign uses.
@@ -109,6 +109,7 @@ Carries:
 - `specArtifacts` / `planArtifacts` / `certificateArtifacts` — the spec, plan, and done-certificate files the workflow wrote (empty for A0).
 - `transcript` — the full agent transcript.
 - `telemetry` — `{ inputTokens, outputTokens, costUsd, wallClockSeconds, agentTurns }`.
+- `taskWallClocks` — per-task wall-clock seconds for a workflow arm's intra-trial work, keyed by the plan task id the certificate stem identifies (e.g. `01-tokenizer`). Populated by the `container` backend from each captured certificate's `Elapsed: <seconds>s` line; it feeds the parallel-speedup metric ([04-metrics.md](04-metrics.md)). Absent on bundles produced before per-task timing was captured.
 
 ### GateEvent (`gate_`)
 

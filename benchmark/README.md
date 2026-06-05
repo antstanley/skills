@@ -9,7 +9,7 @@ benchmark/
   harness/
     domain.py           # entities (Campaign, Trial, Arm, TaskInstance, …)
     driver/             # run_campaign — matrix expand → drive → score → aggregate
-    arms/               # A0–A4 recipes
+    arms/               # A0–A5 recipes
     backends/           # local + container RunBackends + the shared Protocol
     scoring/            # local + container ScoringBackends, oracle, conformance, probes
     stats/              # outcome, cost+robustness, artifact metrics, ablation report
