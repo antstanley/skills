@@ -2,7 +2,7 @@
 
 How to slice a specification into task packages, connect them into a dependency graph, and order that graph so the work produces reviewable pieces as early as possible. Read this before Phases 2–3 of the skill.
 
-The output of this method is the input to [`plan-template.md`](plan-template.md): a set of task packages, a dependency table, and an implementation order grouped into milestones — which Phase 4 writes as a `plan.md` plus one numbered file per task.
+The output of this method is the input to [`plan-template.md`](plan-template.md): a set of task packages, a dependency table, and an implementation order grouped into milestones — which Phase 4 writes as a `plan.md` at the plan-folder root plus one numbered file per task, each authored into the `backlog/` subfolder of the kanban board.
 
 ---
 
@@ -17,7 +17,7 @@ A good package is:
 - **Independently verifiable.** It has a definition of done that can be checked without waiting for a later package.
 - **Vertically sliced where possible.** A thin path that works end to end (one route, its handler, its store access, a test) beats a horizontal layer (every model, with nothing that uses them). Vertical slices are reviewable; horizontal layers defer all review to the end.
 
-During decomposition, give each package a **working label** (a short name). The package becomes a file `NN-snake_case_task.md`, where the two-digit number `NN` is assigned in **implementation order** during Phase 4 — after the order is fixed in Phase 3. That number is then the package's id everywhere: the dependency table, the Mermaid graph, every cross-reference. Numbers are **append-only** once the plan is shared (a later task takes the next free number and records its real position in the order table) — never renumber, or every cross-reference breaks.
+During decomposition, give each package a **working label** (a short name). The package becomes a file `NN-snake_case_task.md` — authored into `backlog/` beside its `NN-snake_case_task-certificate.md` — where the two-digit number `NN` is assigned in **implementation order** during Phase 4, after the order is fixed in Phase 3. The file **moves between the kanban subfolders** (`backlog/` → `in-progress/` → `blocked/`/`done/`) as it is built, but `NN` is its **immutable identity** everywhere — the dependency table, the Mermaid graph, every cross-reference, the certificate name — and never changes with the file's location. Numbers are **append-only** once the plan is shared (a later task takes the next free number and records its real position in the order table) — never renumber, or every cross-reference breaks.
 
 ### Sizing
 
@@ -102,12 +102,12 @@ Spec: a journal app — entries persisted in IndexedDB, a calendar view to navig
 
 | Task | Depends on | Edge kind | Produces |
 |---|---|---|---|
-| 01 passphrase lock | — | — | a reviewer can unlock the app |
-| 02 entry store | — | — | entries persist across reloads |
-| 03 app shell | 01 | review | the shell renders behind the lock |
-| 04 editor | 01, 02, 03 | build, data, review | write and save an entry |
-| 05 calendar | 01, 02, 03 | build, data, review | navigate to a day and open its entry |
-| 06 export | 02, 04 | data, review | export the entries just written |
+| 01 · passphrase lock | — | — | a reviewer can unlock the app |
+| 02 · entry store | — | — | entries persist across reloads |
+| 03 · app shell | 01 | review | the shell renders behind the lock |
+| 04 · editor | 01, 02, 03 | build, data, review | a user can write and save an entry |
+| 05 · calendar | 01, 02, 03 | build, data, review | navigate to a day and open its entry |
+| 06 · export | 02, 04 | data, review | export the entries just written |
 
 ```mermaid
 graph TD
@@ -122,6 +122,6 @@ graph TD
   04 --> 06
 ```
 
-Note that every `Depends on` references a **lower** number — the guarantee you get from numbering in a valid implementation order. The files `01-passphrase_lock.md` … `06-export.md` therefore sort in build order.
+Note that every `Depends on` references a **lower** number — the guarantee you get from numbering in a valid implementation order. The `NN` prefix is the task's identity, not its location: each file is authored into `backlog/` and moves between subfolders as it is built, sorting by `NN` *within* whichever subfolder currently holds it. The folder shows current status; the number shows build sequence.
 
 **Milestones:** *M1 (01, 02, 03)* — a reviewer can unlock the app and see an empty shell backed by a working store. *M2 (04, 05)* — write an entry and navigate to it on the calendar. *M3 (06)* — export the entries created in M2.
