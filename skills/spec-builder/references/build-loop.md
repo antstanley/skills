@@ -19,7 +19,8 @@ ready ─► implement ─► gate 1: semi-formal review ─► gate 2: validate
    *Integration point*; commands in workspaces.md) so the builder's base holds its
    dependencies' work.
 2. Assemble the brief from the task file ([`subagent-brief.md`](subagent-brief.md)) and
-   dispatch the implementer sub-agent into the workspace. Mark the task `In progress`.
+   dispatch the implementer sub-agent into the workspace. Move the task — `backlog/NN-*.md`
+   and its `NN-*-certificate.md` — into `in-progress/`, on the main tree.
 3. The sub-agent builds only this task, runs the repo's test/lint commands in its
    workspace, and reports back: files changed, how each DoD item is met, command results,
    and anything incomplete. It does **not** mark the task done.
@@ -47,9 +48,10 @@ that the review was skipped as trivial and why; do not fabricate a certificate f
 Run **validate-done-certificate** against the (now review-clean) workspace diff, again by
 an agent that is **not** the implementer.
 
-- Input: the diff, the task's `Definition of done`, and `certificates/NN-<task>.md` if it
-  exists. With a certificate, discharge it; without one, derive obligations from the DoD
-  and discharge those (the protocol's no-certificate fallback).
+- Input: the diff, the task's `Definition of done`, and the task's co-located
+  `in-progress/NN-<task>-certificate.md` if it exists — read from the **main tree**, never a
+  sub-agent's workspace copy. With a certificate, discharge it; without one, derive obligations
+  from the DoD and discharge those (the protocol's no-certificate fallback).
 - Output: `VERDICT: DONE | PARTIAL | NOT_DONE` with confidence; when a certificate exists,
   the validator writes the statuses and verdict into it and sets `State: Validated …`.
 - **Pass:** `DONE` → proceed to merge.
@@ -59,14 +61,17 @@ Both gates pass = correct **and** complete. Either alone is insufficient: a `COR
 that is `PARTIAL` does the wrong scope well; a `DONE` diff that is `BUGGY` meets the
 checklist while breaking something it touched.
 
-## Step 4 — Merge and mark done
+## Step 4 — Merge and move to done/
 
 Only when gate 1 ∈ {CORRECT, LIKELY_CORRECT} **and** gate 2 = DONE:
 
 1. Fold the workspace into the integration point and advance the tip (orchestration.md →
    *Merging a completed task*; commands in workspaces.md). Resolve any merge conflict and,
    if the merge changed the result, re-run both gates on the merged code for this task.
-2. Set the task file `Status: Done` and check off its remaining `- [ ]` items.
+2. **Move the task file and its `-certificate.md` from `in-progress/` into `done/`** (on the
+   main tree) and check off its remaining `- [ ]` items. This move is the commit point for
+   "Done" — the last action, *after* the code merges into the integration point. Then
+   recompute `plan.md`'s `Status` from the subfolders and write back only that field.
 3. Tear down the workspace (unregister + remove — workspaces.md → *Teardown*).
 4. Record in the build log: review verdict, validation verdict, merged. Recompute the
    scheduler's `ready` set — newly-unblocked tasks may now dispatch.
@@ -87,8 +92,9 @@ them.
    re-runs gate 2 (and gate 1 if the fix changed logic).
 3. **Bound the retries.** After a small number of attempts (default **2**) without both
    gates passing, **stop and surface to the user** with the diff, the standing verdicts,
-   and what remains — do not loop indefinitely or lower the bar to force a pass. Mark the
-   task **parked** (it stays `In progress` with a note), leave its workspace intact for
+   and what remains — do not loop indefinitely or lower the bar to force a pass. **Park the
+   task**: move it (and its `-certificate.md`) from `in-progress/` into `blocked/` on the main
+   tree and add a `**Blocked:** <reason>` line to its header. Leave its workspace intact for
    inspection, and let the scheduler continue with tasks that do not depend on it.
 4. **`UNVERIFIED`, not `UNSATISFIED`.** If gate 2 returned `PARTIAL` only because evidence
    could not be produced in the workspace (a test harness missing, a screen not
@@ -104,10 +110,14 @@ a partial build.
 ## Invariants (do not violate, whatever the mode)
 
 - **The implementer never grades its own work.** Both gates are run by a different agent.
-- **Both gates pass before merge.** No task reaches `Done` on one gate, or on the
+- **Both gates pass before merge.** No task reaches `done/` on one gate, or on the
   implementer's say-so.
-- **Status reflects reality.** `Done` means merged-and-both-gates-passed; a parked task is
-  never silently marked `Done`; `plan.md` is `Done` only when every task is.
+- **Folder membership reflects reality.** "Done" means the task file sits in `done/` after the
+  merge; a parked task is moved to `blocked/`, never left as if done; `plan.md`'s recomputed
+  `Status` is `Done` only when every task is in `done/`. A task is in **exactly one** of the
+  four subfolders, and on resume that membership is authoritative.
+- **Plan-folder moves are the orchestrator's, on the main tree.** A sub-agent never moves a
+  task file or touches the plan folder; it edits code in its workspace only.
 - **The merged result is what was reviewed.** If a merge conflict changed the code, the
   gates re-run on the merged code — a per-workspace pass does not cover the merge.
 - **Failures surface; they do not get papered over.** The bar is not lowered to force a

@@ -75,7 +75,9 @@ sub-agent isolation:
   and judge only against the task's definition of done. This is weaker than a
   different agent grading the work (it cannot fully prevent self-grading bias),
   so **say so in the report**: note that gates ran in single-agent mode.
-- Merge and mark `Done` exactly as in the normal loop; update the plan board.
+- Merge and **move the task (with its `-certificate.md`) into `done/`** exactly as in the
+  normal loop — or into `blocked/` on a park — performed by the orchestrator on the main tree,
+  then recompute `plan.md`'s `Status` from the subfolders.
 
 State plainly in the build summary which mode ran. The whole point of the skill —
 two gates, neither self-reported — is best honoured by real sub-agents; the

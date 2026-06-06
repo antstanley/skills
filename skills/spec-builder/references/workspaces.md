@@ -15,6 +15,14 @@ colocated repo has both a `.jj` and a `.git`); detection checks jj first.
 **Core principle:** sibling-directory workspaces + a clean shared base + a verified-green
 starting point = reliable parallel isolation.
 
+**The plan folder is never in a workspace.** A task workspace holds only the repo's code; the
+plan folder (`plan.md` plus the `backlog/`/`in-progress/`/`blocked/`/`done/` subfolders) stays
+on the orchestrator's **main working tree**. Moving a task file and its `-certificate.md`
+between subfolders — the kanban status transition — is a main-tree-only operation the
+orchestrator performs; a sub-agent never moves a task file or touches the plan folder. The
+gates read each task's and certificate's content from the main-tree location, never from a
+workspace copy.
+
 ---
 
 ## Detection — which backend, jj preferred

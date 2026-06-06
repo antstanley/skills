@@ -26,7 +26,7 @@ From the plan folder, gather for task `NN`:
 | `NN-<task>.md` `Definition of done` | the DoD checklist | the bar the work is judged against (and the gates) |
 | `plan.md` DoD baseline | the repo's development-guidelines source | the testing / lint / limits discipline every task inherits |
 | The referenced spec sections | the actual prose from `Implements` | behavior detail — pull the sections, not the whole spec set |
-| `certificates/NN-<task>.md` | **summary only** — that a certificate exists | so the builder knows the completeness bar; do **not** hand over the certificate body |
+| the task's co-located `NN-<task>-certificate.md` | **summary only** — that a certificate exists | so the builder knows the completeness bar; do **not** hand over the certificate body |
 
 **Withhold the certificate's evidence/checks from the implementer.** The certificate is
 the validator's protocol. A builder who reads "run `lock.test.ts › rejects wrong
@@ -34,11 +34,12 @@ passphrase`" may write code that passes that one named test rather than the gene
 behavior. The builder gets the *definition of done* (the claim); the validator holds the
 *certificate* (the proof). This keeps the two genuinely independent.
 
-Resolve spec-section links from the plan folder (from a repo-wide plan, `../../…` for a
-global page and `../../<package>/specs/…` for a per-package page; from a plan under
-`.specs/<package>/plans/`, the package's own spec is `../../specs/…` and a global page
-`../../../…`) and include the relevant text in the brief so
-the sub-agent need not go hunting.
+Resolve spec-section links from the task's subfolder — one level deeper than the plan root
+(from a repo-wide plan, `../../../…` for a global page and `../../../<package>/specs/…` for a
+per-package page; from a plan under `.specs/<package>/plans/`, the package's own spec is
+`../../../specs/…` and a global page `../../../../…`) — and include the relevant text in the
+brief so the sub-agent need not go hunting. Because `backlog/`, `in-progress/`, `blocked/`, and
+`done/` are all at the same depth, these links are stable as the task moves between subfolders.
 
 ---
 
