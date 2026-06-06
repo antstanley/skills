@@ -32,9 +32,11 @@ Three rules follow:
 2. **Two gates, both mandatory, neither self-graded.** Correctness (semi-formal-review) and
    completeness (validate-done-certificate) both pass before a task merges. The implementer
    runs neither on its own work.
-3. **The plan folder is the live board.** Task and plan `Status`, the checked-off steps, and
-   the discharged certificates are kept current as the build runs, so progress is readable
-   from the files and an interrupted build resumes from them.
+3. **The plan folder is a board of folders.** Tasks move between `backlog/`, `in-progress/`,
+   `blocked/`, and `done/` as their status changes — the task file and its co-located
+   certificate move together — and `plan.md`'s plan-level `Status` is recomputed from the
+   subfolder union. Progress is `ls`-legible and an interrupted build resumes from folder
+   membership.
 
 ## Relationship to the companion skills
 
@@ -54,10 +56,12 @@ spec-builder is the execution end of a four-skill pipeline:
   - **validate-done-certificate** (this plugin) — gate 2, completeness; discharges the
     certificate done-certificates authored, or the DoD checklist when none exists.
 
-It is **optimised for spec-planner plans** — it reads the dependency table as the source of
-truth, the `Implements / Produces / Pointers / Steps / Definition of done` task fields, and
-the `certificates/` subfolder. It can build a plan from another shape (a hand-written task
-list, a checklist) only insofar as that source carries the same essentials: a dependency
+It is **optimised for spec-planner plans** — it reads the dependency table (keyed by task
+number) as the source of truth, the `Implements / Produces / Pointers / Steps / Definition of
+done` task fields, and the `**Layout:** kanban` marker (or a `backlog/` subfolder) that
+distinguishes a kanban plan from a legacy-flat one. A task carries **no `Status` field** — its
+status is the subfolder it sits in. It can build a plan from another shape (a hand-written
+task list, a checklist) only insofar as that source carries the same essentials: a dependency
 order and a per-task definition of done. Missing those, send the user to spec-planner first.
 
 ## When to apply this skill
@@ -112,17 +116,26 @@ harness can do that — gate on the **capability**, not on which harness you are
 
 1. Locate the plan folder; detect the VCS backend and pick it — jj if present (preferred,
    even in a colocated repo), else git ([`references/workspaces.md`](references/workspaces.md));
-   announce the choice. Read `plan.md`, every `NN-<task>.md`, and `certificates/` if present.
+   announce the choice. **Detect the layout:** a `**Layout:** kanban` marker in `plan.md` (or a
+   `backlog/` subfolder) means kanban — enumerate the task set as the **union** of `backlog/`,
+   `in-progress/`, `blocked/`, and `done/` (a missing subfolder is empty) and read `plan.md`
+   plus every `NN-<task>.md` with its co-located `NN-<task>-certificate.md`. A plan with
+   **neither** marker nor `backlog/` — task files flat at the folder root — is **legacy-flat**:
+   migrate it in place before building (create the subfolders, move each task by its
+   `**Status:**` value — `Done`→`done/`, `In progress`→`in-progress/`, anything else→`backlog/` —
+   relocate each `certificates/NN-*.md` to a co-located `NN-*-certificate.md`, drop the per-task
+   `Status` field, and stamp `**Layout:** kanban`; see
+   [`references/orchestration.md`](references/orchestration.md) → *Migrating a legacy-flat plan*).
    **Check `plan.md` `Status` before building:** a `Draft` plan has not been agreed — confirm
    the decomposition and order with the user and promote it to `Accepted` before dispatching
-   any task. `Accepted` proceeds. `In progress` resumes from the task statuses. `Done` is
+   any task. `Accepted` proceeds. `In progress` resumes from folder membership. `Done` is
    already built — say so rather than rebuilding. (spec-planner emits `Draft`; spec-builder
    owns the `Draft → Accepted` promotion at this handoff.)
 2. Resolve `execution_mode` and `max_parallel_agents` (defaults: parallel, 4) from any
    `.claude/spec-builder.local.md` and the invocation; echo the resolved settings back.
 3. Build the schedule from the **dependency table** (the source of truth, not the Mermaid
-   graph); sanity-check the DAG (no cycles, every dependency a real lower number); read each
-   task's `Status` so already-`Done` tasks are treated as preconditions. See
+   graph), keyed by task number; sanity-check the DAG (no cycles, every dependency a real lower
+   number); treat tasks already in `done/` as preconditions. See
    [`references/orchestration.md`](references/orchestration.md).
 
 ### Phase 2 — Establish the base and the integration point
@@ -141,18 +154,21 @@ current integration point, each via a context-sized brief
 ([`references/subagent-brief.md`](references/subagent-brief.md)). Dispatch a wave's
 independent agents concurrently. Sequential mode is the same loop with the cap at 1.
 
-### Phase 4 — Gate, merge, and update status per task
+### Phase 4 — Gate, merge, and move per task
 
 Each task runs the build loop ([`references/build-loop.md`](references/build-loop.md)):
 implement → **gate 1: semi-formal-review** (correctness) → **gate 2: validate-done-certificate**
-(completeness) → merge into the integration point → mark `Done`. A failed gate re-dispatches
-the implementer with the verdict as feedback, bounded by a small retry count; past that, the
-task is parked and surfaced to the user. Update the task file `Status`, check off its steps,
-let the validator write the certificate verdict, and recompute the ready set as each task lands.
+(completeness) → merge into the integration point → move the task into `done/`. A failed gate
+re-dispatches the implementer with the verdict as feedback, bounded by a small retry count;
+past that, the task is parked — moved into `blocked/` with a `**Blocked:** <reason>` line — and
+surfaced to the user. The orchestrator moves the task file and its certificate between
+subfolders on the main tree, checks off its steps, lets the validator write the certificate
+verdict, recomputes `plan.md`'s `Status` from the subfolders, and recomputes the ready set as
+each task lands.
 
 ### Phase 5 — Finish and report
 
-When every task is `Done`, set `plan.md` `Status: Done`, confirm the integration point
+When every task is in `done/`, `plan.md`'s recomputed `Status` is `Done`; confirm the integration point
 holds the whole build and the suite is green on it, and report the build summary: tasks
 built, the review and validation verdict per task, any parked tasks and why, and where the
 integrated work sits. Shipping it — a jj bookmark, or merging the git integration branch
