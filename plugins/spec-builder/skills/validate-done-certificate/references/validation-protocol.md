@@ -16,10 +16,15 @@ read them once; this file does not restate them.
 
 ## Inputs
 
-- **The certificate** — `.specs/plans/<plan>/certificates/NN-<task>.md` for a spec-planner
-  plan, or wherever the task's certificate lives.
-- **The task file** — `NN-<task>.md`: its `Produces`, `Pointers`, and the
-  `## Definition of done` checklist the certificate's obligations mirror one-to-one.
+- **The certificate** — for a spec-planner plan, the co-located
+  `.specs/plans/<plan>/<current-subfolder>/NN-<task>-certificate.md`, where
+  `<current-subfolder>` is whichever of `backlog/`, `in-progress/`, `blocked/`, or `done/`
+  currently holds the task (`in-progress/` when spec-builder runs this gate). Read it from the
+  orchestrator's **main tree**, never a sub-agent's workspace copy. (Or wherever the task's
+  certificate lives, for a non-plan task.)
+- **The task file** — the certificate's same-subfolder sibling `<current-subfolder>/NN-<task>.md`:
+  its `Produces`, `Pointers`, and the `## Definition of done` checklist the certificate's
+  obligations mirror one-to-one.
 - **The implementation** — the actual code/diff to validate (in spec-builder, the task
   sub-agent's workspace revision).
 

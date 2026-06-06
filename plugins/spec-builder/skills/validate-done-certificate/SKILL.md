@@ -40,7 +40,10 @@ own homework re-asserts its own assumptions.
   checkpoints against different rubrics.
 - **Run by an agent other than the task's implementer** — in spec-builder the implementer
   is a sub-agent in its own workspace; the validator is the orchestrator or a separate
-  validator sub-agent working against that workspace's diff.
+  validator sub-agent working against that workspace's diff. It reads the task's
+  `NN-<task>-certificate.md` from the task's **current kanban subfolder on the main tree**
+  (`in-progress/` when the gate runs) — not from a `certificates/` path, and not from a
+  sub-agent's workspace copy.
 
 ## When to apply this skill
 
@@ -66,7 +69,8 @@ own homework re-asserts its own assumptions.
 
 Follow [`references/validation-protocol.md`](references/validation-protocol.md):
 
-1. **Read the contract.** Open the certificate (or the DoD when none exists); confirm the
+1. **Read the contract.** Open the certificate — the co-located `NN-<task>-certificate.md` in
+   the task's current subfolder on the main tree (or the DoD when none exists); confirm the
    obligations map one-to-one onto the DoD items; read the premises and the regression surface.
 2. **Discharge each obligation.** Collect the named evidence, run the named checks (resolve
    each named call through the 5-step sequence), and set each status from what the evidence
