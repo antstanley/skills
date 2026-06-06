@@ -37,7 +37,7 @@ The certificate is written **blank** and discharged by someone else. When you ha
 ```markdown
 # Done Certificate — Task NN: <title>
 
-**Task:** [NN-snake_case_task.md](../NN-snake_case_task.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [NN-snake_case_task.md](NN-snake_case_task.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored YYYY-MM-DD — unverified   <!-- validator sets: Validated YYYY-MM-DD -->
 
 > This certificate is a verification protocol for Task NN. A validating agent discharges it:
@@ -118,7 +118,7 @@ The certificate this skill authors from it — every status and the verdict left
 ```markdown
 # Done Certificate — Task 01: passphrase lock
 
-**Task:** [01-passphrase_lock.md](../01-passphrase_lock.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [01-passphrase_lock.md](01-passphrase_lock.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-05-24 — unverified
 
 > Verification protocol for Task 01. A validating agent discharges it: collect each obligation's

@@ -86,14 +86,14 @@ The verdict rubric the certificate carries, for the validator to apply:
 
 ## Where the certificate lives
 
-- **For a spec-planner plan:** one certificate per task in a `certificates/` subfolder of the plan folder, named to mirror the task file — `.specs/plans/YYYY-MM-DD-title/certificates/NN-snake_case_task.md`. The `NN` matches the task it certifies, so the folder sorts in implementation order alongside the tasks. The certificate links up to its task (`../NN-…md`) and to `plan.md` (`../plan.md`); the task file may add a `**Certificate:** [certificates/NN-…md](certificates/NN-…md)` line to its header so the link is two-way.
+- **For a spec-planner plan:** one certificate per task **co-located beside its task**, named `NN-snake_case_task-certificate.md` (the `-certificate` suffix avoids colliding with the task's own `NN-snake_case_task.md` in the same folder). It is authored into `backlog/` alongside its still-unbuilt task and moves with the task through `in-progress/` (or `blocked/`) and into `done/` as a single unit — there is **no** dedicated `certificates/` subfolder. Because the certificate and task always share a directory, their cross-links are same-directory and survive every move unchanged: the certificate links to its task as `[NN-…md](NN-…md)` and to the plan as `[plan.md](../plan.md)`; the task file carries a `**Certificate:** [NN-…-certificate.md](NN-…-certificate.md)` line in its header so the link is two-way.
 - **Standalone (no plan folder):** write to `.specs/certificates/<snake_case_task>.md`, or alongside the artifact the task lives in if the user names a location. Link to whatever defines the task's DoD.
 
-Numbers are append-only, exactly as in spec-planner: a certificate keeps its task's number; a task added later takes the next free number.
+Numbers are append-only, exactly as in spec-planner: a certificate keeps its task's number, and a task added later takes the next free number — the next-free-`NN` scan spans the **union of `backlog/`, `in-progress/`, `blocked/`, and `done/`** (everywhere a task can sit), not a single folder.
 
 ## When invoked by spec-planner
 
-spec-planner may delegate here after Phase 4, when done certificates are part of the plan. The DoD baseline, owner, and task numbering are already established — do not re-derive them. Write one certificate per task file into the plan folder's `certificates/` subfolder (see [§Where the certificate lives](#where-the-certificate-lives)), add the two-way `**Certificate:**` link to each task header, and leave every certificate unverified. spec-planner owns the plan and its cross-link pass; done-certificates owns the `certificates/` subfolder.
+spec-planner may delegate here after Phase 4, when done certificates are part of the plan. The DoD baseline, owner, and task numbering are already established — do not re-derive them. Write one certificate per task file **beside its task in `backlog/`** (see [§Where the certificate lives](#where-the-certificate-lives)), add the two-way `**Certificate:**` link to each task header, and leave every certificate unverified. spec-planner owns the plan and its cross-link pass; done-certificates authors certificates into `backlog/` and owns their content; spec-builder owns moving them (with their tasks) between subfolders as the build runs.
 
 ## What NOT to do
 
