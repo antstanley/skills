@@ -1,6 +1,6 @@
 # Plan: Add live in-container runtime verification
 
-**Status:** Done · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Source spec:** [changes/2026-05-28-add_live_container_verification.md](../../benchmark/specs/changes/merged/2026-05-28-add_live_container_verification.md)
+**Status:** Done · **Layout:** kanban · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Source spec:** [changes/2026-05-28-add_live_container_verification.md](../../benchmark/specs/changes/merged/2026-05-28-add_live_container_verification.md)
 
 > **Built 2026-05-28 (spec-builder).** All three tasks `Done`, each through both gates run by an agent other than the implementer. 01 — semi-formal-review LIKELY_CORRECT (one host-side fault found and fixed: a doubled `REPO_SUBDIR` that had silently disabled the content-integrity half), validate-done DONE. 02 — LIKELY_CORRECT, DONE. 03 — CORRECT, DONE. Integrated on the `spec-workflow-benchmark` line; `uv run pytest benchmark/tests` green (332 passed, 7 skipped — the 7th skip is the new container witness; the live Docker/`claude -p` path is gated and reviewed by reading). Produced `benchmark/harness/run_container_check.py` and `benchmark/tests/test_live_container.py`; documented the `BENCHMARK_RUN_CONTAINER_LIVE` opt-in in `benchmark/README.md`.
 

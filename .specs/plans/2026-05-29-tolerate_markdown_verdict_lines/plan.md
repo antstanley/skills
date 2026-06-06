@@ -1,6 +1,6 @@
 # Plan: Tolerate markdown emphasis in discharged `VERDICT:` lines
 
-**Status:** Proposed · **Date:** 2026-05-29 · **Owner:** Ant Stanley · **Source spec:** [changes/2026-05-29-tolerate_markdown_verdict_lines.md](../../benchmark/specs/changes/merged/2026-05-29-tolerate_markdown_verdict_lines.md)
+**Status:** Proposed · **Layout:** kanban · **Date:** 2026-05-29 · **Owner:** Ant Stanley · **Source spec:** [changes/2026-05-29-tolerate_markdown_verdict_lines.md](../../benchmark/specs/changes/merged/2026-05-29-tolerate_markdown_verdict_lines.md)
 
 > Single-task plan: widen two label regexes in `a2_a3.py` to tolerate markdown emphasis around the `VERDICT:` label, plus a regression test on the real live `**VERDICT:** DONE` shape. No domain, schema, arm, or metric change.
 

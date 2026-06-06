@@ -1,6 +1,6 @@
 # Plan: Raise the recursive-arm workflow timeout and budget
 
-**Status:** Proposed · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Source spec:** [changes/2026-05-28-raise_recursive_arm_timeout_budget.md](../../benchmark/specs/changes/merged/2026-05-28-raise_recursive_arm_timeout_budget.md)
+**Status:** Proposed · **Layout:** kanban · **Date:** 2026-05-28 · **Owner:** Ant Stanley · **Source spec:** [changes/2026-05-28-raise_recursive_arm_timeout_budget.md](../../benchmark/specs/changes/merged/2026-05-28-raise_recursive_arm_timeout_budget.md)
 
 > Single-task plan: move two named constants and let the existing A2/A3/A4 budget derivations track the raised value. No domain, schema, arm, or metric change.
 
