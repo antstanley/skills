@@ -1,38 +1,50 @@
 # Plan templates
 
-A plan is a **folder**, not a single file. Repo-wide plans live under the top-level `.specs/plans/`; a plan that targets one package lives under `.specs/<package>/plans/` by default (or a co-located `<package-location>/.specs/plans/`), where `<package>` is the app/package/workspace name. The folder is named `YYYY-MM-DD-snake_case_title/` — an ISO date prefix (the date drafted) then a lowercase snake_case short title, e.g. `.specs/plans/2026-05-22-add_auth_flow/`. Inside it:
+A plan is a **folder**, not a single file. Repo-wide plans live under the top-level `.specs/plans/`; a plan that targets one package lives under `.specs/<package>/plans/` by default (or a co-located `<package-location>/.specs/plans/`), where `<package>` is the app/package/workspace name. The folder is named `YYYY-MM-DD-snake_case_title/` — an ISO date prefix (the date drafted) then a lowercase snake_case short title, e.g. `.specs/plans/2026-05-22-add_auth_flow/`. `plan.md` sits at its root; the task packages live in four status subfolders that double as a kanban board:
 
 ```
 .specs/plans/2026-05-22-add_auth_flow/
-├── plan.md                     ← overview: graph, order, closing block
-├── 01-passphrase_lock.md       ← one file per task package, NN- in implementation order
-├── 02-entry_store.md
-├── 03-app_shell.md
-└── …
+├── plan.md                       ← overview: graph, order, closing block (stays at root)
+├── backlog/                      ← not started
+│   ├── 01-passphrase_lock.md
+│   ├── 01-passphrase_lock-certificate.md
+│   └── 02-entry_store.md
+├── in-progress/                  ← being built
+│   └── 03-app_shell.md
+├── blocked/                      ← parked on a failed gate (blocks dependents)
+└── done/                         ← merged, both gates passed
+    └── 04-editor.md
 ```
+
+A task's **status is the subfolder it sits in** — there is no per-task `Status` field. A new plan has **every task in `backlog/`** and nothing elsewhere: spec-planner creates `backlog/` and authors every task (and its certificate) into it, and spec-builder lazily creates `in-progress/`, `blocked/`, and `done/` as the first task moves into each. (git/jj do not track empty directories, so the three are not pre-created.)
 
 There are two skeletons below — one for `plan.md`, one for a task file. Read both before Phase 4 and adapt each to the spec rather than pasting it verbatim.
 
-The task **number** `NN` is the task's id everywhere in the plan (the dependency table, the Mermaid nodes, every cross-reference). It is assigned in **implementation order**, so the files sort the way the work is sequenced. Numbers are **append-only** once the plan is shared: a task added later takes the next free number and records its real position in the order table, rather than renumbering and breaking cross-references.
+The task **number** `NN` is the task's identity everywhere in the plan (the dependency table, the Mermaid nodes, every cross-reference, the certificate name) and is assigned in **implementation order**. A task keeps its `NN` as it moves between subfolders, so the number — not the file's location — is what every reference resolves to; within a subfolder, files sort by `NN`. Numbers are **append-only** once the plan is shared: a task added later takes the next free number and records its real position in the order table, rather than renumbering and breaking cross-references.
 
 ---
 
 ## Status lifecycle
 
-The plan's `Status` lives in `plan.md`; each task file carries its own `Status` so the folder doubles as a live task board.
+There are two axes of status. The **plan** carries its own `Status` in `plan.md`'s header. A **task**'s status is the subfolder it sits in — there is no per-task `Status` field; the folder *is* the board.
 
 | `plan.md` Status | Meaning |
 |---|---|
 | `Draft` | Drafted, awaiting agreement on the decomposition and order. Default for a new plan. |
 | `Accepted` | Agreed; ready to execute. |
-| `In progress` | Execution started; some task files are `Done`. |
-| `Done` | Every task file is `Done` and its definition of done met. Terminal. |
+| `In progress` | Execution started; some tasks have left `backlog/`. |
+| `Done` | Every task is in `done/` and its definition of done met. Terminal. |
 
-| Task `Status` | Meaning |
+spec-builder **recomputes** `plan.md`'s `Status` from the subfolders after each transition (`In progress` once any task has left `backlog/`, `Done` once every task is in `done/`) — it is the only field the builder writes back to `plan.md`. The planner authors a new plan as `Draft`.
+
+| Task subfolder | Meaning |
 |---|---|
-| `Todo` | Not started. |
-| `In progress` | Being implemented; some steps checked off. |
-| `Done` | All steps and the definition of done met. |
+| `backlog/` | Not started (Todo). Every task in a freshly authored plan. |
+| `in-progress/` | Being implemented. |
+| `blocked/` | Parked on a failed gate past its retry bound — gains a `**Blocked:** <reason>` header line and blocks its dependents. |
+| `done/` | Merged; both gates passed. |
+
+A task moves `backlog/` → `in-progress/` → `done/`, or to `blocked/` when a gate parks it; spec-builder performs the move on the main tree, and the task keeps its `NN` throughout.
 
 An abandoned plan is deleted, not kept as `Abandoned`; the version-control history records it existed.
 
@@ -43,7 +55,7 @@ An abandoned plan is deleted, not kept as `Abandoned`; the version-control histo
 ```markdown
 # Plan: <Human-readable title>
 
-**Status:** Draft · **Date:** YYYY-MM-DD · **Owner:** <Name> · **Source spec:** <path or name>
+**Status:** Draft · **Layout:** kanban · **Date:** YYYY-MM-DD · **Owner:** <Name> · **Source spec:** <path or name>
 
 <One-paragraph summary: what gets built, the shape of the decomposition, and the
 reviewability spine (what is built first and why). A reader should know the plan's
@@ -80,15 +92,19 @@ If the two ever disagree, the table wins — fix the graph to match.
 
 | Task | Depends on | Edge kind | Produces (reviewable artifact) |
 |---|---|---|---|
-| [01 passphrase lock](01-passphrase_lock.md) | — | — | a reviewer can unlock the app |
-| [02 entry store](02-entry_store.md) | — | — | entries persist across reloads |
-| [03 app shell](03-app_shell.md) | 01 | review | the shell renders behind the lock |
-| [04 editor](04-editor.md) | 01, 02, 03 | build, data, review | a user can write and save an entry |
+| 01 · passphrase lock | — | — | a reviewer can unlock the app |
+| 02 · entry store | — | — | entries persist across reloads |
+| 03 · app shell | 01 | review | the shell renders behind the lock |
+| 04 · editor | 01, 02, 03 | build, data, review | a user can write and save an entry |
 
-Each row links to the task file. `Depends on` references **lower** task numbers — a
-property of numbering in implementation order; if a row depends on a higher number,
-either the order or the dependency is wrong. Edge kind names why the dependency
-exists — build / data / contract / review (see task-decomposition.md).
+Each row keys a task by its **number and title** (`01 · passphrase lock`), **not** a
+path hyperlink — a task file moves between subfolders as it is built, so a reader or
+tool finds it by globbing its number across the four subfolders (`*/01-*.md`). Keying
+by number keeps `plan.md` stable: it is never rewritten when a task moves. `Depends on`
+references **lower** task numbers — a property of numbering in implementation order; if
+a row depends on a higher number, either the order or the dependency is wrong. Edge
+kind names why the dependency exists — build / data / contract / review (see
+task-decomposition.md).
 
 ---
 
@@ -129,12 +145,19 @@ though the store has no dependencies.>
 
 ## Task file skeleton (`NN-snake_case_task.md`)
 
+The task file lives in a subfolder (`backlog/` when authored); its status is that
+folder, so it carries **no `Status:` field**. It is authored beside its certificate
+(`NN-snake_case_task-certificate.md`) and the two move together as a unit. Because all
+four subfolders are at the same depth, the links below are authored once and stay
+correct as the task moves.
+
 ```markdown
 # Task NN — <package title>
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo
+**Plan:** [plan.md](../plan.md) · **Certificate:** [NN-snake_case_task-certificate.md](NN-snake_case_task-certificate.md)
 
-**Implements:** <spec page §heading this task satisfies — links resolve from the plan folder>
+**Implements:** <spec page §heading this task satisfies — links resolve from the task's
+subfolder: a global page is `../../../foo.md`, a per-package page `../../../<package>/specs/NN-name.md`>
 **Depends on:** — (or: NN, NN)
 **Produces:** <the reviewable artifact — what a reviewer can do once this lands>
 **Pointers:** <code entry points to touch, as file:line where known>
@@ -167,5 +190,5 @@ though the store has no dependencies.>
 - **`Produces`** is the heart of a task file: it names the reviewable artifact, which is what makes the task a unit of review rather than a unit of code.
 - **The DoD checklist always ends with a `Reviewable:` line** — the single concrete action that lets a reviewer sign off. This is the line that enforces the core principle at the task level.
 - **`Implements`** is what Phase 5's coverage check reads. Every in-scope spec section should appear in some task file's `Implements`, and every task file should name one.
-- **Status fields** make the folder a live board: bump a task's `Status` and check off its `- [ ]` items as it lands; bump `plan.md`'s `Status` as milestones complete.
+- **Folder membership** makes the plan a live board: spec-builder *moves* a task file (and its certificate) between `backlog/`/`in-progress/`/`blocked/`/`done/` as it lands and checks off its `- [ ]` items, and **recomputes** `plan.md`'s `Status` from the subfolders. The planner only authors the initial all-`backlog/` state.
 - **Voice:** future/imperative in steps and `Produces` ("add the session store", "a user can sign in"), past tense in Decisions, question form in Open questions. No marketing words, no emoji, no exclamation points.

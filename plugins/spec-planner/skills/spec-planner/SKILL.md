@@ -1,6 +1,6 @@
 ---
 name: spec-planner
-description: Build an implementation plan from a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. Triggers on "plan the implementation", "create an implementation plan", "plan out this spec", "break this spec into tasks", "build a task plan", "sequence the work", "how should we build this", "turn this change spec into a plan", or "what's the build order for X". Consumes a canonical spec set, a change spec, or an external/framework spec; produces a plan folder at .specs/plans/YYYY-MM-DD-snake_case_title/ (a plan.md task graph plus one hybrid task file per package).
+description: Build an implementation plan from a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. Triggers on "plan the implementation", "create an implementation plan", "plan out this spec", "break this spec into tasks", "build a task plan", "sequence the work", "how should we build this", "turn this change spec into a plan", or "what's the build order for X". Consumes a canonical spec set, a change spec, or an external/framework spec; produces a plan folder at .specs/plans/YYYY-MM-DD-snake_case_title/ — a plan.md task graph at the root plus a kanban board of subfolders (backlog/ · in-progress/ · blocked/ · done/) that hybrid task files move between, each authored into backlog/ beside its done certificate.
 ---
 
 # Spec Planner
@@ -72,31 +72,31 @@ The essentials:
 
 ### Phase 4 — Write the plan
 
-A plan is a **folder**, not a single file. Create `.specs/plans/YYYY-MM-DD-snake_case_title/` (ISO date prefix — today's date — then a lowercase snake_case short title, e.g. `.specs/plans/2026-05-22-add_auth_flow/`). Inside it:
+A plan is a **folder**, not a single file, laid out as a kanban board. Create `.specs/plans/YYYY-MM-DD-snake_case_title/` (ISO date prefix — today's date — then a lowercase snake_case short title, e.g. `.specs/plans/2026-05-22-add_auth_flow/`) with `plan.md` at its root and a `backlog/` subfolder. Inside it:
 
-- **`plan.md`** — the overview: header, summary, the source/DoD baseline, the task graph, the implementation order and milestones, and the closing block. It carries no task bodies — it links to them.
-- **One file per task package**, named `NN-snake_case_task.md` — a two-digit number prefix (assigned in **implementation order**, so the files sort the way the work is sequenced) plus a short snake_case description, e.g. `01-passphrase_lock.md`, `02-entry_store.md`. The number is the task's id everywhere else in the plan (the dependency table, the Mermaid graph). Numbers are append-only once the plan is shared — a task added later takes the next free number and records its true position in the order table, rather than renumbering and breaking cross-references.
+- **`plan.md`** — the overview: header (carrying `**Layout:** kanban`), summary, the source/DoD baseline, the task graph, the implementation order and milestones, and the closing block. It carries no task bodies — it references them by number.
+- **`backlog/`** — every task package, authored here as `NN-snake_case_task.md` (a two-digit number prefix in **implementation order** plus a short snake_case description, e.g. `01-passphrase_lock.md`, `02-entry_store.md`) beside its certificate. A freshly authored plan has **every task in `backlog/`**; `in-progress/`, `blocked/`, and `done/` are created later by spec-builder as tasks move (git/jj do not track empty directories, so they are not pre-created). The number is the task's identity everywhere else in the plan (the dependency table, the Mermaid graph) and survives every move. Numbers are append-only once the plan is shared — a task added later takes the next free number and records its true position in the order table, rather than renumbering and breaking cross-references.
 
 Follow the two skeletons in [`references/plan-template.md`](references/plan-template.md) — one for `plan.md`, one for a task file. The load-bearing rules the body keeps inline:
 
-- **`plan.md`** holds the header, the source/DoD baseline note, the **Task graph**, the implementation-order/milestones section, and the closing block — but no task bodies. The graph is a Mermaid `graph TD` plus a **dependency table that is the source of truth**: if the two disagree, the table wins.
-- **Each task file** (`NN-snake_case_task.md`) is `hybrid` form: header + `**Plan:**`/`**Status:**` line, a structure block (`Implements`, `Depends on`, `Produces`, `Pointers`), a step checklist, and a `Definition of done` checklist whose last item is always a `Reviewable:` line.
+- **`plan.md`** holds the header (with `**Layout:** kanban`), the source/DoD baseline note, the **Task graph**, the implementation-order/milestones section, and the closing block — but no task bodies. The graph is a Mermaid `graph TD` plus a **dependency table that is the source of truth** and keys each task by number, not a path link (the file moves between subfolders): if the two disagree, the table wins.
+- **Each task file** (`backlog/NN-snake_case_task.md`) is `hybrid` form: header + a `**Plan:** [plan.md](../plan.md)` / `**Certificate:**` line and **no `Status:` field** (the subfolder is the status), a structure block (`Implements`, `Depends on`, `Produces`, `Pointers`), a step checklist, and a `Definition of done` checklist whose last item is always a `Reviewable:` line.
 
 Voice: future/imperative for the work, past tense in Decisions, question form in Open questions — the same voice rules as spec-creator. No marketing words, no emoji, no exclamation points.
 
 ### Phase 4.5 — Author done certificates (default; prompt when interactive)
 
-Once the task files exist, delegate to **done-certificates** to author one certificate per task. This is **on by default**; the prompt-vs-include behavior and the delegation mechanics are in [§Adding done certificates](#adding-done-certificates) below.
+Once the task files exist in `backlog/`, delegate to **done-certificates** to author one certificate per task, **co-located beside its task in `backlog/`**. This is **on by default**; the prompt-vs-include behavior and the delegation mechanics are in [§Adding done certificates](#adding-done-certificates) below.
 
 ### Phase 5 — Cross-link and verify
 
 Mandatory, and easy to skip:
 
 1. **Update `.specs/README.md`** (creating it if absent) — add a **Plans** section listing the plan folder under `.specs/plans/`, pointed at its `plan.md`. A plan the index does not reference is invisible.
-2. **Verify every link resolves.** Spec-page links resolve from the plan folder (so `../../foo.md` for a global page — now at the `.specs/` root — and `../../<package>/specs/NN-name.md` for a per-package page, which keeps its `specs/` segment). Each dependency-table row links to a real task file in the folder, and each task file's `Plan:` link points back at `plan.md`.
-3. **Verify the graph is coherent** — the Mermaid edges and the dependency table agree, every task number in the table has a matching `NN-…md` file and vice versa, and the DAG has no cycle.
+2. **Verify every link resolves.** A task file sits one level deeper than the plan root (in a subfolder), so its spec-page links resolve from that subfolder: `../../../foo.md` for a global page (at the `.specs/` root) and `../../../<package>/specs/NN-name.md` for a per-package page (which keeps its `specs/` segment). Because all four subfolders are at the same depth, these links are authored once and stay correct as the task moves. Each dependency-table row references a task by **number** (found by glob across the four subfolders, `*/NN-*.md` — not a path link), and each task file's `Plan:` link points back at `../plan.md`.
+3. **Verify the graph is coherent** — the Mermaid edges and the dependency table agree, every task number in the table has a matching `NN-…md` file in one of the four subfolders and vice versa, and the DAG has no cycle.
 4. **Verify coverage** — every in-scope spec section maps to at least one task file, and every task file names the spec section it implements. Gaps go in `plan.md`'s Open questions, flagged to the user.
-5. **Verify the done certificates** (when included) — every task file has a matching `certificates/NN-…md`, the obligations are one-to-one with the task's `Definition of done`, and the certificate ↔ task links resolve both ways. See the checklist's *Done certificates* section.
+5. **Verify the done certificates** (when included) — every task file has a co-located `NN-…-certificate.md` beside it (no `certificates/` subfolder), found by glob across the four subfolders; the obligations are one-to-one with the task's `Definition of done`, and the certificate ↔ task links resolve both ways. See the checklist's *Done certificates* section.
 6. **Run the checklist** at [`references/checklist.md`](references/checklist.md) before declaring the plan done.
 
 ## What NOT to do
@@ -116,7 +116,7 @@ A task's `Definition of done` is a *claim*; a **done certificate** is the *proto
 
 **When to author.** On by default (Phase 4.5). In an **interactive session, prompt first** — a single yes/no defaulting to yes ("Author a done certificate per task? (default: yes)"); honour an explicit "no". In a **non-interactive run**, include them without prompting unless the request said to skip. An outright "add done certificates" is just an explicit yes.
 
-**Mechanics.** Delegate to done-certificates after Phase 4. It writes **one certificate per task** into the plan folder's `certificates/` subfolder (`.specs/plans/YYYY-MM-DD-title/certificates/NN-…md`, mirroring the task numbers), obligations drawn from each task's DoD with evidence/checks named but status and verdict left blank, and adds a two-way `**Certificate:**` link to each task header. spec-planner owns the plan and its Phase 5 cross-link pass; done-certificates owns the `certificates/` subfolder; a separate validating agent (neither skill) discharges each certificate as its task is built.
+**Mechanics.** Delegate to done-certificates after Phase 4. It writes **one certificate per task** *beside its task* in `backlog/`, named `NN-snake_case_task-certificate.md` (the `-certificate` suffix avoids colliding with the task's own `NN-snake_case_task.md` in the same folder), obligations drawn from each task's DoD with evidence/checks named but status and verdict left blank, and adds a two-way `**Certificate:**` link to each task header (certificate → task is same-directory `[NN-…md](NN-…md)`, certificate → plan is `[plan.md](../plan.md)`). spec-planner owns the plan and its Phase 5 cross-link pass; done-certificates authors certificates into `backlog/` and owns their content; spec-builder owns moving them (with their tasks) between subfolders; a separate validating agent (neither skill) discharges each certificate as its task is built.
 
 If certificates are skipped, the Phase 5 *Done certificates* checklist section does not apply — note in `plan.md` that they were not authored so a later pass can add them.
 
