@@ -1,6 +1,6 @@
 ---
 name: spec-planner
-description: Build an implementation plan from a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. Triggers on "plan the implementation", "create an implementation plan", "plan out this spec", "break this spec into tasks", "build a task plan", "sequence the work", "how should we build this", "turn this change spec into a plan", or "what's the build order for X". Consumes a canonical spec set, a change spec, or an external/framework spec; produces a plan folder at .specs/plans/YYYY-MM-DD-snake_case_title/ — a plan.md task graph at the root plus a kanban board of subfolders (backlog/ · in-progress/ · blocked/ · done/) that hybrid task files move between, each authored into backlog/ beside its done certificate.
+description: Build an implementation plan from a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done. Triggers on "plan the implementation", "break this spec into tasks", "sequence the work", or "turn this change spec into a plan". Consumes a canonical spec set, a change spec, or an external/framework spec; produces a plan folder at .specs/plans/YYYY-MM-DD-snake_case_title/ — a plan.md task graph at the root plus a kanban board of subfolders (backlog/ · in-progress/ · blocked/ · done/) that task files move between, each authored into backlog/ beside its done certificate.
 ---
 
 # Spec Planner
@@ -30,6 +30,7 @@ The boundaries between the companions:
 - **development-guidelines** writes the rules of the road, including the `Definition of done` section that spec-planner *reads* to derive each task's DoD.
 - **spec-reviewer** checks specs against code. spec-planner may invoke it in Phase 1 (R2 / R3) to learn what is already built. It ships in the **spec-creator** plugin and is *optional* — when absent, the Phase 1 code read covers the same ground (a fallback, not a skipped step).
 - **done-certificates** authors the verification protocol for a task's DoD; a *separate* validating agent runs it. See [§Adding done certificates](#adding-done-certificates).
+- **spec-builder** (the `spec-builder` plugin) consumes the finished plan folder downstream — it builds each task, runs the correctness/completeness gates, and discharges the done certificates. The plan this skill writes is its input.
 
 ## When to apply this skill
 
@@ -51,7 +52,7 @@ Five phases, sequential. The value of a plan comes from understanding the spec a
 
 1. **Read the source specification end to end.** For a canonical spec set, read `.specs/README.md` then every page in scope and the schema sidecar. For a change spec, read it and the canonical pages it targets. For an external spec, read the whole document and note its structure.
 2. **Establish the definition-of-done baseline.** Find the repo's development guidelines — `.specs/development-guidelines.md` (the page the `development-guidelines` skill produces) is the first choice; its `Definition of done` and `Limits and bounds` sections set the per-task bar. If absent, fall back to repo signals (`CONTRIBUTING.md`, CI config, test setup) and, failing that, **ask the user** what "done" means for a task here. Record the source in the plan's header note.
-3. **Learn what already exists.** A plan must not re-plan finished work. Walk the code the spec describes; where the spec set has drifted from the code, delegate to **spec-reviewer** (R2 for a canonical spec, R3 for a change spec) to enumerate what is already implemented. spec-reviewer ships with the **spec-creator** plugin — when it is not installed, do the equivalent code read by hand (it is the same enumeration, not an optional step). Built work becomes a precondition in the plan, not a task.
+3. **Learn what already exists.** A plan must not re-plan finished work. Walk the code the spec describes; where the spec set has drifted from the code, invoke the **spec-reviewer** skill (via the Skill tool — R2 for a canonical spec, R3 for a change spec) to enumerate what is already implemented. spec-reviewer ships with the **spec-creator** plugin — when it is not installed, do the equivalent code read by hand (it is the same enumeration, not an optional step). Built work becomes a precondition in the plan, not a task.
 4. **Surface ambiguity early.** Anything the spec leaves undecided that blocks sequencing (an unspecified auth model when half the features are gated) is flagged to the user now and captured for the Open questions block.
 
 ### Phase 2 — Decompose into task packages
@@ -86,7 +87,7 @@ Voice: future/imperative for the work, past tense in Decisions, question form in
 
 ### Phase 4.5 — Author done certificates (default; prompt when interactive)
 
-Once the task files exist in `backlog/`, delegate to **done-certificates** to author one certificate per task, **co-located beside its task in `backlog/`**. This is **on by default**; the prompt-vs-include behavior and the delegation mechanics are in [§Adding done certificates](#adding-done-certificates) below.
+Once the task files exist in `backlog/`, **invoke the done-certificates skill** (via the Skill tool) to author one certificate per task, **co-located beside its task in `backlog/`**. This is **on by default**; the prompt-vs-include behavior and the delegation mechanics are in [§Adding done certificates](#adding-done-certificates) below.
 
 ### Phase 5 — Cross-link and verify
 
@@ -116,7 +117,7 @@ A task's `Definition of done` is a *claim*; a **done certificate** is the *proto
 
 **When to author.** On by default (Phase 4.5). In an **interactive session, prompt first** — a single yes/no defaulting to yes ("Author a done certificate per task? (default: yes)"); honour an explicit "no". In a **non-interactive run**, include them without prompting unless the request said to skip. An outright "add done certificates" is just an explicit yes.
 
-**Mechanics.** Delegate to done-certificates after Phase 4. It writes **one certificate per task** *beside its task* in `backlog/`, named `NN-snake_case_task-certificate.md` (the `-certificate` suffix avoids colliding with the task's own `NN-snake_case_task.md` in the same folder), obligations drawn from each task's DoD with evidence/checks named but status and verdict left blank, and adds a two-way `**Certificate:**` link to each task header (certificate → task is same-directory `[NN-…md](NN-…md)`, certificate → plan is `[plan.md](../plan.md)`). spec-planner owns the plan and its Phase 5 cross-link pass; done-certificates authors certificates into `backlog/` and owns their content; spec-builder owns moving them (with their tasks) between subfolders; a separate validating agent (neither skill) discharges each certificate as its task is built.
+**Mechanics.** Invoke the done-certificates skill (via the Skill tool) after Phase 4. It writes **one certificate per task** *beside its task* in `backlog/`, named `NN-snake_case_task-certificate.md` (the `-certificate` suffix avoids colliding with the task's own `NN-snake_case_task.md` in the same folder), obligations drawn from each task's DoD with evidence/checks named but status and verdict left blank, and adds a two-way `**Certificate:**` link to each task header (certificate → task is same-directory `[NN-…md](NN-…md)`, certificate → plan is `[plan.md](../plan.md)`). spec-planner owns the plan and its Phase 5 cross-link pass; done-certificates authors certificates into `backlog/` and owns their content; spec-builder owns moving them (with their tasks) between subfolders; a separate validating agent (neither skill) discharges each certificate as its task is built.
 
 If certificates are skipped, the Phase 5 *Done certificates* checklist section does not apply — note in `plan.md` that they were not authored so a later pass can add them.
 

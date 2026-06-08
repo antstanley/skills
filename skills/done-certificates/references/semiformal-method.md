@@ -4,12 +4,14 @@ A done certificate is a **semi-formal reasoning certificate**: a structured evid
 
 (The method is the one introduced for code analysis as "semi-formal reasoning" — structured prompting templates that act as certificates. It stays in natural language rather than a proof language like Lean or Coq: no automated proof checker, but far less translation overhead, and the structure still bars skipped cases and unsupported claims.)
 
-> **Vendored copy — keep in sync.** This is the *author* side of the method, vendored from the
-> `reasoning-semiformally` plugin. The *validate/review* side is a sibling vendored copy at
-> `spec-builder/skills/semi-formal-review/references/method.md`. The certificate author and the
-> certificate validator must agree on the **5-step function-resolution sequence** and the
-> **NOT_DONE / PARTIAL / DONE verdict rubric** below; if you edit either here, mirror it in that
-> copy (and ideally upstream), or the two ends of the handoff will silently diverge.
+> **Vendored copy — keep in sync.** This is the *author* side of the method. The *validate/review*
+> side is a sibling vendored copy at `spec-builder/skills/semi-formal-review/references/method.md`.
+> The shared core — the function-resolution, execution-trace, and regression-check blocks wrapped
+> in `<!-- shared:… -->` markers below — is **byte-identical** between the two copies and is
+> enforced by `benchmark/tests/test_skill_docs.py`; edit those blocks in both copies together (the
+> check fails otherwise). Each side keeps its own verdict rubric (`NOT_DONE/PARTIAL/DONE` here,
+> `CORRECT/…/BUGGY` there). The upstream origin is the `reasoning-semiformally` plugin
+> (`haiku.md`/`sonnet.md`), which presents the same method as standalone templates.
 
 ---
 
@@ -29,34 +31,53 @@ A done certificate instantiates this shape with one claim (obligation) per defin
 
 ## Checkpoint 1 — Function resolution
 
-For each function or method call an obligation's claim depends on, determine *which definition is actually invoked* before reasoning about its behavior. Name shadowing (a local, a module-level definition, an import, and a builtin sharing one name) is the classic source of confidently-wrong verification. Resolve each call with this exact sequence, stopping at the first match:
+For each function or method call an obligation's claim depends on, determine *which definition is actually invoked* before reasoning about its behavior. Name shadowing (a local, a module-level definition, an import, and a builtin sharing one name) is the classic source of confidently-wrong verification.
 
-1. Is there a **local variable or parameter** with this name in the current function? If yes → that's what's called. STOP.
-2. Is there a definition with this name in the **enclosing class**? If yes → STOP.
-3. Is there a definition with this name at **module level** (same file, top-level)? If yes → STOP.
-4. Is this name **imported**? If yes → trace the import to its source. STOP.
-5. Is this a **language builtin**? If yes → STOP.
-6. None of the above → flag as **UNRESOLVED**.
+<!-- shared:function-resolution start -->
 
-If a match is found *and* a later step would also match (e.g. a module-level function shares a name with a builtin), record it explicitly: **"NAME SHADOWING: `<name>` at `<scope>` shadows `<what it shadows>`."** A certificate obligation's `Checks` field names the calls a validator must resolve this way and the shadow to watch for.
+Resolve each call with this exact sequence, stopping at the first match:
+
+1. **Local** — a local variable or parameter with this name in the current function? If yes → STOP.
+2. **Enclosing class** — a definition with this name in the enclosing class? If yes → STOP.
+3. **Module level** — a definition with this name at module level (same file, top-level)? If yes → STOP.
+4. **Imported** — is the name imported? If yes → trace the import to its source, then STOP.
+5. **Builtin** — is it a language builtin? If yes → STOP.
+
+If none of the five match, flag the call as `UNRESOLVED`. If a match is found *and* a later step would also match (e.g. a module-level function shares a name with a builtin), record it: `NAME SHADOWING: <name> at <scope> shadows <what it shadows>.`
+
+<!-- shared:function-resolution end -->
+
+A certificate obligation's `Checks` field names the calls a validator must resolve this way and the shadow to watch for.
 
 ---
 
 ## Checkpoint 2 — Execution trace and regression
 
-**Execution trace.** For a behavioral claim, pick one concrete input and write 3–5 steps showing what happens, each step a concrete value or state change — not "processes the input". This is the evidence that a claim actually holds for a real case:
+**Execution trace.** This is the evidence that a claim actually holds for a real case.
+
+<!-- shared:execution-trace start -->
+
+Pick one concrete input and write 3–5 steps showing what happens, each step a concrete value or state change — not "processes the input":
 
 ```
 input → step → step → step → result
 ```
 
-**Regression check.** A task that modifies existing code must not break code that depends on the old behavior. For each modified unit, find one downstream caller and trace that it still works:
+<!-- shared:execution-trace end -->
+
+**Regression check.**
+
+<!-- shared:regression-check start -->
+
+A change that modifies existing code must not break code that depends on the old behavior. For each modified unit, find one downstream caller and trace that it still works:
 
 ```
 <caller> calls <modified unit> with <typical input> → still produces <expected output>: PRESERVED
 ```
 
-If behavior would break, write `REGRESSION: <caller> would now get <wrong result> because <reason>.` If no caller is visible in the available context, write that explicitly — an empty regression check is acceptable *only* when stated, never by silence.
+If behavior would break, write `REGRESSION: <caller> would now get <wrong result> because <reason>.` If no caller is visible in the available context, say so — an empty regression check is acceptable only when stated, never by silence.
+
+<!-- shared:regression-check end -->
 
 ---
 

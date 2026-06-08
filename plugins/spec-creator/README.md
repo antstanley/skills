@@ -10,6 +10,10 @@ The plugin ships a companion **`development-guidelines`** skill that writes the 
 
 It also ships a companion **`spec-reviewer`** skill that reviews specs with semi-formal certificate templates. Three modes: review a **change spec against the canonical spec** for broken references, stale targets, and contradictions; review a **canonical spec against the implemented code** to find missing implementations, incorrect implementations, and shipped features the spec never captured; and review a **change spec against the code** to determine whether its proposed delta has shipped (none/partial/implemented) and, if partial, which gaps remain. Each review ends with a fixed verdict and concrete suggestions; the reviewer surfaces divergences and hands any authoring back to spec-creator. Triggers on "review this change spec", "does the implementation match the spec", "check the spec against the code", "find spec divergences", or "has this change spec been implemented".
 
+## The pipeline
+
+spec-creator is the head of a three-plugin pipeline: **spec-creator** writes the spec → **[spec-planner](../spec-planner)** decomposes it into a dependency-ordered, reviewable task plan → **[spec-builder](../spec-builder)** implements that plan, gating each task through a correctness review and a definition-of-done check. The downstream plugins are optional and installed separately; spec-creator stands on its own.
+
 ## Install
 
 ```

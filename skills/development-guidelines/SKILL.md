@@ -1,6 +1,6 @@
 ---
 name: development-guidelines
-description: Add a development-guidelines page to a canonical spec — the "rules of the road" page (toolchain, code style, defensive coding, limits, version control, testing, AI-agent rules, definition of done) rendered in a chosen coding style for the languages a repo uses. Triggers on "add development guidelines", "add a dev-guidelines page to the spec", "generate coding guidelines", "write the development-guidelines spec", "add coding standards to the spec", or when spec-creator needs to write its development-guidelines.md page. Produces a single global spec page at .specs/development-guidelines.md (or a thin per-package delta) following spec-creator's conventions.
+description: Add a development-guidelines page to a canonical spec — the "rules of the road" (toolchain, code style, defensive coding, limits, version control, testing, AI-agent rules, definition of done) rendered in a chosen coding style for the languages a repo uses. Triggers on "add development guidelines", "generate coding guidelines", "add coding standards to the spec", or when spec-creator needs its development-guidelines.md page. Produces a single global spec page at .specs/development-guidelines.md (or a thin per-package delta) following spec-creator's conventions.
 ---
 
 # Development Guidelines
@@ -18,6 +18,14 @@ This skill is a companion to **spec-creator**. It produces one page in the spec 
 - **Enforcement gates describe gates that exist.** "A pre-push hook runs `lint`" is body text only if the hook exists. A planned gate ("we will add a coverage floor") is an Open question, not a body claim.
 
 When in doubt, separate the *rule* (a guideline the repo commits to — body) from the *mechanism that enforces it* (a hook, a CI gate — body only if wired up, else Open questions). Flag any divergence to the user rather than papering over it.
+
+## When to apply this skill
+
+- A spec set needs its `development-guidelines.md` page written — "add development guidelines", "generate coding guidelines", "add coding standards to the spec".
+- spec-creator reaches the development-guidelines page in its Phase 3 and delegates here (see [§When invoked by spec-creator](#when-invoked-by-spec-creator)).
+- A package needs a per-package guidelines delta layered on top of the global page.
+
+Skip when the request is to write a *different* spec page (that is spec-creator) or to review a spec (that is spec-reviewer). This skill writes exactly one page — the coding discipline for a repo that has, or will have, code.
 
 ## Parameters
 
@@ -68,7 +76,7 @@ A **per-package** development-guidelines page (`.specs/<package>/specs/NN-develo
 
 ### 2 — Resolve parameters
 
-Detect and confirm the languages and the VCS (above). State that the page uses Tiger Style. Note the spec owner and today's date for the header.
+Detect and confirm the languages and the VCS (above), and confirm the coding style (per the §Coding style parameter — Tiger Style by default, Clean Code when the user or repo selects it). State which style the page uses. Note the spec owner and today's date for the header.
 
 ### 3 — Assemble the page
 

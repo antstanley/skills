@@ -30,10 +30,12 @@ unsupported claims.
 > **Vendored copy — keep in sync.** This is the *validate/review* side of the method, used by
 > both `semi-formal-review` and `validate-done-certificate` in this plugin. The *author* side is
 > a sibling vendored copy at `spec-planner/skills/done-certificates/references/semiformal-method.md`.
-> The two ends of the handoff must agree on the **5-step function-resolution sequence** and the
-> verdict rubrics; if you edit either here, mirror it in that copy (and ideally upstream in the
-> `reasoning-semiformally` plugin), or a certificate authored against one will be discharged
-> against a different method.
+> The shared core — the function-resolution, execution-trace, and regression-check blocks wrapped
+> in `<!-- shared:… -->` markers below — is **byte-identical** between the two copies and is
+> enforced by `benchmark/tests/test_skill_docs.py`; edit those blocks in both copies together (the
+> check fails otherwise). Each side keeps its own verdict rubric (`CORRECT/…/BUGGY` here,
+> `NOT_DONE/PARTIAL/DONE` there). The upstream origin is the `reasoning-semiformally` plugin
+> (`haiku.md`/`sonnet.md`), which presents the same method as standalone templates.
 
 ---
 
@@ -54,39 +56,50 @@ P2: The task asked the change to [one sentence: what it should accomplish — fr
 P3: Must not break [one sentence: existing behavior that must be preserved].
 ```
 
-**Step 2 — Function resolution.** For EACH function call in the changed lines, resolve
-it with this exact sequence, stopping at the first match:
+**Step 2 — Function resolution.** For EACH function call in the changed lines:
 
-1. Local variable or parameter with this name in the current function? If yes → STOP.
-2. Definition with this name in the enclosing class? If yes → STOP.
-3. Definition at module level (same file, top-level)? If yes → STOP.
-4. Is the name imported? If yes → trace the import to its source. STOP.
-5. Is it a language builtin? If yes → STOP.
-6. None of the above → flag as `UNRESOLVED`.
+<!-- shared:function-resolution start -->
 
-If a match is found *and* a later step would also match, record it:
-`NAME SHADOWING: <name> at <scope> shadows <what it shadows>.`
+Resolve each call with this exact sequence, stopping at the first match:
 
-**Step 3 — Execution trace.** Pick one concrete input. Write 3–5 steps, each a concrete
-value or state change, not "processes the input":
+1. **Local** — a local variable or parameter with this name in the current function? If yes → STOP.
+2. **Enclosing class** — a definition with this name in the enclosing class? If yes → STOP.
+3. **Module level** — a definition with this name at module level (same file, top-level)? If yes → STOP.
+4. **Imported** — is the name imported? If yes → trace the import to its source, then STOP.
+5. **Builtin** — is it a language builtin? If yes → STOP.
+
+If none of the five match, flag the call as `UNRESOLVED`. If a match is found *and* a later step would also match (e.g. a module-level function shares a name with a builtin), record it: `NAME SHADOWING: <name> at <scope> shadows <what it shadows>.`
+
+<!-- shared:function-resolution end -->
+
+**Step 3 — Execution trace.**
+
+<!-- shared:execution-trace start -->
+
+Pick one concrete input and write 3–5 steps showing what happens, each step a concrete value or state change — not "processes the input":
 
 ```
 input → step → step → step → result
 ```
 
+<!-- shared:execution-trace end -->
+
 For a fix, trace before and after. For a new feature, trace the primary path the task's
 `Produces` line promises.
 
-**Step 4 — Regression check.** For each unit the change modified, find one downstream
-caller and trace that it still works:
+**Step 4 — Regression check.**
+
+<!-- shared:regression-check start -->
+
+A change that modifies existing code must not break code that depends on the old behavior. For each modified unit, find one downstream caller and trace that it still works:
 
 ```
 <caller> calls <modified unit> with <typical input> → still produces <expected output>: PRESERVED
 ```
 
-If behavior would break: `REGRESSION: <caller> would now get <wrong result> because <reason>.`
-If no caller is visible in scope, say so — an empty regression check is acceptable only
-when stated, never by silence.
+If behavior would break, write `REGRESSION: <caller> would now get <wrong result> because <reason>.` If no caller is visible in the available context, say so — an empty regression check is acceptable only when stated, never by silence.
+
+<!-- shared:regression-check end -->
 
 **Step 5 — Edge cases.** List 1–3 inputs the change does not handle, or
 "No unhandled edge cases identified."

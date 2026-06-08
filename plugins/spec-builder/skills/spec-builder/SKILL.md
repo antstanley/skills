@@ -1,10 +1,7 @@
 ---
 name: spec-builder
-description: Implement a spec-planner plan by dispatching one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gating every task through a semi-formal correctness review and a definition-of-done validation before it is merged and marked Done. Self-contained — workspace isolation is vendored, no other plugin required. Walks the dependency graph in waves, parallel by default (max 4 agents) or sequential. Triggers on "build this plan", "implement the plan", "execute the plan in .specs/plans/...", "run the spec-builder", "build the tasks in parallel/sequentially", or handing a spec-planner plan folder over for implementation.
+description: Implement a spec-planner plan by dispatching one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gating every task through a semi-formal correctness review and a definition-of-done validation before it is merged and marked Done. Self-contained — workspace isolation is vendored, no other plugin required. Walks the dependency graph in waves, parallel by default (max 4 agents) or sequential. Triggers on "build this plan", "implement the plan", "execute the plan in .specs/plans/...", or handing a spec-planner plan folder over for implementation.
 compatibility: Needs a harness that can dispatch sub-agents — Claude Code or OpenCode (core Task tool), or Pi with a subagents extension (e.g. @tintinweb/pi-subagents). Without one, runs a sequential single-agent fallback (references/portability.md).
-metadata:
-  author: antstanley
-  version: "0.1.0"
 ---
 
 # Spec Builder
@@ -40,11 +37,12 @@ Three rules follow:
 
 ## Relationship to the companion skills
 
-spec-builder is the execution end of a four-skill pipeline:
+spec-builder is the execution end of a three-plugin pipeline (spec-creator → spec-planner → spec-builder):
 
 - **spec-creator** writes the spec → **spec-planner** decomposes it into a task graph with a
-  definition of done per task → **done-certificates** authors the per-task verification
-  protocol → **spec-builder** (this skill) builds the tasks and discharges those protocols.
+  definition of done per task, and its **done-certificates** skill authors the per-task
+  verification protocol → **spec-builder** (this skill) builds the tasks and discharges those
+  protocols. (done-certificates ships inside the spec-planner plugin, not as a separate one.)
 - It is **self-contained** — it needs no other plugin installed. Workspace isolation is
   vendored into this skill at [`references/workspaces.md`](references/workspaces.md),
   covering both backends:
@@ -198,16 +196,13 @@ user's to run; it is outside the per-task gates.
   falsely-`Done` one. Failures surface; they are not papered over.
 - **Don't build from a spec with no plan.** Decomposition and ordering are spec-planner's
   job; without them the build is not reviewable. Redirect.
-- **Don't hand-roll workspace commands.** Follow the vendored method in workspaces.md
-  (jj preferred, git supported); one workspace per task, branched from the integration
-  point, torn down after merge.
-- **Don't over- or under-context a sub-agent.** Carry the task package's own fields and its
-  dependencies' merged output (already in the workspace base) — not the whole repo, not the
-  whole spec, not other tasks' files.
 - **Don't ignore the dependency table.** It is the source of truth; if the Mermaid graph
   disagrees, the table wins and the discrepancy is noted.
-- **Don't auto-resolve a conflict between "independent" tasks silently** — it may signal a
-  missing edge in the plan; resolve it, re-gate the merged result, and flag it.
+- **Don't hand-roll the mechanics.** Workspace commands (workspaces.md), sub-agent brief
+  sizing (subagent-brief.md), and merge-conflict handling (orchestration.md) each carry a
+  method and a *Common mistakes* coda in their reference — follow them rather than improvising.
+  In particular, never auto-resolve a conflict between "independent" tasks silently: it may
+  signal a missing plan edge, so resolve it, re-gate the merged result, and flag it.
 
 ## Reference files
 

@@ -315,94 +315,11 @@ Rules:
 
 ## Development guidelines (global)
 
-```markdown
-# Development Guidelines
-
-**Status:** Draft · **Date:** YYYY-MM-DD · **Owner:** <Name> · **Scope:** Repo-wide
-
-These are the rules of the road for everyone (humans and agents) writing code in <repo>.
-
-The discipline below — <list pillars> — is non-negotiable across the repo.
-
----
-
-## Toolchain
-
-| Tool | Version / channel | Notes |
-|---|---|---|
-
----
-
-## <Pervasive style — Tiger Style or equivalent>
-
-<Why we adopt it; load-bearing principles>
-
----
-
-## Defensive coding and assertions
-
-### Where to validate
-### Assertions in <language>
-### Errors are data, not exceptions
-### Make invalid states unrepresentable
-
----
-
-## Schema validation
-
-<Validator choice; JSON Schema as upstream; codegen flow>
-
----
-
-## Pre-push hook
-
-<Hook runner; commands; rules>
-
----
-
-## Limits and bounds
-
-<Meta-rule: every limit a named const. Specific values live in per-package specs.>
-
----
-
-## Version control
-
-<jj / git conventions, branch model, commit style>
-
----
-
-## <Language> conventions
-
-### Formatting and linting
-### Code style
-### Naming
-### Imports and exports
-### Testing
-### Documentation
-
----
-
-## Repository hygiene
-
----
-
-## Guidelines for AI agents
-
-<Numbered list of emphases>
-
----
-
-## Definition of done
-
-<Checklist of what "done" means for a change>
-
----
-
-## Assumptions and open questions
-
-(standard closing block)
-```
+The `development-guidelines.md` page is **not templated here.** It is authored by the companion
+`development-guidelines` skill (see [`../../development-guidelines/SKILL.md`](../../development-guidelines/SKILL.md)),
+which detects the repo's languages and coding style and assembles the page from per-language
+templates. spec-creator's Phase 3 invokes that skill rather than hand-writing the page — so the
+page skeleton lives there, with the templates, not duplicated here where it would drift.
 
 ---
 

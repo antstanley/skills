@@ -31,7 +31,8 @@ done, tests pass" is a claim the gates exist to check.
 ## Step 2 — Gate 1: semi-formal review (correctness)
 
 Run **semi-formal-review** against the workspace diff, by an agent that is **not** the
-implementer (the orchestrator, or a separate reviewer sub-agent).
+implementer — the orchestrator (invoke the `semi-formal-review` skill via the Skill tool) or
+a separate reviewer sub-agent briefed to apply it.
 
 - Input: the diff, plus the task's `Produces` and `Steps` (what it was meant to do).
 - Output: `VERDICT: CORRECT | LIKELY_CORRECT | CONCERNS | BUGGY` with confidence and a
@@ -46,7 +47,8 @@ that the review was skipped as trivial and why; do not fabricate a certificate f
 ## Step 3 — Gate 2: validate done (completeness)
 
 Run **validate-done-certificate** against the (now review-clean) workspace diff, again by
-an agent that is **not** the implementer.
+an agent that is **not** the implementer — the orchestrator (invoke the
+`validate-done-certificate` skill via the Skill tool) or a separate validator sub-agent.
 
 - Input: the diff, the task's `Definition of done`, and the task's co-located
   `in-progress/NN-<task>-certificate.md` if it exists — read from the **main tree**, never a
@@ -60,6 +62,11 @@ an agent that is **not** the implementer.
 Both gates pass = correct **and** complete. Either alone is insufficient: a `CORRECT` diff
 that is `PARTIAL` does the wrong scope well; a `DONE` diff that is `BUGGY` meets the
 checklist while breaking something it touched.
+
+The two gates use different-depth rubrics by design: correctness is four-level with a
+`LIKELY_CORRECT` tier for when context is incomplete; completeness is three-level
+(`DONE / PARTIAL / NOT_DONE`), where `PARTIAL` already absorbs the incomplete-evidence
+`UNVERIFIED` case, so it needs no separate "likely" tier.
 
 ## Step 4 — Merge and move to done/
 

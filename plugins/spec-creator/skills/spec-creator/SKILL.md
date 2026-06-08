@@ -1,6 +1,6 @@
 ---
 name: spec-creator
-description: Create, expand, or change formal design specifications for an app, package, or codebase. Triggers on "create/write a spec", "spec out this app", "document the design", "formalize the architecture", "promote to a global spec", "layer a per-package spec on a global one", using another project's specs as a template ("use ../foo/specs as a template"), or proposing/merging a change spec ("change spec", "RFC for X", "draft a change spec", "merge the change spec"). Output is a numbered, layered directory of markdown plus a JSON Schema sidecar (repo-wide globals + per-package specs); a change spec is a single document under .specs/changes/.
+description: Create, expand, or change formal design specifications for an app, package, or codebase. Triggers on "create/write a spec", "document the design", "promote to a global spec", or proposing/merging a change spec ("draft a change spec", "RFC for X", "merge the change spec"). Output is a numbered, layered directory of markdown plus a JSON Schema sidecar (repo-wide globals + per-package specs); a change spec is a single document under .specs/changes/. To plan a spec's implementation, use spec-planner; to build that plan, use spec-builder.
 ---
 
 # Spec Creator
@@ -14,6 +14,16 @@ A skill for writing canonical design specifications: numbered, layered, cross-li
 If something the spec describes does not exist in the code, that's a **divergence**. Flag it; do not paper over it with "deferred at MVP". Plans to resolve divergence are a separate workflow handled by other skills.
 
 This rule shapes every section. A `Routes` section lists routes that exist. A `Plugins mounted` section lists plugins that the app actually mounts. A `Database shape` section describes the schema of the IndexedDB store as it is, not as it will be.
+
+## Relationship to companion skills
+
+spec-creator is the head of a spec pipeline and the hub its siblings build on:
+
+- **development-guidelines** (this plugin) writes the `development-guidelines.md` page of the spec set. Phase 3 invokes it rather than hand-writing that page.
+- **spec-reviewer** (this plugin) reviews the specs this skill produces — a change spec against the canonical spec, a canonical spec against the code, or a change spec against the code. Invoke it after drafting a change spec, on suspected drift, or before a merge.
+- **spec-planner** (the `spec-planner` plugin) turns a finished spec into a buildable, dependency-ordered plan; **spec-builder** (the `spec-builder` plugin) then implements that plan. When the user asks "and how do we build this", point them downstream — spec-planner, then spec-builder.
+
+The companions follow this skill's conventions and do not restate them.
 
 ## When to apply this skill
 
@@ -81,7 +91,7 @@ For each file, follow the conventions in [§File conventions](#file-conventions)
 
 Write one file at a time. Cross-link as you go. Keep an internal map of "claims that need a Decision entry at the bottom" — every non-obvious choice ends up in the closing block.
 
-When the file set includes a `development-guidelines.md` page, delegate it to the companion **`development-guidelines` skill** instead of writing it by hand. It resolves the repo's languages and coding style and assembles the page from per-language templates, then hands back here for Phase 4.
+When the file set includes a `development-guidelines.md` page, **invoke the companion `development-guidelines` skill** (via the Skill tool) instead of writing it by hand. It resolves the repo's languages and coding style and assembles the page from per-language templates, then hands back here for Phase 4.
 
 If the spec layers on a global spec (e.g., per-package architecture builds on `.specs/architecture-principles.md`), open with a one-paragraph **Read first** pointer rather than restating the global rules. See [§Layered structure](#layered-structure).
 
@@ -141,7 +151,7 @@ Each page type has a characteristic section set. **Full skeletons live in [`refe
 - **`01-domain-model.md`** — entities, IDs, relationships, lifecycles. Sections: ID scheme · Entities (one block each) · Relationships (ASCII) · Lifecycle/state machines (ASCII) · Required query patterns · closing block.
 - **Per-component pages (`02-…`, `03-…`)** — pattern: **Responsibilities · Contract/API/Routes · Flow/Lifecycle · Implementation layout · closing block.**
 - **`architecture-principles.md`** (global) — how the code is organised: layering, monorepo layout, dependency graph, language conventions, stack baseline. Long file (200–400 lines is normal).
-- **`development-guidelines.md`** (global) — toolchain, code style, defensive coding, version control, testing pyramid, repo hygiene, definition of done, AI-agent rules. Long file. **Produced by the companion `development-guidelines` skill** — it detects the repo's languages, applies a coding style (Tiger Style or Clean Code), and assembles this page from per-language templates. Invoke it rather than writing this page from scratch; it returns to this skill's Phase 4 for the final cross-link pass.
+- **`development-guidelines.md`** (global) — toolchain, code style, defensive coding, version control, testing pyramid, repo hygiene, definition of done, AI-agent rules. Long file. **Produced by the companion `development-guidelines` skill** — it detects the repo's languages, applies a coding style (Tiger Style or Clean Code), and assembles this page from per-language templates. Invoke that skill (via the Skill tool) rather than writing this page from scratch; it returns to this skill's Phase 4 for the final cross-link pass.
 - **Per-package spec that shadows a global one** — open with a **Read first** pointer to the global page, then describe only the per-package deltas. Don't restate the global rules.
 - **`canonical-types.schema.json`** (sidecar) — JSON Schema Draft 2020-12, one `$def` per entity; per-package schemas `$ref` the global schema for shared types. The global schema holds only **truly shared** types (`Id`, `Timestamp`, `Url`, `Email`, `Bytes`, `Milliseconds`, `ErrorEnvelope`, `NonEmptyString`); a type goes global only when at least two apps reference it.
 

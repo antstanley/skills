@@ -1,6 +1,6 @@
 ---
 name: done-certificates
-description: Author a task-specific semi-formal done certificate — a structured verification protocol that a separate validating agent runs to decide whether a task is complete. For each task it restates the definition of done as proof obligations, names the exact evidence to collect and the resolution/regression checks to run, and leaves the status and verdict blank for the validator to discharge. Triggers on "create a done certificate", "write a certificate of done for these tasks", "add done certificates to the plan", "make a DoD verification certificate", or "generate a completion certificate". Works standalone over any task with a definition of done, and is the companion certificate-author for spec-planner task packages — one certificate per task.
+description: Author a task-specific semi-formal done certificate — a structured verification protocol that a separate validating agent runs to decide whether a task is complete. For each task it restates the definition of done as proof obligations, names the exact evidence to collect and the resolution/regression checks to run, and leaves the status and verdict blank for the validator to discharge. Triggers on "create a done certificate", "add done certificates to the plan", or "generate a completion certificate". Works standalone over any task with a definition of done, and is the companion certificate-author for spec-planner task packages — one certificate per task. To run (discharge) an authored certificate, use validate-done-certificate instead.
 ---
 
 # Done Certificates
@@ -20,7 +20,7 @@ Two rules follow:
 
 ## Relationship to spec-planner
 
-This skill is a companion to **spec-planner**, which produces task packages each carrying a `Definition of done` checklist ending in a `Reviewable:` line. done-certificates consumes that checklist and writes the certificate a validator later discharges: **spec-planner** writes *what done means*, **done-certificates** writes *the protocol to prove it*, and a *validating agent* (subagent, reviewer, later session) *runs* it.
+This skill is a companion to **spec-planner**, which produces task packages each carrying a `Definition of done` checklist ending in a `Reviewable:` line. Read [`spec-planner`'s `SKILL.md`](../spec-planner/SKILL.md) first if you have not — this skill inherits its `NN-` numbering, append-only rule, and kanban-subfolder layout. done-certificates consumes that checklist and writes the certificate a validator later discharges: **spec-planner** writes *what done means*, **done-certificates** writes *the protocol to prove it*, and a *validating agent* (subagent, reviewer, later session) *runs* it.
 
 The **semi-formal reasoning method** — the premise/claim/evidence/verdict structure and the function-resolution and regression checkpoints — is vendored at [`references/semiformal-method.md`](references/semiformal-method.md), so the skill is self-contained when installed. A done certificate is that method instantiated for one task's DoD.
 

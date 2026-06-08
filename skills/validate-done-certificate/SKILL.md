@@ -1,6 +1,6 @@
 ---
 name: validate-done-certificate
-description: Discharge a task's done certificate against its implementation — collect each obligation's named evidence, run its checks, set each status, trace regressions, and derive a DONE / PARTIAL / NOT_DONE verdict by the certificate's rubric. The completeness gate after a spec-builder task is reviewed; when a task has no authored certificate, it derives obligations from the DoD checklist and discharges those the same way. It runs the protocol, it does not author it. Triggers on "validate the done certificate", "discharge this certificate", "is task NN done", "check the implementation against its definition of done", "verify the DoD is met", or spec-builder running the completion gate.
+description: Discharge a task's done certificate against its implementation — collect each obligation's named evidence, run its checks, set each status, trace regressions, and derive a DONE / PARTIAL / NOT_DONE verdict by the certificate's rubric. The completeness gate after a spec-builder task is reviewed; when a task has no authored certificate, it derives obligations from the DoD checklist and discharges those the same way. It runs the protocol, it does not author it (that is done-certificates' job). Triggers on "validate the done certificate", "is task NN done", or "check the implementation against its definition of done".
 ---
 
 # Validate Done Certificate
@@ -29,9 +29,9 @@ own homework re-asserts its own assumptions.
 
 ## Relationship to spec-builder, done-certificates, and semi-formal-review
 
-- **done-certificates** (in the spec-planner plugin) authors one blank certificate per
-  task. **This skill** discharges it. Numbers, obligations, and evidence instructions are
-  already written — do not re-derive them; collect their answers.
+- **done-certificates** ([in the spec-planner plugin](../../../spec-planner/skills/done-certificates/SKILL.md))
+  authors one blank certificate per task. **This skill** discharges it. Numbers, obligations,
+  and evidence instructions are already written — do not re-derive them; collect their answers.
 - In **spec-builder**'s build loop this is the **completeness gate**, run after
   **semi-formal-review** passes. semi-formal-review asks *is the code correct?*
   (`CORRECT / … / BUGGY`); this skill asks *does the code satisfy what done means?*

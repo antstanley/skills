@@ -5,7 +5,7 @@
       "id": 1,
       "name": "add-global-dev-guidelines-detected-languages",
       "prompt": "Add a development-guidelines page to the spec at .specs/. The repo is a monorepo with a Rust backend (Cargo.toml, rust-toolchain.toml) and a TypeScript frontend (tsconfig.json, pnpm-lock.yaml). Use Tiger Style.",
-      "expected_output": "A new global spec page at .specs/development-guidelines.md scoped Repo-wide, with the Status/Date/Owner/Scope header and the closing Assumptions/Decisions/Open questions block. The page detects Rust and TypeScript, confirms them, and carries one Toolchain table covering both, a 'Tiger Style — the pervasive style' section, a Defensive coding section with both an 'Assertions in Rust' and an 'Assertions in TypeScript' subsection, a Limits and bounds meta-rule (no concrete values — those are per-app), a Version control section matching the repo's VCS, a 'Rust conventions' and a 'TypeScript conventions' section, repository hygiene, AI-agent guidelines, and a definition of done naming both languages' tooling. .specs/README.md is updated to index the new global page. No MVP framing, no marketing words, no emoji.",
+      "expected_output": "A new global spec page at .specs/development-guidelines.md scoped Repo-wide, with the Status/Date/Owner/Scope header and the closing Assumptions/Decisions/Open questions block. The page detects Rust and TypeScript, confirms them, and carries one Toolchain table covering both, a 'Tiger Style — the pervasive style' section, a Defensive coding section with both an 'Assertions in Rust' and an 'Assertions in TypeScript' subsection, a Limits and bounds meta-rule (no concrete values — those are per-package), a Version control section matching the repo's VCS, a 'Rust conventions' and a 'TypeScript conventions' section, repository hygiene, AI-agent guidelines, and a definition of done naming both languages' tooling. .specs/README.md is updated to index the new global page. No MVP framing, no marketing words, no emoji.",
       "files": []
     },
     {
@@ -17,9 +17,9 @@
     },
     {
       "id": 3,
-      "name": "per-app-delta-pointer",
-      "prompt": "The global development guidelines at .specs/development-guidelines.md already exist for a TypeScript repo. The apps/worker app additionally uses Rust and runs a stricter per-instance concurrency limit. Add a per-app development page for it.",
-      "expected_output": "A thin per-app page (e.g. .specs/worker/specs/NN-development.md) that opens with a 'Read first' pointer to .specs/development-guidelines.md and documents ONLY the deltas: the Rust conventions/assertions/toolchain rows and the app-specific concurrency limit value. It does not restate the global TypeScript rules. .specs/worker/README.md points at the global specs then lists the per-app set; .specs/README.md indexes the per-app spec set. Standard header (with Scope) and closing block.",
+      "name": "per-package-delta-pointer",
+      "prompt": "The global development guidelines at .specs/development-guidelines.md already exist for a TypeScript repo. The apps/worker app additionally uses Rust and runs a stricter per-instance concurrency limit. Add a per-package development page for it.",
+      "expected_output": "A thin per-package page (e.g. .specs/worker/specs/NN-development.md) that opens with a 'Read first' pointer to .specs/development-guidelines.md and documents ONLY the deltas: the Rust conventions/assertions/toolchain rows and the app-specific concurrency limit value. It does not restate the global TypeScript rules. .specs/worker/README.md points at the global specs then lists the per-package set; .specs/README.md indexes the per-package spec set. Standard header (with Scope) and closing block.",
       "files": []
     }
   ]

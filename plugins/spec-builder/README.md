@@ -2,7 +2,7 @@
 
 Implement a spec-planner plan — dispatch one sub-agent per task in its own isolated workspace, and gate every task through a semi-formal correctness review and a definition-of-done validation before it merges and lands in `done/`. Isolation runs on **jj or git** repos (jj preferred when both exist) and is vendored self-contained, so the plugin needs no other plugin installed.
 
-Triggers on phrases like "build this plan", "implement the plan in .specs/plans/…", "run the spec-builder", "build the tasks in parallel" or "…sequentially". It consumes a spec-planner plan folder (`.specs/plans/YYYY-MM-DD-title/` — `plan.md` at the root plus the `backlog/` · `in-progress/` · `blocked/` · `done/` status folders, each holding its `NN-task.md` files beside their co-located `NN-task-certificate.md`) and produces merged, reviewed, validated code, moving each task between the status folders as it progresses so an `ls` shows where the build stands and an interrupted build resumes from folder membership.
+Triggers on phrases like "build this plan", "implement the plan in .specs/plans/…", "run the spec-builder", "build the tasks in parallel" or "…sequentially". It consumes a spec-planner plan folder (`.specs/plans/YYYY-MM-DD-title/` — `plan.md` at the root plus the `backlog/` · `in-progress/` · `blocked/` · `done/` status folders, each holding its `NN-snake_case_task.md` files beside their co-located `NN-snake_case_task-certificate.md`) and produces merged, reviewed, validated code, moving each task between the status folders as it progresses so an `ls` shows where the build stands and an interrupted build resumes from folder membership.
 
 Its load-bearing rule: **a task is only `Done` when proven done — correct and complete — by an agent other than the one that built it.** Each task is built by its own sub-agent in its own isolated workspace; no task reaches `Done` until it passes two gates the implementer does not run on its own work — a semi-formal review for correctness, and a definition-of-done validation for completeness (discharging the task's done certificate, or its DoD checklist when none exists). The build walks the plan's dependency graph in waves, **parallel by default (max 4 concurrent agents)** or sequential.
 
@@ -17,16 +17,19 @@ This plugin ships three skills: **spec-builder** (orchestrate the build), **semi
 
 ## The pipeline
 
-spec-builder is the execution end of a four-skill pipeline:
+spec-builder is the execution end of a three-plugin pipeline:
 
 ```
-spec-creator → spec-planner → done-certificates → spec-builder
-  (the spec)   (task graph +    (per-task proof     (build, review,
-                definition of    protocol)            validate, merge)
-                done)
+spec-creator  →  spec-planner  →  spec-builder
+ (the spec)      (task graph +     (build, review,
+                  definition of     validate, merge)
+                  done + per-task
+                  done certificate)
 ```
 
-It is **self-contained** — it needs no other plugin installed. Workspace isolation is vendored into the skill (one workspace per task, branched from an accumulating integration point, torn down after merge) and works on **both jj and git**: jj (jujutsu) is preferred when a repo supports both (a colocated repo), plain git repos use git worktrees. The standalone `jj-workspaces` skill is a richer companion when present, but not required. The two gate skills ship in this plugin. It is optimised for spec-planner plans — it reads the dependency table (keyed by task number) as the source of truth, the per-task `Implements / Produces / Pointers / Steps / Definition of done` fields, and each task's co-located `NN-task-certificate.md` (a task's status is the subfolder it sits in, not a `Status` field).
+done-certificates is a skill inside the spec-planner plugin (it authors the per-task proof protocol), not a separate stage.
+
+It is **self-contained** — it needs no other plugin installed. Workspace isolation is vendored into the skill (one workspace per task, branched from an accumulating integration point, torn down after merge) and works on **both jj and git**: jj (jujutsu) is preferred when a repo supports both (a colocated repo), plain git repos use git worktrees. The standalone `jj-workspaces` skill is a richer companion when present, but not required. The two gate skills ship in this plugin. It is optimised for spec-planner plans — it reads the dependency table (keyed by task number) as the source of truth, the per-task `Implements / Produces / Pointers / Steps / Definition of done` fields, and each task's co-located `NN-snake_case_task-certificate.md` (a task's status is the subfolder it sits in, not a `Status` field).
 
 ## spec-builder
 

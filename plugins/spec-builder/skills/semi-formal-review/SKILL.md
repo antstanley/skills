@@ -1,6 +1,6 @@
 ---
 name: semi-formal-review
-description: Review an implemented change with a semi-formal certificate — premises, function resolution, execution trace, regression check, derived verdict — to decide whether it correctly and completely does what was asked without breaking what it touched. The mandatory correctness gate after a spec-builder task is implemented, run by an agent other than the one that wrote the code. Triggers on "review this change semi-formally", "semi-formal review of the diff", "verify this patch", "is this implementation correct", "check for regressions", or spec-builder dispatching a post-implementation review. Produces a CORRECT / LIKELY_CORRECT / CONCERNS / BUGGY verdict with confidence; for a done-vs-definition-of-done check use validate-done-certificate instead.
+description: Review an implemented change with a semi-formal certificate to decide whether it correctly and completely does what was asked without breaking what it touched. The mandatory correctness gate after a spec-builder task is implemented, run by an agent other than the one that wrote the code. Triggers on "semi-formal review of the diff", "is this implementation correct", or spec-builder dispatching a post-implementation review. Produces a CORRECT / LIKELY_CORRECT / CONCERNS / BUGGY verdict. For a done-vs-definition-of-done check use validate-done-certificate; for a standalone patch verification or bug hunt outside a spec-builder build, use reasoning-semiformally.
 ---
 
 # Semi-Formal Review

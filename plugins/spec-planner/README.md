@@ -8,6 +8,8 @@ The plan's two load-bearing rules: every task package is an independently **revi
 
 It consumes any specification: a canonical spec set or change spec from **spec-creator**, or a spec written in another method or framework (PRD, RFC, OpenAPI). It is a companion to spec-creator — it follows that skill's voice and closing-block conventions, reads the `development-guidelines` page for each task's definition of done, and can call **spec-reviewer** to learn what is already built so it does not re-plan finished work.
 
+spec-planner sits in the middle of a three-plugin pipeline: **[spec-creator](../spec-creator)** writes the spec → **spec-planner** (this plugin) plans it → **[spec-builder](../spec-builder)** builds the plan, discharging the done certificates this plugin authors. The neighbouring plugins are optional and installed separately.
+
 ## Install
 
 ```

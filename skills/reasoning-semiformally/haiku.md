@@ -25,7 +25,8 @@ For EACH function call that appears in the changed lines, resolve it using this 
 3. Is there a definition with this name at module level (same file, top-level)? If yes → that's what's called. STOP.
 4. Is this name imported? If yes → trace the import to its source. That's what's called. STOP.
 5. Is this a language builtin? If yes → the builtin is what's called. STOP.
-6. If none of the above: flag as UNRESOLVED.
+
+If none of the five match, flag the call as UNRESOLVED.
 
 If at any step you find a definition AND a later step would also match (e.g., a module-level function has the same name as a builtin), write: "NAME SHADOWING: [name] at [scope] shadows [what it shadows]."
 
