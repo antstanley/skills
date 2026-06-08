@@ -1,6 +1,6 @@
 {
   "name": "spec-planner",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done and a task-specific semi-formal done certificate. Consumes a spec-creator spec (or any spec); produces a kanban plan folder that spec-builder builds.",
   "author": { "name": "antstanley" },
   "repository": "https://github.com/antstanley/skills",
