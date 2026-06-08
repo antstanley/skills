@@ -1,8 +1,8 @@
 # Task 06 — Validator certificate path
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/06-validator_certificate_path.md](certificates/06-validator_certificate_path.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [06-validator_certificate_path-certificate.md](06-validator_certificate_path-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) §C (certificate read from the task's current subfolder, not `certificates/`) — the validate-done-certificate side
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) §C (certificate read from the task's current subfolder, not `certificates/`) — the validate-done-certificate side
 **Depends on:** 03
 **Produces:** the validate-done-certificate skill reads the certificate (and its task) as the co-located `NN-snake_case_task-certificate.md` sitting in the task's **current** kanban subfolder on the orchestrator's main tree — not from a `certificates/` path and not from a sub-agent's stale workspace copy
 **Pointers:** `plugins/spec-builder/skills/validate-done-certificate/SKILL.md` — main-tree-view statement (L41–43), open-the-certificate step (L69); `plugins/spec-builder/skills/validate-done-certificate/references/validation-protocol.md` — Inputs certificate path (L19), Inputs task-file path (L21), no-certificate fallback (L92)

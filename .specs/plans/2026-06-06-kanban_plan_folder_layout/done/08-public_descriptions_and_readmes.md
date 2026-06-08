@@ -1,8 +1,8 @@
 # Task 08 — Public descriptions + READMEs
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/08-public_descriptions_and_readmes.md](certificates/08-public_descriptions_and_readmes.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [08-public_descriptions_and_readmes-certificate.md](08-public_descriptions_and_readmes-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) — the "Both `plugin.json` descriptions" and "Both plugin `README.md` files" rows (manual edit — not synced, not checked)
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) — the "Both `plugin.json` descriptions" and "Both plugin `README.md` files" rows (manual edit — not synced, not checked)
 **Depends on:** 01, 04, 05
 **Produces:** both `.claude-plugin/plugin.json` descriptions and both plugin `README.md` files reworded from the flat "live board / `Status` / optional `certificates/` subfolder" framing to folder-as-status with co-located certificates — the surface `scripts/sync-skills.sh` does not regenerate and `scripts/check.sh` does not gate, so it must be hand-edited or it goes silently stale
 **Pointers:** `plugins/spec-builder/.claude-plugin/plugin.json` — description (L4, "live board"); `plugins/spec-builder/README.md` — intro/pipeline (L5, "optional `certificates/` subfolder" + "live board"), optimised-for (L29, "reads … the `certificates/` subfolder"); `plugins/spec-planner/.claude-plugin/plugin.json` (L4) and `plugins/spec-planner/README.md` — verify (recon found these largely neutral; touch only where the flat framing appears)

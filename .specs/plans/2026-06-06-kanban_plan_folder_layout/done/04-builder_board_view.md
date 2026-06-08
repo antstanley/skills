@@ -1,8 +1,8 @@
 # Task 04 — Builder board view
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/04-builder_board_view.md](certificates/04-builder_board_view.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [04-builder_board_view-certificate.md](04-builder_board_view-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) §G (planner→builder discovery contract), §H (builder side — `Layout:` marker inference + legacy-flat migrate-in-place), §F (read side — bookkeeping reads folder membership), §B (recompute `plan.md` `Status` from subfolders)
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) §G (planner→builder discovery contract), §H (builder side — `Layout:` marker inference + legacy-flat migrate-in-place), §F (read side — bookkeeping reads folder membership), §B (recompute `plan.md` `Status` from subfolders)
 **Depends on:** 01
 **Produces:** spec-builder's `SKILL.md` + `orchestration.md` describe enumerating the full task set as the **union** of `backlog/`/`in-progress/`/`blocked/`/`done/` (missing folder = empty), building the DAG from `plan.md`'s number-keyed dependency table, deriving `ready` = `backlog/` tasks whose `Depends-on` are all in `done/`, `running` = `in-progress/`, parked = `blocked/`, `done` = `done/`; recomputing `plan.md`'s plan-level `Status` from the subfolders after each transition; and detecting kanban via the `**Layout:** kanban` marker (or a `backlog/` subfolder) while migrating a legacy-flat plan in place
 **Pointers:** `plugins/spec-builder/skills/spec-builder/SKILL.md` — core principle rule 3 (L35–37), "optimised for" line (L57–60), Phase 1 read (L115–120), Phase 4 status-write (L148–151), and **all** `certificates/` mentions (L59 and L115 — update, do not keep); `plugins/spec-builder/skills/spec-builder/references/orchestration.md` — Reading the plan (L36–50), wave-scheduler sets (L54–85), §Status bookkeeping (L140–161)

@@ -1,6 +1,6 @@
 # Done Certificate — Task 09: Migrate existing flat plans
 
-**Task:** [09-migrate_existing_flat_plans.md](../09-migrate_existing_flat_plans.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [09-migrate_existing_flat_plans.md](09-migrate_existing_flat_plans.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified
 
 > This certificate is a verification protocol for Task 09. A validating agent discharges it:

@@ -1,8 +1,8 @@
 # Task 02 — Planner verification + decomposition guidance
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/02-planner_verification_guidance.md](certificates/02-planner_verification_guidance.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [02-planner_verification_guidance-certificate.md](02-planner_verification_guidance-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) §B/§D/§E (checklist side), §C (checklist done-certificates section), §H, and the `task-decomposition.md` reconciliation of `NN`-as-identity with folder moves
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) §B/§D/§E (checklist side), §C (checklist done-certificates section), §H, and the `task-decomposition.md` reconciliation of `NN`-as-identity with folder moves
 **Depends on:** 01
 **Produces:** `checklist.md` and `task-decomposition.md` conformed to the kanban contract — the pre-handoff checklist verifies four subfolders, number-keyed references, the `../../../` depth, and co-located `NN-task-certificate.md` files; the decomposition guidance reconciles "one numbered file per task" with files that move between subfolders while keeping their number as identity
 **Pointers:** `plugins/spec-planner/skills/spec-planner/references/checklist.md` — Folder/document structure (file-count L10, `plan.md` header L11, task-open L15), Graph coherence (L23–25), Cross-links (L63), Done certificates (L72, L74); `plugins/spec-planner/skills/spec-planner/references/task-decomposition.md` — output framing (L5), `NN`-assignment paragraph (L20), worked example (L93–110), build-order note (L125)

@@ -1,8 +1,8 @@
 # Task 09 — Migrate existing flat plans
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/09-migrate_existing_flat_plans.md](certificates/09-migrate_existing_flat_plans.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [09-migrate_existing_flat_plans-certificate.md](09-migrate_existing_flat_plans-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) §H (legacy-flat migration) and Merge-plan step 4 (migrate the seven existing `.specs/plans/` folders in place)
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) §H (legacy-flat migration) and Merge-plan step 4 (migrate the seven existing `.specs/plans/` folders in place)
 **Depends on:** 01
 **Produces:** the seven existing flat plan folders under `.specs/plans/` migrated in place to the kanban layout — each plan.md stamped `**Layout:** kanban`, every task file filed into the subfolder its old `Status:` maps to (with the per-task `Status` field dropped), and the one `certificates/` subfolder (benchmark) relocated to co-located `done/NN-*-certificate.md` files — so the seven plans match the contract task 01 defines and the builder (task 04) reads
 **Pointers:** `.specs/plans/` (the seven folders); the mapping rule lives in §H of the change spec. This task edits **only** `.specs/plans/**` (not the new plan folder being authored here, which the build migrates by the same rule when it runs)

@@ -1,6 +1,6 @@
 # Done Certificate — Task 03: Certificate co-location
 
-**Task:** [03-certificate_colocation.md](../03-certificate_colocation.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [03-certificate_colocation.md](03-certificate_colocation.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified
 
 > This certificate is a verification protocol for Task 03. A validating agent discharges it:

@@ -1,6 +1,6 @@
 # Done Certificate — Task 02: Planner verification + decomposition guidance
 
-**Task:** [02-planner_verification_guidance.md](../02-planner_verification_guidance.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [02-planner_verification_guidance.md](02-planner_verification_guidance.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified
 
 > This certificate is a verification protocol for Task 02. A validating agent discharges it:

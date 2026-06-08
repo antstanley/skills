@@ -1,8 +1,8 @@
 # Task 01 — Planner authoring contract
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/01-planner_authoring_contract.md](certificates/01-planner_authoring_contract.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [01-planner_authoring_contract-certificate.md](01-planner_authoring_contract-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) §A (board of folders), §B (status is folder location — planner side), §D (tasks referenced by number), §E (link depth +1), §H (`Layout:` marker — planner side), and the planner side of §C (certificates authored into `backlog/`)
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) §A (board of folders), §B (status is folder location — planner side), §D (tasks referenced by number), §E (link depth +1), §H (`Layout:` marker — planner side), and the planner side of §C (certificates authored into `backlog/`)
 **Depends on:** —
 **Produces:** the canonical kanban layout fully specified in the planner `SKILL.md` and `plan-template.md` — the four-folder tree (`plan.md` at root + `backlog/`/`in-progress/`/`blocked/`/`done/`), no per-task `**Status:**` field, a dependency table that keys tasks by number (no path link), `../../../` spec-link depth authored once, a `**Layout:** kanban` header field, and certificates co-located beside their tasks — so a planner author can author a kanban plan
 **Pointers:** `plugins/spec-planner/skills/spec-planner/SKILL.md` — frontmatter description (L3), Phase 4 (L73–83), Phase 4.5 (L87–89), Phase 5 step 2 (L96), Phase 5 done-cert verify (L99), §Adding done certificates (L113–121); `plugins/spec-planner/skills/spec-planner/references/plan-template.md` — folder tree (L5–12), Status lifecycle (L20–37), `plan.md` header (L46), dependency table (L81–91), task-file skeleton (L130–159), Notes (L170)

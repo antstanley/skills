@@ -1,6 +1,6 @@
 # Done Certificate — Task 05: Builder transitions + isolation
 
-**Task:** [05-builder_transitions_and_isolation.md](../05-builder_transitions_and_isolation.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [05-builder_transitions_and_isolation.md](05-builder_transitions_and_isolation.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified   <!-- validator sets: Validated YYYY-MM-DD -->
 
 > This certificate is a verification protocol for Task 05. A validating agent discharges it:

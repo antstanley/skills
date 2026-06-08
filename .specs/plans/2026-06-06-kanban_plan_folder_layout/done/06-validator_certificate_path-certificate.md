@@ -1,6 +1,6 @@
 # Done Certificate — Task 06: Validator certificate path
 
-**Task:** [06-validator_certificate_path.md](../06-validator_certificate_path.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [06-validator_certificate_path.md](06-validator_certificate_path.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified
 
 > This certificate is a verification protocol for Task 06. A validating agent discharges it:

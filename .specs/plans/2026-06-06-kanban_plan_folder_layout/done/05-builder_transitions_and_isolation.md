@@ -1,8 +1,8 @@
 # Task 05 — Builder transitions + isolation
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/05-builder_transitions_and_isolation.md](certificates/05-builder_transitions_and_isolation.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [05-builder_transitions_and_isolation-certificate.md](05-builder_transitions_and_isolation-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) §F (orchestrator moves files on the main tree as one transaction), §B (status writes become moves; park → `blocked/`), §E (subagent-brief spec-link depth +1), §C (build-loop reads the co-located certificate)
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) §F (orchestrator moves files on the main tree as one transaction), §B (status writes become moves; park → `blocked/`), §E (subagent-brief spec-link depth +1), §C (build-loop reads the co-located certificate)
 **Depends on:** 01, 03, 04
 **Produces:** spec-builder's `build-loop.md`, `subagent-brief.md`, `workspaces.md`, and `portability.md` describe a status transition as a single serialized file move the orchestrator performs **on the main tree** — on dispatch `backlog/NN-*.md` (and its `-certificate.md`) → `in-progress/`; on both-gates-pass-and-merge → `done/`; on park → `blocked/` with a `**Blocked:** <reason>` header line — never inside a task workspace; the certificate is read from the task's current subfolder on main; spec-link depth gains one `../`; and the sequential fallback performs the same moves
 **Pointers:** `plugins/spec-builder/skills/spec-builder/references/build-loop.md` — step 1 mark-in-progress (L22), step 3 certificate path (L50), step 4 mark-done (L63–73), parking (L91), Invariants (L104–114); `subagent-brief.md` — certificate path (L29), spec-link depth (L37–40); `workspaces.md` — add a main-tree-only-moves assertion (none exists today; ~Core principle, L15–16); `portability.md` — sequential fallback "update the plan board" (L78)

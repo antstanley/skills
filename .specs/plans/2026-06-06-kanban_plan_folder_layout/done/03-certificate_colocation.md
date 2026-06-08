@@ -1,8 +1,8 @@
 # Task 03 — Certificate co-location
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/03-certificate_colocation.md](certificates/03-certificate_colocation.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [03-certificate_colocation-certificate.md](03-certificate_colocation-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) §C (a certificate co-locates with its task and moves with it)
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) §C (a certificate co-locates with its task and moves with it)
 **Depends on:** 01
 **Produces:** the done-certificates skill authors a certificate **beside** its task as `NN-snake_case_task-certificate.md` (no `certificates/` subfolder), into `backlog/` alongside the still-unbuilt task; same-directory cross-links (`[NN-…md](NN-…md)` to the task, `[plan.md](../plan.md)` to the plan) that survive every move; a next-free-`NN` that spans all four subfolders; and an ownership boundary where done-certificates authors content while spec-builder owns moving the file with its task
 **Pointers:** `plugins/spec-planner/skills/done-certificates/SKILL.md` — §Where the certificate lives (L87–92), §When invoked / ownership (L94–96), next-free-`NN` logic (L92); `plugins/spec-planner/skills/done-certificates/references/certificate-template.md` — skeleton header link (L40), worked-example header link (L121)

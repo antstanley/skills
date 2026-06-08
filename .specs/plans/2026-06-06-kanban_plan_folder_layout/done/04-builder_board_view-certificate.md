@@ -1,6 +1,6 @@
 # Done Certificate — Task 04: Builder board view
 
-**Task:** [04-builder_board_view.md](../04-builder_board_view.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [04-builder_board_view.md](04-builder_board_view.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified
 
 > This certificate is a verification protocol for Task 04. A validating agent discharges it:

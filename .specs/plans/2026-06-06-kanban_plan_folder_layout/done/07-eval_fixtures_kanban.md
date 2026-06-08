@@ -1,8 +1,8 @@
 # Task 07 — Eval fixtures assert kanban
 
-**Plan:** [plan.md](plan.md) · **Status:** Todo · **Certificate:** [certificates/07-eval_fixtures_kanban.md](certificates/07-eval_fixtures_kanban.md)
+**Plan:** [plan.md](../plan.md) · **Certificate:** [07-eval_fixtures_kanban-certificate.md](07-eval_fixtures_kanban-certificate.md)
 
-**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../changes/2026-06-05-kanban_plan_folder_layout.md) — the `4 × evals.json` row of the Affected-pages table and the "four-folder ripple" / "shared worked example" implementation notes
+**Implements:** [2026-06-05-kanban_plan_folder_layout.md](../../../changes/2026-06-05-kanban_plan_folder_layout.md) — the `4 × evals.json` row of the Affected-pages table and the "four-folder ripple" / "shared worked example" implementation notes
 **Depends on:** 01, 02, 03, 04, 05, 06
 **Produces:** all four `evals.json` golden `expected_output`s rewritten to assert the kanban layout — the four-folder board (`backlog/`/`in-progress/`/`blocked/`/`done/`), co-located `NN-task-certificate.md` files (no `certificates/` subfolder), task references by number, folder-move transitions (not `Status:`-field flips), `**Layout:** kanban`, the four-bucket enumeration, and `../../../` spec-link depth — with the shared journal-app worked example updated identically across them
 **Pointers:** `plugins/spec-planner/skills/spec-planner/evals/evals.json` (3 cases — L8 "one `NN-…md` file per task" + `(../../)` depth, L15 flat task-file list); `plugins/spec-planner/skills/done-certificates/evals/evals.json` (3 cases — L7 worked example, L8 `certificates/` path + `../NN-…md` depth); `plugins/spec-builder/skills/spec-builder/evals/evals.json` (4 cases — L7 `certificates/` subfolder + worked example, L8/L15/L22 `Status:`-flip transitions); `plugins/spec-builder/skills/validate-done-certificate/evals/evals.json` (2 cases — L7 `certificates/NN-…md` path)

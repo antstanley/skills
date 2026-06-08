@@ -1,6 +1,6 @@
 # Done Certificate — Task 01: Planner authoring contract
 
-**Task:** [01-planner_authoring_contract.md](../01-planner_authoring_contract.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [01-planner_authoring_contract.md](01-planner_authoring_contract.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified   <!-- validator sets: Validated YYYY-MM-DD -->
 
 > This certificate is a verification protocol for Task 01. A validating agent discharges it:

@@ -1,6 +1,6 @@
 # Done Certificate — Task 08: Public descriptions + READMEs
 
-**Task:** [08-public_descriptions_and_readmes.md](../08-public_descriptions_and_readmes.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [08-public_descriptions_and_readmes.md](08-public_descriptions_and_readmes.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified   <!-- validator sets: Validated YYYY-MM-DD -->
 
 > This certificate is a verification protocol for Task 08. A validating agent discharges it:

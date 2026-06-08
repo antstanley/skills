@@ -1,6 +1,6 @@
 # Done Certificate — Task 07: Eval fixtures assert kanban
 
-**Task:** [07-eval_fixtures_kanban.md](../07-eval_fixtures_kanban.md) · **Plan:** [plan.md](../plan.md)
+**Task:** [07-eval_fixtures_kanban.md](07-eval_fixtures_kanban.md) · **Plan:** [plan.md](../plan.md)
 **State:** Authored 2026-06-06 — unverified   <!-- validator sets: Validated YYYY-MM-DD -->
 
 > This certificate is a verification protocol for Task 07. A validating agent discharges it:
