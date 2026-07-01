@@ -26,6 +26,15 @@ The **semi-formal reasoning method** — the premise/claim/evidence/verdict stru
 
 It is not limited to spec-planner output. Any task with a definition of done — an issue with acceptance criteria, a PRD feature with a "done when" list, a ticket checklist — can have a certificate authored for it; the source shapes how the obligations are read, the certificate structure is the same.
 
+## Model & effort
+
+Authoring runs **inline**, so its model is **advisory**: write certificates on **`opus` at
+`high` effort** — the obligations a validator later depends on are only as precise as the
+reasoning that authored them. This matches the planning tier in spec-planner's
+[`model-policy.md`](../spec-planner/references/model-policy.md). Discharging a certificate is
+a *separate* role (validate-done-certificate) and runs under its own gate policy — `fable`
+at `high`.
+
 ## When to apply this skill
 
 - The user asks to **create, write, or generate a done certificate** for one or more tasks — "create a certificate of done for each of these tasks", "add done certificates to the plan", "make a completion certificate for task 04".

@@ -27,6 +27,13 @@ When in doubt, separate the *rule* (a guideline the repo commits to — body) fr
 
 Skip when the request is to write a *different* spec page (that is spec-creator) or to review a spec (that is spec-reviewer). This skill writes exactly one page — the coding discipline for a repo that has, or will have, code.
 
+## Model & effort
+
+This is the plugin's **mechanical** role — detect languages/VCS/style, then merge per-language
+base files with style overlays. It does not need the top tier: run it on **`sonnet` at
+`medium` effort** (advisory, since it runs inline). See spec-creator's
+[`model-policy.md`](../spec-creator/references/model-policy.md) for the full table.
+
 ## Parameters
 
 Three inputs shape the page. Resolve all three before writing.

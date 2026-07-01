@@ -17,6 +17,16 @@ The review method is a semi-formal certificate procedure: literal numbered steps
 
 The skill inherits spec-creator's reality rule and uses it as the test for its code-facing modes: **a canonical body claim that no code backs is a divergence.** The reviewer's job is to surface it — flag it, route it to an Open question or a change spec — never to soften it into "deferred" or quietly edit the body to match a half-built feature.
 
+## Model & effort
+
+Reviewing is the reasoning-heavy, analytical role — tracing references and running the
+semi-formal certificate templates. Run it on **`fable` at `high` effort**, the reviewer tier
+— the most capable model (same as spec-builder's gates). This is advisory when the pass runs
+inline; if you want it enforced on Claude Code, dispatch it as a `Workflow` `agent()` with
+`{ model: 'fable', effort: 'high' }` — spec-reviewer is self-contained enough (spec + code →
+verdict) to survive isolation. See spec-creator's
+[`model-policy.md`](../spec-creator/references/model-policy.md).
+
 ## When to apply this skill
 
 Three review modes. Pick by what the user points at.

@@ -32,6 +32,16 @@ The boundaries between the companions:
 - **done-certificates** authors the verification protocol for a task's DoD; a *separate* validating agent runs it. See [§Adding done certificates](#adding-done-certificates).
 - **spec-builder** (the `spec-builder` plugin) consumes the finished plan folder downstream — it builds each task, runs the correctness/completeness gates, and discharges the done certificates. The plan this skill writes is its input.
 
+## Model & effort
+
+This skill (and its companion `done-certificates`) runs **inline**, so its model choice is
+**advisory**, not enforced: decomposition and certificate authoring are both intended to run
+on **`opus` at `high` effort** — the reasoning that produces the plan sets the ceiling on
+every downstream build. If the session is on a weaker model or lower effort, switch before
+planning. See [`references/model-policy.md`](references/model-policy.md) for the per-role
+table, the `spec-reviewer` exception, and how to run an enforced planning pass via `Workflow`
+if you want one.
+
 ## When to apply this skill
 
 - The user has a spec (canonical, change, or external) and asks how to build it — "plan the implementation", "break this into tasks", "what's the build order".
@@ -130,3 +140,4 @@ spec-creator may delegate here after drafting or merging a change spec, when the
 - [`references/task-decomposition.md`](references/task-decomposition.md) — How to slice a spec into reviewable task packages, the four dependency edge types (build / data / contract / review), the reviewability-ordering method, and milestone grouping. Read before Phases 2–3.
 - [`references/plan-template.md`](references/plan-template.md) — The two plan skeletons: `plan.md` (header, source/DoD note, Mermaid + table task graph, implementation-order section, closing block) and the per-task `NN-…md` file (header, hybrid structure + step checklist + definition of done). Read before Phase 4.
 - [`references/checklist.md`](references/checklist.md) — Pre-handoff checklist: graph coherence (Mermaid ↔ table, no cycles), coverage (every spec section mapped), DoD present on every package, voice, cross-links. Read after writing, before declaring done.
+- [`references/model-policy.md`](references/model-policy.md) — The advisory model/effort for the planning roles (decomposition and done-certificate authoring on `opus`/`high`), why it is advisory rather than enforced, and how to run an enforced pass via `Workflow`. Read before planning if unsure what the session should run on.

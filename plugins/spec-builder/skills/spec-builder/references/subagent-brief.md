@@ -45,8 +45,9 @@ brief so the sub-agent need not go hunting. Because `backlog/`, `in-progress/`, 
 
 ## The implementer prompt template
 
-Dispatch the sub-agent (general-purpose, or a feature-dev implementer) into its workspace
-with a brief shaped like this — adapt, do not paste verbatim:
+Dispatch the implementer at its prescribed model and effort — **`sonnet` at `high`** by
+default ([`model-policy.md`](model-policy.md)) — into the workspace the orchestrator already
+created for it, with a brief shaped like this — adapt, do not paste verbatim:
 
 ```
 You are implementing one task of a larger plan, in an isolated workspace. Build ONLY
@@ -103,7 +104,9 @@ Do not mark the task done yourself — that is the gates' decision.
 ## Reviewer and validator briefs
 
 The two gate agents are briefed more narrowly — they get the diff and the contract, not
-the implementer's reasoning:
+the implementer's reasoning. Both run at the **gate tier — `fable` at `high` effort**
+([`model-policy.md`](model-policy.md)), the most capable model, since correctness and
+completeness are the load-bearing gates:
 
 - **Reviewer (semi-formal-review):** the workspace diff, the task's `Produces` and `Steps`
   (what it was meant to do), and the instruction to run the semi-formal certificate and

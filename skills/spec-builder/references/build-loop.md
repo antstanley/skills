@@ -19,8 +19,9 @@ ready ─► implement ─► gate 1: semi-formal review ─► gate 2: validate
    *Integration point*; commands in workspaces.md) so the builder's base holds its
    dependencies' work.
 2. Assemble the brief from the task file ([`subagent-brief.md`](subagent-brief.md)) and
-   dispatch the implementer sub-agent into the workspace. Move the task — `backlog/NN-*.md`
-   and its `NN-*-certificate.md` — into `in-progress/`, on the main tree.
+   dispatch the implementer at its policy model/effort — `sonnet` at `high` by default
+   ([`model-policy.md`](model-policy.md)) — into the workspace. Move the task —
+   `backlog/NN-*.md` and its `NN-*-certificate.md` — into `in-progress/`, on the main tree.
 3. The sub-agent builds only this task, runs the repo's test/lint commands in its
    workspace, and reports back: files changed, how each DoD item is met, command results,
    and anything incomplete. It does **not** mark the task done.
@@ -32,7 +33,10 @@ done, tests pass" is a claim the gates exist to check.
 
 Run **semi-formal-review** against the workspace diff, by an agent that is **not** the
 implementer — the orchestrator (invoke the `semi-formal-review` skill via the Skill tool) or
-a separate reviewer sub-agent briefed to apply it.
+a separate reviewer sub-agent briefed to apply it. Dispatch it at the gate model/effort,
+`fable` at `high` ([`model-policy.md`](model-policy.md)); when the orchestrator runs the gate
+itself it runs on the session model, so dispatch it as its own sub-agent when the `fable`
+model matters.
 
 - Input: the diff, plus the task's `Produces` and `Steps` (what it was meant to do).
 - Output: `VERDICT: CORRECT | LIKELY_CORRECT | CONCERNS | BUGGY` with confidence and a
@@ -48,7 +52,8 @@ that the review was skipped as trivial and why; do not fabricate a certificate f
 
 Run **validate-done-certificate** against the (now review-clean) workspace diff, again by
 an agent that is **not** the implementer — the orchestrator (invoke the
-`validate-done-certificate` skill via the Skill tool) or a separate validator sub-agent.
+`validate-done-certificate` skill via the Skill tool) or a separate validator sub-agent —
+at the gate model/effort, `fable` at `high` ([`model-policy.md`](model-policy.md)).
 
 - Input: the diff, the task's `Definition of done`, and the task's co-located
   `in-progress/NN-<task>-certificate.md` if it exists — read from the **main tree**, never a

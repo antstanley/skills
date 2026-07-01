@@ -26,6 +26,15 @@ Two knobs, with defaults, resolved in this order (later wins):
    time") overrides both for this run. Echo the resolved settings back before starting so
    the user can correct them.
 
+**Per-role model and effort** are resolved the same way — defaults in
+[`model-policy.md`](model-policy.md) (implementer `sonnet`/`high`, both gates `fable`/`high`,
+orchestrator inherits the session), overridable per invocation ("gates at xhigh",
+"implementer on opus"). Echo the resolved model/effort per role back with the other settings.
+How strictly they are honoured depends on the dispatch path — on Claude Code the `Workflow`
+tool carries both model and effort; on the portable `Task`/`Agent` path model is set on the
+dispatch and effort is advisory (see *Dispatching a batch* below and
+[`model-policy.md`](model-policy.md)).
+
 `sequential` is `parallel` with `max_parallel_agents = 1` and strict one-at-a-time
 ordering; the build loop is otherwise identical. Choose sequential when the repo's tests
 are stateful/serial, when tasks share files heavily, or when the user wants to watch each
@@ -113,8 +122,27 @@ Loop until every task is in `done/`:
 In **sequential** mode `max_parallel_agents = 1`, so step 1 dispatches exactly one task
 and the loop fully resolves it (including merge) before the next — the same code path.
 
-Dispatch the independent sub-agents of one wave **concurrently** (multiple Agent calls in
-a single message), not one after another, so the wave actually runs in parallel.
+Dispatch the independent sub-agents of one wave **concurrently**, not one after another, so
+the wave actually runs in parallel.
+
+### Dispatching a batch
+
+Each role runs at its prescribed model and effort ([`model-policy.md`](model-policy.md)). On
+**Claude Code**, prefer dispatching a tick's ready set as **one `Workflow` call** that
+pipelines the batch's tasks through implement → gate 1 → gate 2, since the `Workflow`
+`agent()` carries **both** model and effort (the plain `Task`/`Agent` tool carries model but
+not effort). Workflow runs the batch under its own concurrency cap; it returns each task's
+verdicts and workspace ref; the **orchestrator** then merges the CORRECT-and-DONE tasks into
+the integration point in reviewability order, moves them to `done/`, tears down their
+workspaces, recomputes `ready`, and runs the next batch. On harnesses without Workflow, fall
+back to the portable `Task`/`Agent` dispatch (multiple calls in one message) — set the model
+on each dispatch, treat effort as advisory. Either way the stateful work — the DAG walk,
+merges, folder moves, the advancing integration point — stays in the orchestrator's own
+control flow.
+
+The whole DAG is **not** one pipeline: a task cannot begin until its dependencies have
+merged, and a pipeline starts every item at once — so the orchestrator loops batch by batch
+over the ready frontier rather than handing all tasks to a single call.
 
 ---
 

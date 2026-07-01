@@ -59,5 +59,7 @@ Gate 2 — **completeness**. The validating agent the [done-certificates](../spe
 | `execution_mode` | `parallel` | `.claude/spec-builder.local.md` frontmatter, or inline in the request |
 | `max_parallel_agents` | `4` | same (ignored when sequential) |
 | `workspace_layout` | `sibling` | same (`sibling` \| `grouped` — see workspaces.md) |
+| implementer model / effort | `sonnet` / `high` | inline in the request; policy in `references/model-policy.md` |
+| gate model / effort (both gates) | `fable` / `high` | same |
 
-An explicit request ("build sequentially", "max 2 agents") overrides the file and the defaults for that run.
+An explicit request ("build sequentially", "max 2 agents", "gates at xhigh") overrides the file and the defaults for that run. Because spec-builder fans out, model and effort are set per role — on Claude Code the `Workflow` tool carries both (see [`references/model-policy.md`](skills/spec-builder/references/model-policy.md)); on the portable `Task`/`Agent` path the model is set per dispatch and effort is advisory. The other spec-* plugins run inline, so their model policy is advisory.
