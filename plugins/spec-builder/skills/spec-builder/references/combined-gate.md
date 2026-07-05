@@ -45,9 +45,9 @@ checkpoints run once.
 
 ## The protocol (combined mode)
 
-Run by a single agent that is **not** the implementer, at the gate tier — `fable` at `high`
-effort ([`model-policy.md`](model-policy.md)). Follow it in order; do not collapse the two
-verdicts into one.
+Run by a single agent that is **not** the implementer, at the model/effort the orchestrator
+resolved for the gate ([`model-policy.md`](model-policy.md)). Follow it in order; do not
+collapse the two verdicts into one.
 
 1. **Read once.** Read the workspace diff, the code it touches, and the task's
    `NN-<task>-certificate.md` (from the **main tree**, the `in-progress/` subfolder — never a

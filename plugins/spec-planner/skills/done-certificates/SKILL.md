@@ -28,12 +28,12 @@ It is not limited to spec-planner output. Any task with a definition of done —
 
 ## Model & effort
 
-Authoring runs **inline**, so its model is **advisory**: write certificates on **`opus` at
-`high` effort** — the obligations a validator later depends on are only as precise as the
-reasoning that authored them. This matches the planning tier in spec-planner's
-[`model-policy.md`](../spec-planner/references/model-policy.md). Discharging a certificate is
-a *separate* role (validate-done-certificate) and runs under its own gate policy — `fable`
-at `high`.
+Authoring runs **inline**, so there is no dispatch to pin a model to — it runs on the session
+model. The obligations a validator later depends on are only as precise as the reasoning that
+authored them, so give it a capable model, the same steer as the rest of planning
+(spec-planner's [`model-policy.md`](../spec-planner/references/model-policy.md)). Discharging a
+certificate is a *separate* role (validate-done-certificate) that runs downstream under
+spec-builder's gate, whose model the orchestrator chooses there.
 
 ## When to apply this skill
 

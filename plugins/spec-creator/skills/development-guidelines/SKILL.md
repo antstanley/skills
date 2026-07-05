@@ -30,9 +30,10 @@ Skip when the request is to write a *different* spec page (that is spec-creator)
 ## Model & effort
 
 This is the plugin's **mechanical** role — detect languages/VCS/style, then merge per-language
-base files with style overlays. It does not need the top tier: run it on **`sonnet` at
-`medium` effort** (advisory, since it runs inline). See spec-creator's
-[`model-policy.md`](../spec-creator/references/model-policy.md) for the full table.
+base files with style overlays. It runs **inline on the session model** and does not need the
+top tier — a mid-tier model handles it. See spec-creator's
+[`model-policy.md`](../spec-creator/references/model-policy.md) for how the plugin's roles pick
+a model.
 
 ## Parameters
 

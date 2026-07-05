@@ -1,26 +1,25 @@
-# Model & effort policy — recommended model for the spec-creator roles
+# Model & effort — spec-creator runs on the session model
 
 The spec-creator plugin does **not** fan out sub-agents — its three skills (`spec-creator`,
 `development-guidelines`, `spec-reviewer`) run **inline** and hand off to each other in the
-same session. There is no dispatch call to attach a model to, so this policy is
-**advisory**: it states the model and reasoning effort each role is intended to run at. If
-the session is on a weaker model or lower effort than a role calls for, switch before
-proceeding.
+same session. There is no dispatch call to attach a model to, so there is no per-role table to
+enforce: the skills run on **whatever model the session is on**.
 
-| Role | Model | Effort | Why |
-|---|---|---|---|
-| **Spec authoring** (the `spec-creator` skill) | `opus` | `high` | Investigative reading of the code, deciding the layered file set, writing precise canonical/change specs — creative, structural reasoning that everything downstream is built from. |
-| **spec-reviewer** (R1 / R2 / R3 passes) | `fable` | `high` | Analytical verification: tracing references, running the semi-formal certificate templates, producing a divergence verdict. The reviewer tier (the most capable model) — same as spec-builder's gates. |
-| **development-guidelines** | `sonnet` | `medium` | Templated assembly: detect languages/VCS/style, then merge per-language base files with style overlays. More mechanical than creative, so it does not need the top tier. |
+The roles differ in how much they ask of the model, which is worth keeping in mind when you
+pick what to run the session on:
 
-Notes:
+- **Spec authoring** (`spec-creator`) — investigative reading of the code, deciding the layered
+  file set, writing precise canonical/change specs. The most reasoning-heavy role; give it a
+  capable model.
+- **spec-reviewer** — analytical verification: tracing references, running the semi-formal
+  certificate templates, producing a divergence verdict. Also reasoning-heavy; a capable model
+  earns its keep.
+- **development-guidelines** — templated assembly (detect languages/VCS/style, merge base files
+  with style overlays). More mechanical than creative; it does not need the ceiling.
 
-- **Enforcement is out of scope here by design.** These roles are inline; enforcing a model
-  would mean dispatching them as sub-agents and losing the shared investigation context that
-  makes the hand-offs coherent. Only spec-builder, which already fans out, enforces
-  model/effort.
-- **If you want spec-reviewer enforced** on Claude Code, you *can* dispatch it as a
-  `Workflow` `agent()` with `{ model: 'fable', effort: 'high' }` — it is the most
-  self-contained of the three (it takes a spec + code and returns a verdict), so it survives
-  being run as an isolated sub-agent better than the authoring roles do.
-- An explicit request overrides the table ("write this spec at max effort").
+These are considerations for choosing what to run the session on, not fixed defaults, and an
+explicit request overrides ("write this spec at max effort"). If you want `spec-reviewer`
+enforced on a specific model, it is self-contained enough (spec + code → verdict) to dispatch
+as a `Workflow` `agent()` with the model and effort you choose — the authoring roles rely on
+shared session context and do not isolate as cleanly. Only spec-builder, which fans out,
+selects a model per sub-agent as a matter of course.

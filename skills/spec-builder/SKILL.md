@@ -137,9 +137,10 @@ harness can do that — gate on the **capability**, not on which harness you are
    owns the `Draft → Accepted` promotion at this handoff.)
 2. Resolve `execution_mode`, `max_parallel_agents`, and `gate_mode` (defaults: parallel, 4,
    combined) from any `.claude/spec-builder.local.md` and the invocation; echo the resolved
-   settings back. Resolve the **per-role model and effort** the same way (defaults in
-   [`references/model-policy.md`](references/model-policy.md): implementer `sonnet`/`high`,
-   both gates `fable`/`high`); echo those back too.
+   settings back. Resolve the **per-role model and effort** the same way — but with no pinned
+   defaults: by default the orchestrator chooses each role's model/effort by its own judgment
+   ([`references/model-policy.md`](references/model-policy.md)), overridable per role/run; echo
+   the resolved choices back too.
 3. Build the schedule from the **dependency table** (the source of truth, not the Mermaid
    graph), keyed by task number; sanity-check the DAG (no cycles, every dependency a real lower
    number); treat tasks already in `done/` as preconditions. See
@@ -159,7 +160,7 @@ Walk the graph with bounded concurrency (orchestration.md → *The wave schedule
 ready tasks up to `max_parallel_agents`, each into its own workspace branched from the
 current integration point, each via a context-sized brief
 ([`references/subagent-brief.md`](references/subagent-brief.md)). Dispatch a wave's
-independent agents concurrently, each at its prescribed model/effort
+independent agents concurrently, each at the model/effort the orchestrator resolved for it
 ([`references/model-policy.md`](references/model-policy.md)) — on Claude Code prefer a single
 `Workflow` call per batch (it carries model **and** effort); on the portable `Task`/`Agent`
 path set the model per dispatch and treat effort as advisory. Sequential mode is the same
@@ -224,10 +225,11 @@ user's to run; it is outside the per-task gates.
   agents), reading the plan into a schedule, the bounded-concurrency wave scheduler, the
   backend-neutral workspace lifecycle and the accumulating integration point, merge-conflict
   handling, and status bookkeeping. Read before Phases 1–3.
-- [`references/model-policy.md`](references/model-policy.md) — Which model and reasoning
-  effort each role runs at (implementer, the verifier gate(s), orchestrator), and how dispatch
-  enforces it — `Workflow` batch dispatch on Claude Code (model + effort), the portable
-  `Task`/`Agent` fallback (model set, effort advisory). Read before Phase 3.
+- [`references/model-policy.md`](references/model-policy.md) — How the orchestrator **chooses**
+  each role's model and reasoning effort (implementer, the verifier gate(s), orchestrator) and
+  how the user overrides it, plus how dispatch carries the choice — `Workflow` batch dispatch on
+  Claude Code (model + effort), the portable `Task`/`Agent` fallback (model set, effort
+  advisory). Read before Phase 3.
 - [`references/workspaces.md`](references/workspaces.md) — The vendored, self-contained
   workspace-isolation method for **both backends**: detection (jj preferred, else git),
   sibling directory selection, the per-workspace commands, the baseline test run, merging

@@ -27,10 +27,11 @@ Three knobs, with defaults, resolved in this order (later wins):
    time", "split the gates") overrides both for this run. Echo the resolved settings back
    before starting so the user can correct them.
 
-**Per-role model and effort** are resolved the same way — defaults in
-[`model-policy.md`](model-policy.md) (implementer `sonnet`/`high`, both gates `fable`/`high`,
-orchestrator inherits the session), overridable per invocation ("gates at xhigh",
-"implementer on opus"). Echo the resolved model/effort per role back with the other settings.
+**Per-role model and effort** are resolved the same way — but there are no pinned defaults:
+by default the **orchestrator chooses** per role ([`model-policy.md`](model-policy.md)) — it
+inherits the session for itself, and picks the implementer's and the gates' model/effort by its
+own judgment unless the user overrides ("gates at xhigh", "implementer on opus", "everything on
+sonnet"). Echo the resolved model/effort per role back with the other settings.
 
 **Gate mode** (`gate_mode`) resolves the same way — `combined` (default) runs one verifier
 sub-agent that proves correctness and completeness in a single context
@@ -136,7 +137,7 @@ the wave actually runs in parallel.
 
 ### Dispatching a batch
 
-Each role runs at its prescribed model and effort ([`model-policy.md`](model-policy.md)). On
+Each role runs at the model and effort the orchestrator resolved for it ([`model-policy.md`](model-policy.md)). On
 **Claude Code**, prefer dispatching a tick's ready set as **one `Workflow` call** that
 pipelines the batch's tasks through implement → verify (or implement → gate 1 → gate 2 under
 `gate_mode: split`), since the `Workflow` `agent()` carries **both** model and effort (the

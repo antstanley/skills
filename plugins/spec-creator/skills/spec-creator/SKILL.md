@@ -27,13 +27,13 @@ The companions follow this skill's conventions and do not restate them.
 
 ## Model & effort
 
-This plugin's three skills run **inline**, so model choice is **advisory**, not enforced.
-Spec authoring is intended to run on **`opus` at `high` effort**; the `spec-reviewer` passes
-on **`fable` at `high`** (the reviewer tier — the most capable model); `development-guidelines`,
-being templated assembly, on **`sonnet` at `medium`**. If the session is on a weaker model
-than a role calls for, switch before proceeding. See
-[`references/model-policy.md`](references/model-policy.md) for the table, the rationale, and
-how to run `spec-reviewer` as an enforced `Workflow` sub-agent if you want enforcement.
+This plugin's three skills run **inline**, so there is no dispatch to pin a model to — they
+run on **whatever model the session is on**. They differ in how much they ask of it: spec
+authoring and the `spec-reviewer` passes are reasoning-heavy and want a capable model;
+`development-guidelines`, being templated assembly, does not need the ceiling. Treat those as
+considerations when you pick what to run the session on, not fixed defaults; an explicit
+request overrides. See [`references/model-policy.md`](references/model-policy.md) for the
+rationale and how to run `spec-reviewer` as an enforced `Workflow` sub-agent if you want one.
 
 ## When to apply this skill
 
@@ -219,4 +219,4 @@ Spec voice is declarative present tense describing what exists; past tense in De
 - [`references/checklist.md`](references/checklist.md) — Pre-handoff checklist (no MVP language, all cross-refs resolve, closing block on every page, schema sidecar matches body claims). Read after writing, before declaring done.
 - [`references/change-specs.md`](references/change-specs.md) — Change-spec document type: how a proposed-change document differs from a canonical spec, its single-document structure, the `Proposed → Accepted → Implemented → Merged` lifecycle, and the merge procedure. Read when the user wants to propose a change to an existing spec or merge a shipped change back in.
 - [`references/examples.md`](references/examples.md) — Two worked runs: promoting a per-package page to global, and adding a sibling app modelled on existing specs. Read when a request matches one of these shapes.
-- [`references/model-policy.md`](references/model-policy.md) — The advisory model/effort for the plugin's three roles (spec authoring `opus`/`high`, spec-reviewer `fable`/`high`, development-guidelines `sonnet`/`medium`), why it is advisory, and how to run spec-reviewer as an enforced `Workflow` sub-agent. Read if unsure what the session should run on.
+- [`references/model-policy.md`](references/model-policy.md) — Why the plugin's three roles run on the session model (they are inline, nothing to pin), which are reasoning-heavy enough to want a capable model, and how to run spec-reviewer as an enforced `Workflow` sub-agent. Read if unsure what the session should run on.

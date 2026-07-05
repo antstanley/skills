@@ -87,7 +87,7 @@ Apply the certificate from [`references/method.md`](references/method.md):
 Follow this full procedure on every review, regardless of which model or agent runs it —
 there is no compact shortcut. (The method is sound on any model; that is why a weaker one
 still produces a defensible verdict. spec-builder nonetheless *dispatches* this gate on the
-most capable model — `fable` at `high` effort — because correctness is load-bearing; see
+most capable model the orchestrator picks for it — because correctness is load-bearing; see
 that plugin's `model-policy.md`. Soundness-on-any-model and prescribe-the-strongest-model are
 not in tension.) If the verdict is `BUGGY` and the caller needs the offending line, expand to
 fault localization (also in the reference) and report the line with its sufficiency test.

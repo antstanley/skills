@@ -61,7 +61,7 @@ The **completeness** gate. The validating agent the [done-certificates](../spec-
 | `max_parallel_agents` | `4` | same (ignored when sequential) |
 | `gate_mode` | `combined` | same (`combined` \| `split` — one verifier, or two separate gates; see combined-gate.md) |
 | `workspace_layout` | `sibling` | same (`sibling` \| `grouped` — see workspaces.md) |
-| implementer model / effort | `sonnet` / `high` | inline in the request; policy in `references/model-policy.md` |
-| gate model / effort (both gates) | `fable` / `high` | same |
+| implementer model / effort | orchestrator's choice | overridable inline or in `.claude/spec-builder.local.md`; guidance in `references/model-policy.md` |
+| gate model / effort | orchestrator's choice | same (favours the most capable model available) |
 
-An explicit request ("build sequentially", "max 2 agents", "gates at xhigh") overrides the file and the defaults for that run. Because spec-builder fans out, model and effort are set per role — on Claude Code the `Workflow` tool carries both (see [`references/model-policy.md`](skills/spec-builder/references/model-policy.md)); on the portable `Task`/`Agent` path the model is set per dispatch and effort is advisory. The other spec-* plugins run inline, so their model policy is advisory.
+An explicit request ("build sequentially", "max 2 agents", "gates at xhigh", "implementer on opus") overrides the file and the orchestrator's choices for that run. Because spec-builder fans out, model and effort are set per role — **by default the orchestrator chooses** each role's model/effort (guidance in [`references/model-policy.md`](skills/spec-builder/references/model-policy.md)), and the user can override any role; on Claude Code the `Workflow` tool carries both model and effort, on the portable `Task`/`Agent` path the model is set per dispatch and effort is advisory. The other spec-* plugins run inline, so they simply use the session model.

@@ -45,8 +45,8 @@ brief so the sub-agent need not go hunting. Because `backlog/`, `in-progress/`, 
 
 ## The implementer prompt template
 
-Dispatch the implementer at its prescribed model and effort — **`sonnet` at `high`** by
-default ([`model-policy.md`](model-policy.md)) — into the workspace the orchestrator already
+Dispatch the implementer at the model and effort the orchestrator resolved for it
+([`model-policy.md`](model-policy.md)) — into the workspace the orchestrator already
 created for it, with a brief shaped like this — adapt, do not paste verbatim:
 
 ```
@@ -107,9 +107,9 @@ Do not mark the task done yourself — that is the gates' decision.
 By default one verifier runs both gates in a single context ([`build-loop.md`](build-loop.md)
 → *Step 2*, [`combined-gate.md`](combined-gate.md)); under `gate_mode: split` the two are
 briefed separately. Either way the gate agent gets the diff and the contract, not the
-implementer's reasoning, and runs at the **gate tier — `fable` at `high` effort**
-([`model-policy.md`](model-policy.md)), the most capable model, since correctness and
-completeness are the load-bearing gates:
+implementer's reasoning, and runs at the model and effort the orchestrator resolved for the
+gate ([`model-policy.md`](model-policy.md)) — the load-bearing role, so the orchestrator
+favours the most capable model available, since correctness and completeness gate the merge:
 
 - **Combined verifier (default):** the workspace diff; the task's `Produces` and `Steps` (for
   correctness); the task's `Definition of done` and its `NN-<task>-certificate.md` if one

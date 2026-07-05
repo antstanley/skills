@@ -21,7 +21,7 @@ ready ─► implement ─► verify: correctness + completeness ─► merge �
    *Integration point*; commands in workspaces.md) so the builder's base holds its
    dependencies' work.
 2. Assemble the brief from the task file ([`subagent-brief.md`](subagent-brief.md)) and
-   dispatch the implementer at its policy model/effort — `sonnet` at `high` by default
+   dispatch the implementer at the model/effort the orchestrator resolved for it
    ([`model-policy.md`](model-policy.md)) — into the workspace. Move the task —
    `backlog/NN-*.md` and its `NN-*-certificate.md` — into `in-progress/`, on the main tree.
 3. The sub-agent builds only this task, runs the repo's test/lint commands in its
@@ -33,9 +33,9 @@ done, tests pass" is a claim the gates exist to check.
 
 ## Step 2 — Verify: correctness and completeness
 
-Verify the workspace diff by an agent that is **not** the implementer, at the gate
-model/effort — `fable` at `high` ([`model-policy.md`](model-policy.md)). How many agents run
-it is the `gate_mode` knob ([`orchestration.md`](orchestration.md) → *Configuration*):
+Verify the workspace diff by an agent that is **not** the implementer, at the model/effort
+the orchestrator resolved for the gate ([`model-policy.md`](model-policy.md)). How many agents
+run it is the `gate_mode` knob ([`orchestration.md`](orchestration.md) → *Configuration*):
 
 - **`combined` (default) — one gate, one context.** Dispatch a single verifier that reads the
   diff once and returns both verdicts, per [`combined-gate.md`](combined-gate.md). It runs the
@@ -44,8 +44,8 @@ it is the `gate_mode` knob ([`orchestration.md`](orchestration.md) → *Configur
   path, since the two gates otherwise iterate the same code twice.
 - **`split` — two gates, two contexts.** Gate 1 (`semi-formal-review`) runs first; only if it
   passes does gate 2 (`validate-done-certificate`) run, each by a separate agent (or the
-  orchestrator via the Skill tool — dispatch it as its own sub-agent when the `fable` model
-  matters, since a gate the orchestrator runs itself uses the session model). Choose it when
+  orchestrator via the Skill tool — dispatch it as its own sub-agent when the chosen gate
+  model matters, since a gate the orchestrator runs itself uses the session model). Choose it when
   reviewer≠validator independence is worth the extra tokens — a high-risk plan, or a retry you
   distrust.
 

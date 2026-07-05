@@ -20,11 +20,10 @@ The skill inherits spec-creator's reality rule and uses it as the test for its c
 ## Model & effort
 
 Reviewing is the reasoning-heavy, analytical role — tracing references and running the
-semi-formal certificate templates. Run it on **`fable` at `high` effort**, the reviewer tier
-— the most capable model (same as spec-builder's gates). This is advisory when the pass runs
-inline; if you want it enforced on Claude Code, dispatch it as a `Workflow` `agent()` with
-`{ model: 'fable', effort: 'high' }` — spec-reviewer is self-contained enough (spec + code →
-verdict) to survive isolation. See spec-creator's
+semi-formal certificate templates. It runs **inline on the session model**, so give it a
+capable one; nothing pins the model here. If you want it enforced on a specific model, it is
+self-contained enough (spec + code → verdict) to dispatch as a `Workflow` `agent()` with the
+model and effort you choose. See spec-creator's
 [`model-policy.md`](../spec-creator/references/model-policy.md).
 
 ## When to apply this skill
