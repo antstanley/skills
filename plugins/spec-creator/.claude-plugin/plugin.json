@@ -1,6 +1,6 @@
 {
   "name": "spec-creator",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Create or expand formal design specifications for an app, package, or codebase — numbered, layered, cross-linked markdown that defines what exists in the current branch. Head of the spec-creator → spec-planner → spec-builder pipeline; its specs feed spec-planner.",
   "author": { "name": "antstanley" },
   "repository": "https://github.com/antstanley/skills",
