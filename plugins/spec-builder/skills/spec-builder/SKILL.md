@@ -8,9 +8,10 @@ compatibility: Needs a harness that can dispatch sub-agents — Claude Code or O
 
 A skill for **executing** an implementation plan: turning a spec-planner plan folder into
 merged, reviewed, validated code. Each task is built by its own sub-agent in its own jj
-workspace, and no task reaches `Done` until it has passed two gates run by an agent other
-than the one that built it — a semi-formal **correctness** review and a definition-of-done
-**completeness** validation.
+workspace, and no task reaches `Done` until an agent other than the one that built it has
+proven it **correct** (a semi-formal review) and **complete** (a definition-of-done
+validation) — by default in one combined verification gate, or as two separate gates under
+`gate_mode: split`.
 
 ## Core principle
 
@@ -19,16 +20,17 @@ complete — by someone other than its builder.** spec-planner already did the h
 it decomposed the spec into reviewable task packages, ordered them for reviewability, and
 wrote each one's definition of done (and, by default, a done certificate). spec-builder's
 job is to *honour that structure* — build in dependency order, give each task exactly the
-context its package names, and let the two gates decide done-ness, never the builder's
+context its package names, and let the gates decide done-ness, never the builder's
 self-report.
 
 Three rules follow:
 
 1. **One sub-agent per task, in one isolated workspace.** Tasks are built in parallel where
    the graph allows it; isolation comes from per-task workspaces (jj or git), not from trust.
-2. **Two gates, both mandatory, neither self-graded.** Correctness (semi-formal-review) and
-   completeness (validate-done-certificate) both pass before a task merges. The implementer
-   runs neither on its own work.
+2. **Two proofs, both mandatory, neither self-graded.** Correctness (semi-formal-review) and
+   completeness (validate-done-certificate) both pass before a task merges — by default proven
+   by one verification gate in a single context, or by two separate gates under
+   `gate_mode: split`. The implementer runs neither on its own work.
 3. **The plan folder is a board of folders.** Tasks move between `backlog/`, `in-progress/`,
    `blocked/`, and `done/` as their status changes — the task file and its co-located
    certificate move together — and `plan.md`'s plan-level `Status` is recomputed from the
@@ -50,9 +52,12 @@ spec-builder is the execution end of a three-plugin pipeline (spec-creator → s
     workspaces. jj (jujutsu) is preferred when a repo supports both (a colocated repo);
     plain git repos use git worktrees. The standalone `jj-workspaces` skill is a richer
     companion when installed, but not required.
-  - **semi-formal-review** (this plugin) — gate 1, correctness.
-  - **validate-done-certificate** (this plugin) — gate 2, completeness; discharges the
+  - **semi-formal-review** (this plugin) — the correctness method.
+  - **validate-done-certificate** (this plugin) — the completeness method; discharges the
     certificate done-certificates authored, or the DoD checklist when none exists.
+  - By default a single **verification gate** runs both over one reading of the diff
+    ([`references/combined-gate.md`](references/combined-gate.md)), for token efficiency;
+    `gate_mode: split` runs them as two separate agents.
 
 It is **optimised for spec-planner plans** — it reads the dependency table (keyed by task
 number) as the source of truth, the `Implements / Produces / Pointers / Steps / Definition of
@@ -77,7 +82,7 @@ Skip or redirect when:
   building straight from a spec skips the decomposition and ordering that make the build
   reviewable.
 - **The change is a single trivial task** — a one-file edit with a three-line definition of
-  done. Building it directly is faster than spinning up a workspace and two gates; say so.
+  done. Building it directly is faster than spinning up a workspace and a verification gate; say so.
 - The request is to *write or change the spec* (spec-creator) or to *plan* it (spec-planner).
 
 **Expect manual sign-off on visually-reviewable tasks.** Every task's definition of done ends
@@ -107,7 +112,8 @@ harness can do that — gate on the **capability**, not on which harness you are
 - **Absent** → you are most likely in Pi without a subagents extension. Do **not**
   fake parallelism or let the builder grade its own work. Offer the user the
   install path (`pi install npm:@tintinweb/pi-subagents`, then reload Pi) or the
-  sequential single-agent fallback that keeps both gates as separate passes — see
+  sequential single-agent fallback that still runs the verification (correctness and
+  completeness) in-context — see
   [`references/portability.md`](references/portability.md). State which mode ran.
 
 ### Phase 1 — Load the plan and resolve settings
@@ -129,9 +135,9 @@ harness can do that — gate on the **capability**, not on which harness you are
    any task. `Accepted` proceeds. `In progress` resumes from folder membership. `Done` is
    already built — say so rather than rebuilding. (spec-planner emits `Draft`; spec-builder
    owns the `Draft → Accepted` promotion at this handoff.)
-2. Resolve `execution_mode` and `max_parallel_agents` (defaults: parallel, 4) from any
-   `.claude/spec-builder.local.md` and the invocation; echo the resolved settings back.
-   Resolve the **per-role model and effort** the same way (defaults in
+2. Resolve `execution_mode`, `max_parallel_agents`, and `gate_mode` (defaults: parallel, 4,
+   combined) from any `.claude/spec-builder.local.md` and the invocation; echo the resolved
+   settings back. Resolve the **per-role model and effort** the same way (defaults in
    [`references/model-policy.md`](references/model-policy.md): implementer `sonnet`/`high`,
    both gates `fable`/`high`); echo those back too.
 3. Build the schedule from the **dependency table** (the source of truth, not the Mermaid
@@ -162,8 +168,9 @@ loop with the cap at 1.
 ### Phase 4 — Gate, merge, and move per task
 
 Each task runs the build loop ([`references/build-loop.md`](references/build-loop.md)):
-implement → **gate 1: semi-formal-review** (correctness) → **gate 2: validate-done-certificate**
-(completeness) → merge into the integration point → move the task into `done/`. A failed gate
+implement → **verify** (correctness + completeness — one combined gate by default
+([`references/combined-gate.md`](references/combined-gate.md)), or two gates under
+`gate_mode: split`) → merge into the integration point → move the task into `done/`. A failed gate
 re-dispatches the implementer with the verdict as feedback, bounded by a small retry count;
 past that, the task is parked — moved into `blocked/` with a `**Blocked:** <reason>` line — and
 surfaced to the user. The orchestrator moves the task file and its certificate between
@@ -179,7 +186,7 @@ built, the review and validation verdict per task, any parked tasks and why, and
 integrated work sits. Shipping it — a jj bookmark, or merging the git integration branch
 into the target — is the user's call; offer it, but do not push or land without being asked.
 
-**Close the loop back to the spec.** The two gates prove each task is correct and complete
+**Close the loop back to the spec.** The gates prove each task is correct and complete
 against its *own* definition of done — they do **not** re-check the integrated code against
 the source spec. Whether the spec is faithfully implemented rests on the plan's coverage
 (spec-planner's Phase 5 maps every in-scope spec section to a task) plus each DoD encoding
@@ -191,13 +198,13 @@ user's to run; it is outside the per-task gates.
 
 ## What NOT to do
 
-- **Don't let a builder grade its own work.** Both gates are run by a different agent. This
-  is the rule the whole skill exists to enforce.
+- **Don't let a builder grade its own work.** The verification — combined or split — is run
+  by a different agent. This is the rule the whole skill exists to enforce.
 - **Don't fake parallelism when the harness can't dispatch sub-agents.** If no dispatch tool
   is present (typically Pi without a subagents extension), take the documented fallback in
   [`references/portability.md`](references/portability.md) and say which mode ran — don't
   pretend gates were run by a separate agent when they weren't.
-- **Don't mark a task `Done` on one gate, or on the implementer's self-report.** Correct and
+- **Don't mark a task `Done` on one verdict, or on the implementer's self-report.** Correct and
   complete, both proven, then merge.
 - **Don't lower the bar to force a green build.** A parked task honestly surfaced beats a
   falsely-`Done` one. Failures surface; they are not papered over.
@@ -218,7 +225,7 @@ user's to run; it is outside the per-task gates.
   backend-neutral workspace lifecycle and the accumulating integration point, merge-conflict
   handling, and status bookkeeping. Read before Phases 1–3.
 - [`references/model-policy.md`](references/model-policy.md) — Which model and reasoning
-  effort each role runs at (implementer, the two gates, orchestrator), and how dispatch
+  effort each role runs at (implementer, the verifier gate(s), orchestrator), and how dispatch
   enforces it — `Workflow` batch dispatch on Claude Code (model + effort), the portable
   `Task`/`Agent` fallback (model set, effort advisory). Read before Phase 3.
 - [`references/workspaces.md`](references/workspaces.md) — The vendored, self-contained
@@ -227,10 +234,16 @@ user's to run; it is outside the per-task gates.
   and teardown, and an operation-mapping table (concept → jj → git). Read before Phase 2.
 - [`references/subagent-brief.md`](references/subagent-brief.md) — How to assemble a
   context-sized brief from a task package, the implementer prompt template, brief sizing,
-  and the narrower reviewer/validator briefs. Read before dispatching.
+  and the verifier brief (combined by default, or the split reviewer/validator briefs). Read
+  before dispatching.
 - [`references/build-loop.md`](references/build-loop.md) — The per-task lifecycle: implement,
-  the two gates and their pass/fail rules, merge-and-mark-done, handling a failed gate
+  the verification gate and its pass/fail rules, merge-and-mark-done, handling a failed gate
   (feedback, bounded retries, parking), and the invariants. Read before Phase 4.
+- [`references/combined-gate.md`](references/combined-gate.md) — The default single-context
+  verification gate: one agent, one reading of the diff, both verdicts; the merged protocol
+  (shared checkpoints once, then correctness and completeness), the dual-verdict output, and
+  the `gate_mode: combined | split` knob — what the merge preserves and what it relaxes. Read
+  before Phase 4.
 - [`references/portability.md`](references/portability.md) — Which harnesses can dispatch
   sub-agents (Claude Code, OpenCode, Pi-with-extension), the capability gate, and the
   sequential single-agent fallback when no dispatch tool is present. Read at Preflight.

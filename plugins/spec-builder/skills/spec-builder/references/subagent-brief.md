@@ -76,10 +76,11 @@ Repo definition of done (inherited): <tests / lint / format / named-constant lim
 from plan.md's baseline — name the actual commands, e.g. `npm test`, `npm run lint`>.
 
 ## How you are judged (so build for it, do not game it)
-After you report done, a SEPARATE agent reviews your diff semi-formally for correctness
-and regressions, and a SEPARATE validator checks it against the definition of done. Write
-the code the task actually needs — general, correct behavior — not code aimed at a
-specific named test. Add or update tests as the definition of done requires.
+After you report done, a SEPARATE verifier — never you — checks your diff for both
+correctness (semi-formally, for regressions and scope/shadowing bugs) and completeness
+against the definition of done, and merges it only if both hold. Write the code the task
+actually needs — general, correct behavior — not code aimed at a specific named test. Add
+or update tests as the definition of done requires.
 
 ## Report back
 When done, report: the files you changed, how each Definition-of-done item is met, the
@@ -101,21 +102,27 @@ Do not mark the task done yourself — that is the gates' decision.
 
 ---
 
-## Reviewer and validator briefs
+## The verifier brief
 
-The two gate agents are briefed more narrowly — they get the diff and the contract, not
-the implementer's reasoning. Both run at the **gate tier — `fable` at `high` effort**
+By default one verifier runs both gates in a single context ([`build-loop.md`](build-loop.md)
+→ *Step 2*, [`combined-gate.md`](combined-gate.md)); under `gate_mode: split` the two are
+briefed separately. Either way the gate agent gets the diff and the contract, not the
+implementer's reasoning, and runs at the **gate tier — `fable` at `high` effort**
 ([`model-policy.md`](model-policy.md)), the most capable model, since correctness and
 completeness are the load-bearing gates:
 
-- **Reviewer (semi-formal-review):** the workspace diff, the task's `Produces` and `Steps`
-  (what it was meant to do), and the instruction to run the semi-formal certificate and
-  return `CORRECT / LIKELY_CORRECT / CONCERNS / BUGGY`. It must not be the implementer.
-- **Validator (validate-done-certificate):** the workspace diff, the task's `Definition of
-  done`, and the certificate file if one exists; the instruction to discharge it and
-  return `DONE / PARTIAL / NOT_DONE`. It must not be the implementer, and ideally not the
-  reviewer either, though the orchestrator may run both gates itself since it did not write
-  the code.
+- **Combined verifier (default):** the workspace diff; the task's `Produces` and `Steps` (for
+  correctness); the task's `Definition of done` and its `NN-<task>-certificate.md` if one
+  exists (for completeness); and the instruction to run the combined-gate protocol and return
+  **both** verdicts — `CORRECT / LIKELY_CORRECT / CONCERNS / BUGGY` and
+  `DONE / PARTIAL / NOT_DONE`. It must not be the implementer.
+- **Split briefs (`gate_mode: split`):** the same two, narrower and sequential —
+  - *Reviewer (semi-formal-review):* the diff, the task's `Produces` and `Steps` (what it was
+    meant to do), and the instruction to run the semi-formal certificate and return
+    `CORRECT / LIKELY_CORRECT / CONCERNS / BUGGY`. It must not be the implementer.
+  - *Validator (validate-done-certificate):* the diff, the task's `Definition of done`, and
+    the certificate if one exists; the instruction to discharge it and return
+    `DONE / PARTIAL / NOT_DONE`. It must not be the implementer, and ideally not the reviewer
+    either — though the orchestrator may run both itself, since it did not write the code.
 
-See [`build-loop.md`](build-loop.md) for how the three fit together and what happens on
-each verdict.
+See [`build-loop.md`](build-loop.md) for how they fit together and what happens on each verdict.

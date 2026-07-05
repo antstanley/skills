@@ -1,8 +1,9 @@
 # Model & effort policy — which model runs each role, and how it is enforced
 
 spec-builder is the one skill in the spec-* family that actually **fans out** — it
-dispatches a sub-agent per task and two more per gate. That fan-out is where model and
-reasoning-effort choices can be pinned to each role.
+dispatches a sub-agent per task and, by default, one more to verify it (two under
+`gate_mode: split`). That fan-out is where model and reasoning-effort choices can be pinned to
+each role.
 
 This file is the single source of truth for the role → model/effort mapping. The build
 loop, the sub-agent brief, and the orchestrator all defer here.
@@ -14,8 +15,7 @@ loop, the sub-agent brief, and the orchestrator all defer here.
 | Role | Model | Effort | Why |
 |---|---|---|---|
 | **Implementer** (per-task builder) | `sonnet` | `high` | Code-writing, high volume, one per task — the cost/throughput role. High effort keeps it careful without the top-tier price on every task. |
-| **Reviewer** — gate 1, `semi-formal-review` | `fable` | `high` | Correctness is the load-bearing gate: certificate reasoning, function resolution, regression tracing. Run it on the most capable model — Fable 5 — so the verdict is as trustworthy as the pipeline can make it. |
-| **Validator** — gate 2, `validate-done-certificate` | `fable` | `high` | Completeness is the other load-bearing gate: discharging obligations and tracing evidence. Same tier as the reviewer. |
+| **Verifier** — the gate: correctness (`semi-formal-review`) + completeness (`validate-done-certificate`) | `fable` | `high` | Both are load-bearing: certificate reasoning, function resolution, regression tracing, obligation discharge. Run on the most capable model — Fable 5 — so the verdicts are as trustworthy as the pipeline can make it. By default **one** verifier sub-agent runs both over a single reading of the diff (`gate_mode: combined` — [`combined-gate.md`](combined-gate.md)); `gate_mode: split` runs them as two separate dispatches at the same tier. |
 | **Orchestrator** (this top-level session) | inherits the session | — | Coordination and bookkeeping — the DAG walk, merges, folder moves, status. It runs at whatever the user launched spec-builder on. |
 
 Effort is the `low | medium | high | xhigh | max` scale; `high` is the default across these
@@ -41,21 +41,23 @@ enforcement strength depends on which:
   **both** `model` and `effort`, so the policy is fully honoured. The orchestrator keeps its
   stateful DAG walk, integration point, and merges in its own control flow (it has a shell; a
   Workflow script does not); it uses Workflow only to run each scheduling batch's implement →
-  gate 1 → gate 2 chain at the model/effort above. The per-batch shape — one `pipeline()` over
-  the currently-ready tasks, each carried through the three stages under Workflow's own
-  concurrency cap:
+  verify chain at the model/effort above. The per-batch shape — one `pipeline()` over the
+  currently-ready tasks, each carried through the two stages (implement, then verify) under
+  Workflow's own concurrency cap:
 
   ```js
   // batch = the ready tasks this tick, capped at max_parallel_agents
+  // gate_mode: combined (default) — implement, then ONE verifier returns both verdicts
   const results = await pipeline(
     batch,
-    task  => agent(implementerBrief(task), { model: 'sonnet', effort: 'high',
-               label: `impl:${task.id}`, phase: 'Implement' }),
-    (impl, task) => agent(reviewBrief(task, impl), { model: 'fable', effort: 'high',
-               label: `review:${task.id}`, phase: 'Gate 1 · correctness' }),
-    (rev,  task) => agent(validateBrief(task),     { model: 'fable', effort: 'high',
-               label: `validate:${task.id}`, phase: 'Gate 2 · completeness' }),
+    task         => agent(implementerBrief(task),        { model: 'sonnet', effort: 'high',
+               label: `impl:${task.id}`,   phase: 'Implement' }),
+    (impl, task) => agent(combinedGateBrief(task, impl), { model: 'fable',  effort: 'high',
+               label: `verify:${task.id}`, phase: 'Gate · verify' }),
   )
+  // Under gate_mode: split, add the third stage back — gate 1 then gate 2, each fable/high:
+  //   (impl, task) => agent(reviewBrief(task, impl), { model:'fable', effort:'high', label:`review:${task.id}`,   phase:'Gate 1 · correctness' }),
+  //   (rev,  task) => agent(validateBrief(task),     { model:'fable', effort:'high', label:`validate:${task.id}`, phase:'Gate 2 · completeness' }),
   // Workflow returns per-task verdicts + workspace refs; the orchestrator then MERGES the
   // CORRECT-and-DONE tasks into the integration point in reviewability order, moves them to
   // done/, tears down their workspaces, recomputes ready, and runs the next batch.
@@ -78,8 +80,9 @@ Rules that hold on every path (see [`build-loop.md`](build-loop.md) and
   (serially, so parallel `jj workspace add` calls cannot race — [`workspaces.md`](workspaces.md)),
   and passes the path into the implementer brief. The agent just edits files in the path it is
   given.
-- **A separate agent runs each gate.** The reviewer and validator are distinct dispatches from
-  the implementer — the "never grade your own work" invariant holds by construction.
+- **A separate agent runs the verification.** The combined verifier (default), or the reviewer
+  and validator under `split`, are distinct dispatches from the implementer — the "never grade
+  your own work" invariant holds by construction.
 - **Failed-gate retries** (bounded, default 2) re-dispatch the implementer in the same
   workspace with the verdict as feedback, then re-run the gate. Parking to `blocked/` after the
   bound, and the `UNVERIFIED`-not-`UNSATISFIED` case, are unchanged.

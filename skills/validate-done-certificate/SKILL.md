@@ -37,7 +37,10 @@ own homework re-asserts its own assumptions.
   (`CORRECT / … / BUGGY`); this skill asks *does the code satisfy what done means?*
   (`DONE / PARTIAL / NOT_DONE`). A task is marked `Done` only when review is
   `CORRECT`/`LIKELY_CORRECT` **and** this skill returns `DONE`. Both reuse the same
-  checkpoints against different rubrics.
+  checkpoints against different rubrics. By default spec-builder runs the two as **one**
+  verifier agent over a single reading of the diff (`gate_mode: combined`, that plugin's
+  `references/combined-gate.md`); `gate_mode: split` runs this gate as its own agent after the
+  correctness gate passes. This skill's protocol and verdict are the same in both.
 - **Run by an agent other than the task's implementer** — in spec-builder the implementer
   is a sub-agent in its own workspace; the validator is the orchestrator or a separate
   validator sub-agent working against that workspace's diff. It reads the task's

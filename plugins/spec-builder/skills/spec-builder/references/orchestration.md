@@ -9,27 +9,36 @@ flight); the rule that orders everything is the plan's **dependency table**.
 
 ## Configuration
 
-Two knobs, with defaults, resolved in this order (later wins):
+Three knobs, with defaults, resolved in this order (later wins):
 
-1. **Defaults:** `execution_mode: parallel`, `max_parallel_agents: 4`.
+1. **Defaults:** `execution_mode: parallel`, `max_parallel_agents: 4`, `gate_mode: combined`.
 2. **Project config file** (optional): `.claude/spec-builder.local.md`, YAML frontmatter:
    ```yaml
    ---
    execution_mode: parallel        # parallel | sequential
    max_parallel_agents: 4          # ignored when sequential
+   gate_mode: combined             # combined | split  (see build-loop.md / combined-gate.md)
    workspace_layout: sibling       # sibling | grouped (see workspaces.md)
    ---
    ```
    Read it with the `plugin-settings` pattern if present; create it only if the user asks
    to persist a preference.
 3. **The invocation** — an explicit request ("build sequentially", "max 2 agents at a
-   time") overrides both for this run. Echo the resolved settings back before starting so
-   the user can correct them.
+   time", "split the gates") overrides both for this run. Echo the resolved settings back
+   before starting so the user can correct them.
 
 **Per-role model and effort** are resolved the same way — defaults in
 [`model-policy.md`](model-policy.md) (implementer `sonnet`/`high`, both gates `fable`/`high`,
 orchestrator inherits the session), overridable per invocation ("gates at xhigh",
 "implementer on opus"). Echo the resolved model/effort per role back with the other settings.
+
+**Gate mode** (`gate_mode`) resolves the same way — `combined` (default) runs one verifier
+sub-agent that proves correctness and completeness in a single context
+([`build-loop.md`](build-loop.md) → *Step 2*, [`combined-gate.md`](combined-gate.md)), the
+token-efficient path since the two gates otherwise iterate the same diff twice; `split` runs
+the two gates as separate agents, correctness then completeness, trading tokens for
+reviewer≠validator independence (a high-risk plan, a distrusted retry). Echo it back with the
+other resolved settings.
 How strictly they are honoured depends on the dispatch path — on Claude Code the `Workflow`
 tool carries both model and effort; on the portable `Task`/`Agent` path model is set on the
 dispatch and effort is advisory (see *Dispatching a batch* below and
@@ -129,9 +138,9 @@ the wave actually runs in parallel.
 
 Each role runs at its prescribed model and effort ([`model-policy.md`](model-policy.md)). On
 **Claude Code**, prefer dispatching a tick's ready set as **one `Workflow` call** that
-pipelines the batch's tasks through implement → gate 1 → gate 2, since the `Workflow`
-`agent()` carries **both** model and effort (the plain `Task`/`Agent` tool carries model but
-not effort). Workflow runs the batch under its own concurrency cap; it returns each task's
+pipelines the batch's tasks through implement → verify (or implement → gate 1 → gate 2 under
+`gate_mode: split`), since the `Workflow` `agent()` carries **both** model and effort (the
+plain `Task`/`Agent` tool carries model but not effort). Workflow runs the batch under its own concurrency cap; it returns each task's
 verdicts and workspace ref; the **orchestrator** then merges the CORRECT-and-DONE tasks into
 the integration point in reviewability order, moves them to `done/`, tears down their
 workspaces, recomputes `ready`, and runs the next batch. On harnesses without Workflow, fall
@@ -184,7 +193,7 @@ merging the second one conflicts:
 1. Do **not** silently auto-resolve. A conflict between tasks the plan called independent
    is signal — the decomposition may have a missing edge.
 2. Resolve in a dedicated step (the orchestrator, or a sub-agent briefed with both diffs
-   and the conflict), then **re-run both gates** on the merged result for the later task —
+   and the conflict), then **re-run the verification** on the merged result for the later task —
    a clean per-workspace review does not cover the merge.
 3. Note the conflict in the build log and consider flagging the missing dependency edge
    back to the plan (an `Open question` for a spec-planner pass).

@@ -1,7 +1,8 @@
 # Portability — running spec-builder across harnesses
 
 spec-builder's core mechanic is **dispatching one sub-agent per task** into an
-isolated workspace, gated by two reviews run by an agent other than the builder.
+isolated workspace, gated by a verification (correctness and completeness) run by an
+agent other than the builder.
 That mechanic depends on the host harness exposing a **sub-agent dispatch tool**.
 Harnesses differ here, so confirm the capability before orchestrating — and
 degrade gracefully when it is absent.
@@ -69,17 +70,19 @@ sub-agent isolation:
 - Build each task directly in the integration workspace (still branch a workspace
   per task if the VCS supports it — workspace isolation is independent of
   sub-agent dispatch; see `references/workspaces.md`).
-- **Keep both gates.** Run semi-formal-review (correctness) and
-  validate-done-certificate (completeness) as separate review *passes* with fresh
-  framing — explicitly adopt a reviewer stance distinct from the implementer's,
-  and judge only against the task's definition of done. This is weaker than a
-  different agent grading the work (it cannot fully prevent self-grading bias),
-  so **say so in the report**: note that gates ran in single-agent mode.
+- **Keep the verification.** Run the combined gate — correctness (semi-formal-review)
+  and completeness (validate-done-certificate) over one reading of the diff
+  ([`combined-gate.md`](combined-gate.md)) — as a review *pass* with fresh framing:
+  explicitly adopt a reviewer stance distinct from the implementer's, and judge only
+  against the task's definition of done. Here the verifier is the same session as the
+  builder, so this is weaker than a different agent grading the work (it cannot fully
+  prevent self-grading bias) — **say so in the report**: note that verification ran in
+  single-agent mode.
 - Merge and **move the task (with its `-certificate.md`) into `done/`** exactly as in the
   normal loop — or into `blocked/` on a park — performed by the orchestrator on the main tree,
   then recompute `plan.md`'s `Status` from the subfolders.
 
 State plainly in the build summary which mode ran. The whole point of the skill —
-two gates, neither self-reported — is best honoured by real sub-agents; the
+verification the builder does not self-report — is best honoured by real sub-agents; the
 fallback keeps the *workflow* working where the harness can't dispatch, and is
 transparent about the reduced isolation.

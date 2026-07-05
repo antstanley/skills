@@ -38,6 +38,11 @@ Both reuse the same procedure from [`references/method.md`](references/method.md
 against different rubrics. A task is only marked `Done` when this skill returns
 `CORRECT`/`LIKELY_CORRECT` **and** validate-done-certificate returns `DONE`.
 
+In spec-builder's default `gate_mode: combined`, both run as **one** verifier agent over a
+single reading of the diff (that plugin's `references/combined-gate.md`) — the shared
+checkpoints computed once; `gate_mode: split` runs them as two separate agents. Either way
+this skill's method and verdict are unchanged.
+
 **Run by a different agent than the one that wrote the code.** A builder reviewing its
 own work re-asserts its own assumptions. In spec-builder the implementer is a sub-agent
 in its own workspace; this review is run by the orchestrator or a separate reviewer
