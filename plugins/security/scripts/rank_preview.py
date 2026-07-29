@@ -9,6 +9,10 @@ import re
 from pathlib import Path
 
 DEFAULT_PREVIEW_BYTES = 1024
+# Never read more than this per file when building a preview, matching the
+# direct-scope cap in generate_rank_input.py; a preview is ~1 KiB, so
+# unbounded reads of multi-GB files would only waste memory.
+DEFAULT_MAX_READ_BYTES = 64 * 1024
 PREVIEW_HEAD_LINES = 12
 PREVIEW_SAMPLE_LINES = 10
 
@@ -936,17 +940,13 @@ def structural_outline(path: Path, text: str) -> list[str]:
 def preview_for(
     path: Path, preview_bytes: int, *, max_read_bytes: int | None = None
 ) -> tuple[str, bool]:
+    limit = DEFAULT_MAX_READ_BYTES if max_read_bytes is None else max_read_bytes
     try:
         with path.open("rb") as source:
             sample = source.read(4096)
             if is_binary_sample(sample):
                 return "", True
-            remaining = (
-                source.read()
-                if max_read_bytes is None
-                else source.read(max(0, max_read_bytes - len(sample)))
-            )
-            data = sample + remaining
+            data = sample + source.read(max(0, limit - len(sample)))
     except OSError:
         return "", True
     if is_binary_sample(data):

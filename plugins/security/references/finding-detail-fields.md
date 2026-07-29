@@ -4,7 +4,7 @@ For every reportable finding in `findings.json`, preserve the validated reasonin
 
 ## Writing Rules
 
-- Wrap RPC names, functions, types, fields, parameters, configuration keys, literal identifiers, and short expressions in single backticks. For example: `environment/add`, `environmentId`, `execServerUrl`, and `EnvironmentManager::upsert_environment()`.
+- Wrap RPC names, functions, types, fields, parameters, configuration keys, literal identifiers, and short expressions in single backticks. For example: `POST /archives`, `member.name`, `dest_root`, and `extract_archive()`.
 - Keep code out of prose. Put source snippets in `codeEvidence[].code`, then reference them from the section that explains why the snippet matters. Consumers consolidate those referenced snippets under **Root cause** so the violated invariant and its source proof stay together.
 - Root cause must be a source-backed walkthrough, not a verdict paragraph. Start with the code where user-controlled data is declared, decoded, or read; follow each meaningful call, transformation, or state transition; then show the missing control, dangerous operation, and later consumer when it affects impact.
 - Give each code-evidence item a stable `id`, a concise `label`, an exact source location, the smallest useful snippet, a `role`, and an `explanation`. Supported roles include `user_input`, `entrypoint`, `propagation`, `root_control`, `sink`, `outcome`, and `expected_control`.
@@ -31,129 +31,115 @@ Treat recorded artifacts as a navigator, not another source-proof section. When 
 
 ## Structured Example
 
-The following shape shows how to encode the `environment/add` reserved-environment overwrite finding:
+The following shape shows how to encode the archive-extraction path-traversal finding from `${CLAUDE_PLUGIN_ROOT}/examples/completed-scan/`:
 
 ```json
 {
-  "summary": "The runtime `environment/add` method forwards caller-controlled `environmentId` and `execServerUrl` to `EnvironmentManager::upsert_environment()`. Startup rejects the reserved `local` identifier, but the runtime mutation path accepts it and replaces the map entry used by default environment lookup.",
+  "summary": "The `POST /archives` upload handler passes the uploaded archive to `extract_archive()`, which joins each attacker-controlled `member.name` onto `dest_root` and writes without a containment check, so a member named `../../etc/cron.d/job` escapes the extraction root.",
   "codeEvidence": [
     {
-      "id": "rpc-input",
-      "label": "Caller-controlled environment fields",
-      "path": "codex-rs/app-server-protocol/src/protocol/v2/environment.rs",
-      "startLine": 6,
-      "endLine": 12,
-      "language": "rust",
+      "id": "upload-input",
+      "label": "Attacker-controlled archive upload",
+      "path": "src/upload.py",
+      "startLine": 18,
+      "endLine": 23,
+      "language": "python",
       "role": "user_input",
-      "code": "#[serde(rename_all = \"camelCase\")]\npub struct EnvironmentAddParams {\n    pub environment_id: String,\n    pub exec_server_url: String,\n}",
-      "explanation": "`environmentId` and `execServerUrl` are accepted as caller-controlled strings."
+      "code": "@app.post(\"/archives\")\ndef upload_archive():\n    archive = request.files[\"archive\"]\n    return extract_archive(archive.stream, DEST_ROOT)",
+      "explanation": "The uploaded archive bytes, including every member name, are attacker-controlled and flow directly into `extract_archive()`."
     },
     {
-      "id": "rpc-forward",
-      "label": "RPC forwards both fields without validation",
-      "path": "codex-rs/app-server/src/request_processors/environment_processor.rs",
-      "startLine": 15,
-      "endLine": 22,
-      "language": "rust",
-      "role": "entrypoint",
-      "code": "self.environment_manager\n    .upsert_environment(params.environment_id, params.exec_server_url)\n    .map_err(|err| invalid_request(err.to_string()))?;",
-      "explanation": "The handler passes both values directly to `upsert_environment()` and performs no reserved-ID check."
-    },
-    {
-      "id": "startup-reserved-check",
-      "label": "Startup protects the reserved local identifier",
-      "path": "codex-rs/exec-server/src/environment.rs",
-      "startLine": 167,
-      "endLine": 176,
-      "language": "rust",
-      "role": "expected_control",
-      "code": "if id == LOCAL_ENVIRONMENT_ID {\n    return Err(ExecServerError::Protocol(format!(\n        \"environment id `{LOCAL_ENVIRONMENT_ID}` is reserved for EnvironmentManager\"\n    )));\n}",
-      "explanation": "Initial environment construction enforces the invariant that `local` belongs to `EnvironmentManager`."
-    },
-    {
-      "id": "runtime-upsert",
-      "label": "Runtime upsert omits the reserved-ID check",
-      "path": "codex-rs/exec-server/src/environment.rs",
-      "startLine": 253,
-      "endLine": 281,
-      "language": "rust",
+      "id": "member-join",
+      "label": "Member name joined without containment",
+      "path": "src/extract.py",
+      "startLine": 37,
+      "endLine": 40,
+      "language": "python",
       "role": "root_control",
-      "code": "if environment_id.is_empty() {\n    return Err(ExecServerError::Protocol(\n        \"environment id cannot be empty\".to_string(),\n    ));\n}\n// ... build remote environment ...\nself.environments\n    .write()\n    .unwrap_or_else(std::sync::PoisonError::into_inner)\n    .insert(environment_id, Arc::new(environment));",
-      "explanation": "`upsert_environment()` rejects only an empty ID before inserting into the shared map. Passing `local` replaces the protected entry."
+      "code": "for member in tar.getmembers():\n    destination = os.path.join(dest_root, member.name)",
+      "explanation": "`member.name` is joined onto `dest_root` verbatim; nothing normalizes the result or rejects `..` segments, so the joined path can leave `dest_root`."
     },
     {
-      "id": "default-lookup",
-      "label": "Default selection reads the overwritten map entry",
-      "path": "codex-rs/exec-server/src/environment.rs",
-      "startLine": 205,
-      "endLine": 210,
-      "language": "rust",
-      "role": "outcome",
-      "code": "pub fn default_environment(&self) -> Option<Arc<Environment>> {\n    self.default_environment\n        .as_deref()\n        .and_then(|environment_id| self.get_environment(environment_id))\n}",
-      "explanation": "Default lookup resolves the stored `local` ID through the mutable environment map, so the replacement affects later operations."
+      "id": "member-write",
+      "label": "Filesystem write at the joined path",
+      "path": "src/extract.py",
+      "startLine": 41,
+      "endLine": 44,
+      "language": "python",
+      "role": "sink",
+      "code": "    with open(destination, \"wb\") as handle:\n        handle.write(tar.extractfile(member).read())",
+      "explanation": "The write happens at the unvalidated joined path, so the attacker-chosen suffix decides which file is created or overwritten."
+    },
+    {
+      "id": "expected-containment",
+      "label": "Containment used by the sibling download helper",
+      "path": "src/download.py",
+      "startLine": 29,
+      "endLine": 33,
+      "language": "python",
+      "role": "expected_control",
+      "code": "resolved = os.path.realpath(candidate)\nif not resolved.startswith(os.path.realpath(base) + os.sep):\n    raise ValueError(\"path escapes the base directory\")",
+      "explanation": "The sibling download helper shows the expected invariant: resolve the candidate path and reject anything outside the base directory before touching the filesystem."
     }
   ],
   "rootCause": {
-    "summary": "The violated invariant is that `local` must always identify the manager-owned local runtime. Startup enforces that invariant, but `EnvironmentManager::upsert_environment()` does not reuse the reserved-ID check and inserts a remote `Environment` under the caller-supplied key.",
+    "summary": "The violated invariant is that every extracted member must resolve inside `dest_root`. `extract_archive()` joins the attacker-controlled `member.name` onto `dest_root` and writes without the resolve-and-contain check the sibling download helper applies.",
     "evidenceRefs": [
-      "rpc-input",
-      "rpc-forward",
-      "runtime-upsert",
-      "default-lookup",
-      "startup-reserved-check"
+      "upload-input",
+      "member-join",
+      "member-write",
+      "expected-containment"
     ]
   },
   "validation": {
     "method": "static source trace",
-    "summary": "The source trace confirms that an `environment/add` caller controls both inputs, the RPC forwards them unchanged, and runtime insertion accepts `local`.",
+    "summary": "The source trace confirms uploaded member names reach the join and write with no normalization, containment check, or member-name filter on the path.",
     "evidenceRefs": [
-      "rpc-input",
-      "rpc-forward",
-      "runtime-upsert"
+      "upload-input",
+      "member-join",
+      "member-write"
     ],
     "assertions": [
-      "The runtime path lacks the reserved-ID check present during startup.",
-      "Inserting `local` replaces the existing `HashMap` entry."
+      "No caller of `extract_archive()` prevalidates member names.",
+      "A member named `../../escape.txt` produces a destination outside `dest_root`."
     ],
     "limitations": [
-      "The finding was validated by source review; no live JSON-RPC reproduction was run."
+      "The finding was validated by source review; no crafted archive was executed against a running instance."
     ]
   },
   "attackPath": {
-    "summary": "A lower-trust app-server client opts into the experimental API, calls `environment/add` with `environmentId: \"local\"`, and points `execServerUrl` at an attacker-controlled executor. Later default environment selection resolves the replaced map entry.",
+    "summary": "An attacker uploads a crafted archive to `POST /archives` with a member named `../../etc/cron.d/job`; extraction writes the attacker's file content outside the extraction root.",
     "dataflow": {
-      "summary": "`environment/add` parameters -> `environment_add()` -> `upsert_environment()` -> shared environment map -> `default_environment()`",
-      "source": "caller-controlled `environmentId` and `execServerUrl`",
-      "sink": "the shared environment map",
-      "outcome": "default `local` selection resolves to the attacker-controlled remote executor",
+      "summary": "uploaded archive -> `upload_archive()` -> `extract_archive()` member loop -> `os.path.join(dest_root, member.name)` -> filesystem write",
+      "source": "attacker-controlled archive member names",
+      "sink": "the `open(destination, \"wb\")` write",
+      "outcome": "file creation or overwrite at an attacker-chosen path outside `dest_root`",
       "evidenceRefs": [
-        "rpc-input",
-        "rpc-forward",
-        "runtime-upsert",
-        "default-lookup"
+        "upload-input",
+        "member-join",
+        "member-write"
       ]
     },
     "reachability": {
-      "summary": "The attacker must be able to act as an app-server client and enable `experimentalApi`; default stdio and private Unix-socket transports reduce exposure.",
-      "attacker": "lower-trust app-server client",
-      "entrypoint": "experimental `environment/add` RPC",
-      "outcome": "future operations selected for `local` are routed to the remote executor"
+      "summary": "Any client able to reach the upload endpoint controls the archive bytes; no privileged role or unusual configuration is required.",
+      "attacker": "authenticated upload-endpoint client",
+      "entrypoint": "`POST /archives`",
+      "outcome": "arbitrary file write with the service's filesystem privileges"
     },
     "evidenceRefs": [
-      "rpc-forward",
-      "runtime-upsert",
-      "default-lookup"
+      "member-join",
+      "member-write"
     ],
     "impact": {
-      "level": "medium",
-      "why": "Later commands and filesystem requests selected for `local` can be routed to the attacker-controlled remote executor."
+      "level": "high",
+      "why": "An arbitrary file write with service privileges can overwrite trusted configuration or scheduled-job definitions."
     },
     "likelihood": {
-      "level": "medium",
-      "why": "Exploitation requires access to the app-server client boundary and the experimental method."
+      "level": "high",
+      "why": "Crafting a traversal member name is trivial and the endpoint is part of the ordinary product surface."
     },
     "limitations": [
-      "This overwrite does not directly execute code on the victim host."
+      "Write privileges are bounded by the service account's filesystem permissions."
     ]
   }
 }

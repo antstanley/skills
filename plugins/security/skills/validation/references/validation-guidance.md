@@ -113,10 +113,9 @@ Use this checklist to keep validation close to the prompt contract:
 
 ## Confidence Guidance
 
-Calibrate confidence from the strongest evidence actually obtained, not the scariness of the bug class.
+Calibrate confidence from the strongest evidence actually obtained, not the scariness of the bug class. Every consumer — the findings schema enum, the compact `validation` record, and this skill's output contract — takes the categorical levels `high`, `medium`, or `low`:
 
-- `1.0` for a reproduced crashing PoC with a successful validation result
-- `0.9+` for valgrind or ASan reproduction with a successful validation result
-- `0.8+` for a debugger trace that successfully demonstrates the vulnerability path
-- `0.3+` for code understanding with a defensible success or failure conclusion
-- `0.0` when counterevidence clearly defeats the suspected vulnerability
+- `high`: a reproduced crashing PoC, a valgrind or ASan reproduction, or a debugger trace that demonstrates the vulnerability path end to end
+- `medium`: a focused test or realistic interface reproduction that stops short of full demonstration, or a complete static source/control/sink/impact trace with no material counterevidence
+- `low`: code understanding with a defensible conclusion but unresolved reachability, precondition, or exploitability gaps
+- counterevidence that clearly defeats the suspected vulnerability is a `suppressed` disposition with that counterevidence recorded, not a low-confidence finding

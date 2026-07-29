@@ -24,7 +24,29 @@ PHASE_SKILLS = (
     "attack-path-analysis",
 )
 
+# The diff and deep tails mandate a write-up per reportable finding and one
+# hardening pass, so those profiles cannot complete without these skills.
+TAIL_SKILLS = (
+    "vulnerability-writeup",
+    "propose-security-hardening",
+)
+
 DEEP_SCAN_MIN_WORKERS = 4
+
+# Ambient Git environment variables would silently redirect the repository
+# probe below to another repository, so strip them the way target_identity.py
+# does.
+GIT_REPOSITORY_ENVIRONMENT = (
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_CEILING_DIRECTORIES",
+    "GIT_COMMON_DIR",
+    "GIT_DIR",
+    "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+    "GIT_INDEX_FILE",
+    "GIT_NAMESPACE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_WORK_TREE",
+)
 
 
 @dataclass(frozen=True)
@@ -47,13 +69,13 @@ PROFILES: dict[str, Profile] = {
     ),
     "security_diff_scan": Profile(
         description="Git-backed security diff scan.",
-        required_skills=PHASE_SKILLS,
+        required_skills=(*PHASE_SKILLS, *TAIL_SKILLS),
         requires_git=True,
         delegation="suggest",
     ),
     "deep_security_scan": Profile(
         description="Repeated-discovery deep security scan.",
-        required_skills=(*PHASE_SKILLS, "security-scan"),
+        required_skills=(*PHASE_SKILLS, *TAIL_SKILLS, "security-scan"),
         delegation="block",
         min_worker_slots=DEEP_SCAN_MIN_WORKERS,
         min_worker_slots_severity="warn",
@@ -148,13 +170,20 @@ def git_repo_root(target: Path) -> str | None:
     """Return the Git working-tree root containing target, if any."""
     if shutil.which("git") is None:
         return None
+    environment = os.environ.copy()
+    for name in GIT_REPOSITORY_ENVIRONMENT:
+        environment.pop(name, None)
     try:
         completed = subprocess.run(
             ["git", "-C", str(target), "rev-parse", "--show-toplevel"],
             capture_output=True,
-            text=True,
             check=False,
             timeout=30,
+            env=environment,
+            # Decode UTF-8 explicitly; the Windows ANSI codepage breaks
+            # non-ASCII paths.
+            encoding="utf-8",
+            errors="replace",
         )
     except (OSError, subprocess.SubprocessError):
         return None

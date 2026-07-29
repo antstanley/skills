@@ -1,6 +1,6 @@
 ---
 name: validation
-description: Use when a security scan is already in the validation phase of a security scan or the user explicitly asks to determine whether one or more candidate security findings are valid. Do not use as the primary trigger for full PR, commit, branch, patch, or repository scans.
+description: Use when a security scan is already in its validation phase or the user explicitly asks to determine whether one or more candidate security findings are valid. Do not use as the primary trigger for full PR, commit, branch, patch, or repository scans.
 ---
 
 # Security Validation
@@ -18,7 +18,7 @@ Use the shared scan artifact path conventions in `../../references/scan-artifact
 
 ### Compact Standard-Scan Mode
 
-When `security:security-scan` explicitly invokes this skill in compact standard-scan mode, use `<discovery_dir>/candidate_ledger.jsonl` as both the candidate input and the phase-closure artifact. Apply the validation method and evidence rules in this skill to the full candidate set in one invocation. Add one nested `validation` record to every row, using the compact record shape in `../../references/scan-artifacts.md`, while preserving every discovery field and row order.
+When `security:security-scan`, or the centralized tail of `security:deep-security-scan`, explicitly invokes this skill in compact standard-scan mode, use `<discovery_dir>/candidate_ledger.jsonl` as both the candidate input and the phase-closure artifact. Apply the validation method and evidence rules in this skill to the full candidate set in one invocation. Add one nested `validation` record to every row, using the compact record shape in `../../references/scan-artifacts.md`, while preserving every discovery field and row order.
 
 In this mode, the nested record replaces the per-finding validation report, receipt, and closure table. Rewrite the ledger atomically. Do not feed the enriched ledger back through the discovery normalizer. Create `<discovery_dir>/validation_artifacts/<candidate_id>/` only when validation produces an actual PoC, crafted input, or log, and reference it from the nested record. All validation reasoning, instance-preservation, evidence, and confidence requirements still apply; only the artifact packaging changes.
 

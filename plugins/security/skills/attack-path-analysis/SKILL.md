@@ -1,6 +1,6 @@
 ---
 name: attack-path-analysis
-description: Use when a security scan is already in the attack-path-analysis phase of a security scan or the user explicitly asks to trace a security finding from source to sink and calibrate severity. Do not use as the primary trigger for full PR, commit, branch, patch, or repository scans.
+description: Use when a security scan is already in its attack-path-analysis phase or the user explicitly asks to trace a security finding from source to sink and calibrate severity. Do not use as the primary trigger for full PR, commit, branch, patch, or repository scans.
 ---
 
 # Security Attack Path Analysis
@@ -18,7 +18,7 @@ Use the shared scan artifact path conventions in `../../references/scan-artifact
 
 ### Compact Standard-Scan Mode
 
-When `security:security-scan` explicitly invokes this skill in compact standard-scan mode, load the per-scan threat model and the enriched `<discovery_dir>/candidate_ledger.jsonl`. Analyze, in one invocation, every row whose validation disposition is `reportable` or `deferred`. Add one nested `attack_path` record to each row that enters the phase, using the compact record shape in `../../references/scan-artifacts.md`, while preserving every discovery and validation field and the original row order.
+When `security:security-scan`, or the centralized tail of `security:deep-security-scan`, explicitly invokes this skill in compact standard-scan mode, load the per-scan threat model and the enriched `<discovery_dir>/candidate_ledger.jsonl`. Analyze, in one invocation, every row whose validation disposition is `reportable` or `deferred`. Add one nested `attack_path` record to each row that enters the phase, using the compact record shape in `../../references/scan-artifacts.md`, while preserving every discovery and validation field and the original row order.
 
 In this mode, the nested record replaces the per-finding attack-path report and receipt. Rewrite the ledger atomically. Keep attack-path facts, counterevidence, severity calibration, and policy adjustment as separate reasoning steps even though their output is compact. All reachability, instance-preservation, and evidence requirements still apply; only the artifact packaging changes.
 
@@ -112,6 +112,7 @@ Render attack-path facts using `references/attack-path-facts.md`.
 - Use the final policy-adjustment matrix mechanically rather than re-arguing severity from scratch after the facts are set.
 - Outside compact standard-scan mode, save a final visible report for each candidate finding using that finding's attack-path analysis report path from `../../references/scan-artifacts.md`. Compact standard scans use the nested phase record instead.
 
--- Considerations for attack path --
+## Considerations For Attack Path
+
 - A bug matters if evidence shows an attacker could exploit it.
 - The attack surface should generally be one that is plausibly exposed to end users / external actors (or another actor explicitly in scope in the threat model).

@@ -36,8 +36,19 @@ throughout.
   use Claude Code mechanisms.
 - Reimplemented the repeated-discovery loop in `deep-security-scan` on Claude Code
   subagents, replacing the MCP-coordinated Codex SDK sessions.
-- Renamed the artifact wire identifiers from `codex-security*` to `security*`.
-  Scan bundles produced by the original work are therefore not readable here.
+- Removed the Codex SDK/desktop-app integration lanes with no Claude Code
+  consumer: the `SECURITY_TARGET_PATHS_FILE` scoped-path hand-off and its
+  `bind-repo-scopes` subcommand, the app progress counters, and the
+  `SECURITY_WORKER_STATUS` telemetry emission.
+- Hardened and bug-fixed the vendored helper scripts: fence-aware report
+  validation, symlink-tolerant export destinations and scan-dir spellings,
+  deterministic sealing under `SECURITY_STARTED_AT`, explicit UTF-8 subprocess
+  decoding, Git-environment stripping, bounded preview reads, and a stricter
+  schema-safety gate.
+- Renamed the document-type and digest-algorithm wire identifiers from
+  `codex-security*` to `security*`; the `csf_`/`occ_` finding- and
+  occurrence-id prefixes are unchanged. Scan bundles produced by the original
+  work are therefore not readable here.
 
 Files not listed above are otherwise carried over from the original work.
 

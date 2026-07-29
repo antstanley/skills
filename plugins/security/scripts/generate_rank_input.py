@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -114,6 +115,20 @@ EXCLUDED_FILENAMES = {
     "yarn.lock",
 }
 
+# Ambient Git environment variables would silently redirect every diff probe
+# below to another repository, so strip them the way target_identity.py does.
+GIT_REPOSITORY_ENVIRONMENT = (
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_CEILING_DIRECTORIES",
+    "GIT_COMMON_DIR",
+    "GIT_DIR",
+    "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+    "GIT_INDEX_FILE",
+    "GIT_NAMESPACE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_WORK_TREE",
+)
+
 SHARD_INPUT_GLOB = "rank-shard-*.input.jsonl"
 SHARD_OUTPUT_GLOB = "rank-shard-*.output.jsonl"
 SHARD_INPUT_PATTERN = re.compile(r"^rank-shard-([0-9]{4,})\.input\.jsonl$")
@@ -152,14 +167,6 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_PREVIEW_BYTES,
         help=f"Maximum UTF-8 bytes in each preview. Defaults to {DEFAULT_PREVIEW_BYTES}.",
     )
-
-    bind = subparsers.add_parser(
-        "bind-repo-scopes",
-        help="Copy SDK scoped-path targets into the unsealed manifest and coverage documents.",
-    )
-    bind.add_argument("--scopes-file", required=True, help="JSON array of requested scopes.")
-    bind.add_argument("--manifest", required=True, help="Unsealed scan-manifest.json path.")
-    bind.add_argument("--coverage", required=True, help="Unsealed coverage.json path.")
 
     diff = subparsers.add_parser(
         "make-diff-rank-input",
@@ -459,51 +466,47 @@ def make_repo_rank_input(args: argparse.Namespace) -> None:
     print(f"Wrote {len(rows)} rows to {output}")
 
 
-def bind_repo_scopes(args: argparse.Namespace) -> None:
-    scopes = load_scopes_file(Path(args.scopes_file).expanduser())
-    manifest_path = Path(args.manifest).expanduser()
-    coverage_path = Path(args.coverage).expanduser()
-    try:
-        manifest: object = json.loads(manifest_path.read_text(encoding="utf-8"))
-        coverage: object = json.loads(coverage_path.read_text(encoding="utf-8"))
-        if not isinstance(manifest, dict) or not isinstance(coverage, dict):
-            raise ValueError("expected JSON objects")
-        scan = manifest.get("scan")
-        if not isinstance(scan, dict):
-            raise ValueError("manifest.scan must be an object")
-        scope = scan.get("scope")
-        if not isinstance(scope, dict):
-            raise ValueError("manifest.scan.scope must be an object")
-    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
-        raise SystemExit("Unable to bind requested scopes into the scan contract") from exc
-    scope["includePaths"] = scopes
-    coverage["includePaths"] = scopes
-    manifest_path.write_text(
-        json.dumps(manifest, ensure_ascii=True, indent=2) + "\n", encoding="utf-8"
-    )
-    coverage_path.write_text(
-        json.dumps(coverage, ensure_ascii=True, indent=2) + "\n", encoding="utf-8"
-    )
-    print(f"Bound {len(scopes)} requested scopes into the scan contract")
+def git_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    for name in GIT_REPOSITORY_ENVIRONMENT:
+        environment.pop(name, None)
+    return environment
 
 
 def run_git_changed_paths(repo: Path, diff_args: list[str]) -> list[tuple[Path, str]]:
-    result = subprocess.run(
-        [
-            "git",
-            "-C",
-            str(repo),
-            "diff",
-            "--name-status",
-            "-z",
-            "--diff-filter=ACMRD",
-            *diff_args,
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    fields = result.stdout.split("\0")
+    command = [
+        "git",
+        "-C",
+        str(repo),
+        "diff",
+        "--name-status",
+        "-z",
+        "--diff-filter=ACMRD",
+        *diff_args,
+    ]
+    try:
+        # Read bytes and decode UTF-8 explicitly: the Windows ANSI codepage
+        # breaks non-ASCII paths, and text-mode newline translation must never
+        # touch -z-delimited output.
+        result = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            env=git_environment(),
+        )
+    except OSError as exc:
+        print(f"generate_rank_input.py: error: could not run git: {exc}", file=sys.stderr)
+        raise SystemExit(2) from exc
+    if result.returncode != 0:
+        stderr_lines = result.stderr.decode("utf-8", errors="replace").splitlines()
+        stderr = next((line.strip() for line in stderr_lines if line.strip()), "")
+        detail = f": {stderr}" if stderr else ""
+        print(
+            f"generate_rank_input.py: error: git diff failed for {' '.join(diff_args)}{detail}",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+    fields = result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
     if fields and not fields[-1]:
         fields.pop()
 
@@ -985,8 +988,6 @@ def main() -> None:
     args = parse_args()
     if args.command == "make-repo-rank-input":
         make_repo_rank_input(args)
-    elif args.command == "bind-repo-scopes":
-        bind_repo_scopes(args)
     elif args.command == "make-diff-rank-input":
         make_diff_rank_input(args)
     elif args.command == "make-rank-shards":

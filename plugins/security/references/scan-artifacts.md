@@ -6,12 +6,11 @@ Use these shared path conventions for Security scan workflows unless the user ex
 
 - `plugin_dir=${CLAUDE_PLUGIN_ROOT}`
 - `repo_name=<basename of repo_root>`
-- `target_id=<stable scan target identity from references/scan-contract.md>`
+- `target_id=<targetId from the target-identity helper below>`
 - `system_temp_dir=<platform temporary directory>`
 - `security_scans_dir=<system_temp_dir>/security-scans/<repo_name>`
 - `scan_id=<commit>_<scan timestamp>`
 - `scan_dir=<security_scans_dir>/<scan_id>`
-- `target_paths_file=$SECURITY_TARGET_PATHS_FILE` for scoped-path scans driven by an external caller; this read-only scope input lives outside the model-writable scan directory. Pass it directly to `make-repo-rank-input --scopes-file` and `bind-repo-scopes --scopes-file` before finalization, and do not print, evaluate, modify, or treat its contents as shell syntax.
 - `artifacts_dir=<scan_dir>/artifacts`
 - `context_dir=<artifacts_dir>/01_context`
 - `discovery_dir=<artifacts_dir>/02_discovery`
@@ -22,6 +21,16 @@ Use these shared path conventions for Security scan workflows unless the user ex
 The preflight helper reports the resolved `scanRoot`; prefer it over re-deriving the path. `SECURITY_SCAN_ROOT` overrides it. Otherwise use the active process temporary directory (for example, `%TEMP%` on Windows or `$TMPDIR` when configured on Unix-like hosts) instead of hardcoding `/tmp`.
 
 Resolve `<python_command>` to the configured Python interpreter (`$PYTHON` when one is provided), otherwise use `python` on Windows and `python3` on Unix-like hosts.
+
+## Target Identity And Snapshot Digest
+
+Resolve the drafted manifest's `scan.target` block by running the extracted helper; never hand-compute `targetId` or `snapshotDigest`:
+
+```text
+<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/target_identity.py --target <target_dir> [--kind git_worktree|git_revision|git_diff|directory_snapshot]
+```
+
+The helper prints a JSON object with `kind`, `targetId`, `snapshotDigest`, `revision` for Git targets, and supporting `git` metadata. Omit `--kind` to let it classify the target (`git_revision` for a clean checkout, `git_worktree` for a dirty one, `directory_snapshot` outside Git); pass `--kind git_diff` for diff scans. Copy `kind`, `targetId`, `snapshotDigest`, and `revision` when present into the drafted `scan.target`, then set `displayName` yourself and add `baseRevision`/`headRevision` for diff targets from the resolved diff. Record `remote` only as a sanitized URL without credentials, query, or fragment. Run the helper at manifest-authoring time so the digest reflects the reviewed content; the finalizer validates these values at seal time but does not compute them. The identity and digest scheme is defined in `${CLAUDE_PLUGIN_ROOT}/references/scan-contract.md`.
 
 ## Threat Model (Phase 1) Paths
 
@@ -49,16 +58,20 @@ End each repository-scoped threat model with these two lines:
 - Optional compact validation evidence: `<discovery_dir>/validation_artifacts/<candidate_id>/`
   - Create this directory only for actual PoCs, crafted inputs, or logs and reference those paths from the row's `validation` object. Do not create placeholder per-candidate directories or narrative reports.
 
-The legacy ranking, raw/deduped candidate, per-finding receipt, and phase-report paths below are for diff/deep or resumed legacy workflows. A compact standard scan uses the enriched ledger instead.
+The raw/deduped candidate, per-finding receipt, and phase-report paths below are for diff and resumed legacy workflows. Compact standard scans and the deep-scan centralized tail use the enriched ledger instead.
+
+### Deep Scan Discovery
+
+- Deep discovery root: `<discovery_dir>/deep`
+- Per-pass threat model: `<discovery_dir>/deep/pass-NNN/threat_model.md`
+- Per-pass raw candidates: `<discovery_dir>/deep/pass-NNN/raw_candidates.jsonl`
+- Discovery manifest: `<discovery_dir>/deep/discovery_manifest.json`
 
 ### Coverage Planning
 
 - Advisory seed research: `<context_dir>/seed_research.md`
-- Scoped ranking input: `<discovery_dir>/rank_input.jsonl` if applicable
-- Scoped ranking shards: `<discovery_dir>/rank_shards/rank-shard-NNNN.input.jsonl` and matching worker-local `.output.jsonl` files if ranking applies
-- Scoped ranking worker assignments: `<discovery_dir>/rank_worker_assignments.json` if ranking applies
-- Scoped ranking output: `<discovery_dir>/rank_output.jsonl` if applicable
-- Scoped deep-review input: `<discovery_dir>/deep_review_input.jsonl` if applicable
+- Diff worklist input: `<discovery_dir>/rank_input.jsonl` if applicable
+- Diff deep-review input: `<discovery_dir>/deep_review_input.jsonl` if applicable
 - Finding discovery report: `<discovery_dir>/finding_discovery_report.md`
 
 ### Deep Review

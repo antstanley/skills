@@ -34,7 +34,7 @@ Classify the originally supplied parent separately from its children:
 
 Preserve one result per selected issue. Use deterministic breadth-first tree order: include the parent first when selected, then each approved depth ordered by creation time with the issue identifier as the tie-breaker. Preserve source identifiers and parent relationships in references.
 
-The `triage-finding/v0` result accepts at most 250 findings. Before fetching full content for an approved level, count the parent when selected plus all previously imported and newly approved issues. If the total would exceed 250, stop and report the count. Ask the user to narrow by depth, status, label, or a smaller parent. Do not truncate the issue set or split it into multiple result payloads automatically.
+The `triage-finding/v0` result caps `findings` at 250 entries (see `triage-result-contract.md`, the contract owner). Before fetching full content for an approved level, count the parent when selected plus all previously imported and newly approved issues. If the total would exceed the cap, stop and report the count, and ask the user to narrow by depth, status, label, or a smaller parent.
 
 ## Retrieval Failure Handling
 

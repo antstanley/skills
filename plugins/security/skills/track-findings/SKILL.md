@@ -1,6 +1,6 @@
 ---
 name: track-findings
-description: Track validated Security findings in Linear, Jira, GitHub issues, or draft GitHub security advisories. Use it for one finding or an explicitly selected batch of up to 25 findings tracked as Linear, Jira, or GitHub issues. Includes duplicate checks, exact previews, approval-gated writes, and readback. Do not use it for scans or fixes.
+description: Track validated findings from a sealed Security scan directory in Linear, Jira, GitHub issues, or draft GitHub security advisories. The source must be a sealed scan bundle that passes validate_tracking_source.py. Use it for one finding or an explicitly selected batch of up to 25 findings tracked as Linear, Jira, or GitHub issues. Includes duplicate checks, exact previews, approval-gated writes, and readback. Do not use it for scans or fixes, or for ad-hoc "file this bug in Jira/Linear/GitHub" requests with no sealed scan directory — file those directly with the provider's ordinary tools.
 ---
 
 # Track Findings

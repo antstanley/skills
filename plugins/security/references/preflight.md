@@ -2,7 +2,7 @@
 
 Top-level scan skills run this read-only helper before substantive scan work. It answers one question: can this session honestly run the requested scan mode?
 
-Resolve `<python_command>` to the configured Python interpreter (`$PYTHON` when one is provided), otherwise `python` on Windows and `python3` on Unix-like hosts.
+To launch the preflight itself, resolve `<python_command>` to the configured Python interpreter (`$PYTHON` when one is provided), otherwise `python` on Windows and `python3` on Unix-like hosts. For every later helper command, prefer the preflight's reported `resolved.pythonCommand`, which resolves in this order: `$PYTHON`, then the interpreter that ran the preflight (`sys.executable`), then the platform default above.
 
 ```text
 <python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/preflight.py --profile <capability-profile> --target <scan-target-directory> --runtime-check delegation_available=<true|false> [--worker-slots <count>] --available-skill <skill-name>
@@ -16,7 +16,7 @@ Inspect the current tool surface once before building the command, and pass ever
 
 - `--runtime-check delegation_available=true` when the Agent tool is available for subagents, `false` when it is not. If tool schemas are deferred, search the deferred tool list before passing `false`. Pass `false` only after discovery fails to expose a usable delegation tool.
 - `--worker-slots <count>` for the number of subagents this session can run concurrently. Only the deep profile evaluates it. Omit it rather than guessing.
-- `--available-skill <skill-name>` once per installed security skill, using plugin-local names such as `validation`. Take these from the session's available-skills list, not from files on disk. Do not pass unrelated session skills.
+- `--available-skill <skill-name>` once per installed security skill, using plugin-local names such as `validation`. Take these from the session's available-skills list, not from files on disk. Do not pass unrelated session skills. All three profiles require the four phase skills (`threat-model`, `finding-discovery`, `validation`, `attack-path-analysis`); the diff and deep profiles additionally require the mandated tail skills `vulnerability-writeup` and `propose-security-hardening`, and the deep profile requires `security-scan`.
 
 A passed `delegated_workers` check means the runtime supports delegation and the explicitly invoked scan authorizes it. A worker-slot result is the available maximum, not a promise that every worker will start. If delegation is unavailable, continue on the documented parent fallback and do not describe configured slots as running workers or as reduced coverage.
 
