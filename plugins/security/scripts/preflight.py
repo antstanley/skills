@@ -377,9 +377,7 @@ def check_writable(label: str, path: Path, report: Report) -> None:
             status="fail",
             severity="block",
             reason=f"{path} is not writable.",
-            remediation=(
-                "Point SECURITY_SCAN_ROOT or SECURITY_STATE_DIR at a writable directory."
-            ),
+            remediation=("Point SECURITY_SCAN_ROOT or SECURITY_STATE_DIR at a writable directory."),
         )
     )
 
@@ -388,9 +386,7 @@ def parse_runtime_check(value: str) -> tuple[str, bool]:
     """Parse a name=true|false runtime fact."""
     name, separator, raw = value.partition("=")
     if not separator or raw not in {"true", "false"}:
-        raise argparse.ArgumentTypeError(
-            f"runtime check must be <name>=true|false, got: {value}"
-        )
+        raise argparse.ArgumentTypeError(f"runtime check must be <name>=true|false, got: {value}")
     return name, raw == "true"
 
 
