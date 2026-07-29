@@ -67,12 +67,22 @@ def git_command(
         command.extend(["--git-dir", str(git_dir), "--work-tree", str(work_tree)])
     full_command = [*command, *args]
     try:
+        if text:
+            # Decode UTF-8 explicitly; the Windows ANSI codepage breaks
+            # non-ASCII output.
+            return subprocess.run(
+                full_command,
+                check=False,
+                capture_output=True,
+                env=environment,
+                encoding="utf-8",
+                errors="replace",
+            )
         return subprocess.run(
             full_command,
             check=False,
             capture_output=True,
             env=environment,
-            text=text,
         )
     except FileNotFoundError:
         # Git is optional for directory scans. Treat an unavailable executable like
@@ -316,7 +326,8 @@ def directory_content_digest(target: Path, *, excluded: tuple[Path, ...] = ()) -
     if paths is None:
         paths = sorted(target.rglob("*"))
     digest = hashlib.sha256()
-    update_digest_field(digest, b"format", b"security-directory/v1")
+    # Domain separation: the emitted identifier is part of the digest material.
+    update_digest_field(digest, b"format", b"security-snapshot/v1")
     for path in paths:
         relative_path = path.relative_to(target)
         if any(
@@ -433,11 +444,19 @@ def sanitize_remote_url(remote: str) -> str | None:
         host, _, path = rest.partition(":")
         return f"ssh://{host}/{path.lstrip('/')}"
     parts = urlsplit(candidate)
-    if not parts.hostname:
+    try:
+        hostname = parts.hostname
+        port = parts.port
+    except ValueError:
+        # A malformed port (for example ssh://git@host:owner/repo.git) makes
+        # the remote unusable; drop it so the caller falls back to the
+        # local-workspace identity.
         return None
-    netloc = parts.hostname
-    if parts.port:
-        netloc = f"{netloc}:{parts.port}"
+    if not hostname:
+        return None
+    netloc = hostname
+    if port:
+        netloc = f"{netloc}:{port}"
     return urlunsplit((parts.scheme, netloc, parts.path, "", ""))
 
 

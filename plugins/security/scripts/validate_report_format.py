@@ -29,10 +29,45 @@ REQUIRED_FINDING_SUBSECTIONS = (
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 FINDING_RE = re.compile(r"^### \[(\d+)\]\s+(.+?)\s*$", re.MULTILINE)
 FIELD_ROW_RE = re.compile(r"^\|\s*((?:\\.|[^|])+?)\s*\|\s*((?:\\.|[^|])*?)\s*\|\s*$", re.MULTILINE)
+FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 
 
 def line_number(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
+
+
+def mask_fenced_blocks(text: str) -> str:
+    """Blank out fenced code-block lines so structural regexes cannot match them.
+
+    Code evidence is embedded verbatim inside ``` / ~~~ fences, so a snippet line
+    that looks like a heading or table row must not affect validation. Newlines
+    are preserved, keeping reported line numbers accurate.
+    """
+    masked: list[str] = []
+    fence_char = ""
+    fence_length = 0
+    for line in text.split("\n"):
+        match = FENCE_RE.match(line)
+        if fence_char:
+            stripped = line.strip()
+            closes = (
+                match is not None
+                and match.group(1)[0] == fence_char
+                and len(stripped) >= fence_length
+                and set(stripped) == {fence_char}
+            )
+            if closes:
+                fence_char = ""
+                fence_length = 0
+            masked.append("")
+            continue
+        if match:
+            fence_char = match.group(1)[0]
+            fence_length = len(match.group(1))
+            masked.append("")
+            continue
+        masked.append(line)
+    return "\n".join(masked)
 
 
 def top_level_headings(text: str) -> list[str]:
@@ -110,6 +145,7 @@ def validate_findings(text: str, errors: list[str]) -> None:
 
 
 def validate_report(text: str) -> list[str]:
+    text = mask_fenced_blocks(text)
     errors: list[str] = []
     validate_required_sections(text, errors)
     validate_findings(text, errors)

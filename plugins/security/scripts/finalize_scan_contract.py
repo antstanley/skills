@@ -18,7 +18,7 @@ import secrets
 import stat
 import sys
 from collections.abc import Iterator
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path, PurePosixPath
 from typing import Any, BinaryIO, TextIO
 from urllib.parse import quote, urlsplit
@@ -539,15 +539,9 @@ def _sha256_scan_local_file(scan_dir: Path, relative_path: str, context: str) ->
     return digest.hexdigest()
 
 
-def write_scan_local_bytes(
-    scan_dir: Path, relative_path: str, payload: bytes, *, external_name: bool = False
-) -> None:
+def write_scan_local_bytes(scan_dir: Path, relative_path: str, payload: bytes) -> None:
     scan_dir = _require_scan_directory(scan_dir)
-    if external_name:
-        if relative_path in {"", ".", ".."} or "/" in relative_path or "\0" in relative_path:
-            raise ContractError("external output path: expected a safe file name")
-    else:
-        relative_path = _require_safe_relative_path(relative_path, "scan-local output path")
+    relative_path = _require_safe_relative_path(relative_path, "scan-local output path")
     path = scan_dir / relative_path
     if not _descriptor_relative_writes_available():
         if not _is_windows():
@@ -800,8 +794,13 @@ def _populate_unsealed_manifest_envelope(
         started_at = os.environ.get("SECURITY_STARTED_AT")
         if started_at is not None:
             _validate_date_time(started_at, "SECURITY_STARTED_AT")
-            scan["startedAt"] = started_at
-            scan["completedAt"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            # Deterministic sealing: prefer draft-provided timestamps, fall back
+            # to the override, and never stamp wall-clock time so repeated runs
+            # produce byte-identical bundles.
+            for field in ("startedAt", "completedAt"):
+                value = scan.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    scan[field] = started_at
         return
 
     scan["id"] = completion_binding["scanId"]
@@ -1240,17 +1239,25 @@ def _require_safe_schema(schema: dict[str, Any], context: str) -> None:
     pending: list[tuple[Any, bool]] = [(schema, True)]
     nodes = 0
     applicator_edges = 0
+    # Reject every applicator the minimal validator does not implement, so a
+    # schema edit cannot pass the safety gate yet validate vacuously.
     unsupported_keywords = {
         "$async",
         "$ref",
         "$dynamicRef",
         "$recursiveRef",
+        "anyOf",
+        "oneOf",
+        "not",
+        "else",
         "prefixItems",
         "patternProperties",
         "propertyNames",
         "dependentSchemas",
         "dependencies",
         "uniqueItems",
+        "unevaluatedProperties",
+        "unevaluatedItems",
     }
     while pending:
         value, is_schema = pending.pop()
@@ -1280,19 +1287,22 @@ def _require_safe_schema(schema: dict[str, Any], context: str) -> None:
                 continue
             if keyword in unsupported_keywords:
                 raise ContractError(f"{context}: unsupported JSON Schema keyword")
+            if keyword == "additionalProperties" and not isinstance(child, bool):
+                # The validator only implements the boolean form.
+                raise ContractError(f"{context}: unsupported JSON Schema keyword")
+            if keyword in {"if", "then", "items", "contains"} and isinstance(child, bool):
+                # The validator only implements the schema form; a boolean here
+                # would be accepted by the gate but validate vacuously.
+                raise ContractError(f"{context}: unsupported JSON Schema keyword")
             edges = 0
-            if keyword in {"allOf", "anyOf", "oneOf"} and isinstance(child, list):
+            if keyword == "allOf" and isinstance(child, list):
                 edges = len(child)
             elif keyword in {
                 "if",
                 "then",
-                "else",
-                "not",
                 "items",
                 "contains",
                 "additionalProperties",
-                "unevaluatedProperties",
-                "unevaluatedItems",
             } and isinstance(child, (dict, bool)):
                 edges = 1
             elif keyword in {"properties", "$defs", "definitions"} and isinstance(child, dict):
@@ -1911,6 +1921,39 @@ def build_findings_export(
     return build_csv_projection(findings, coverage)
 
 
+def _write_external_export_output(output: Path, contents: bytes) -> None:
+    """Atomically write an export to a user-chosen destination outside the scan directory.
+
+    External destinations are not scan-local, so the scan directory's
+    non-symlink canonicality requirement does not apply; the destination parent
+    is resolved (following symlinks such as macOS /tmp) and written directly.
+    """
+    try:
+        parent = Path(os.path.realpath(output.parent))
+        if not parent.is_dir():
+            raise ContractError(
+                f"export output path: expected an existing directory: {output.parent}"
+            )
+        temp_path = parent / f".{output.name}.{secrets.token_hex(8)}.tmp"
+        try:
+            descriptor = os.open(temp_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(descriptor, "wb") as handle:
+                handle.write(contents)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temp_path, parent / output.name)
+        except BaseException:
+            try:
+                os.unlink(temp_path)
+            except FileNotFoundError:
+                pass
+            raise
+    except ContractError:
+        raise
+    except OSError as exc:
+        raise ContractError(f"export output path: {exc}") from exc
+
+
 def write_export_output(scan_dir: Path, output: Path, export_format: str, contents: bytes) -> None:
     if export_format not in EXPORT_PATHS:
         raise ContractError(f"unsupported export format: {export_format}")
@@ -1936,7 +1979,7 @@ def write_export_output(scan_dir: Path, output: Path, export_format: str, conten
                 relative_output = output.relative_to(ancestor).as_posix()
                 break
         else:
-            write_scan_local_bytes(output.parent, output.name, contents, external_name=True)
+            _write_external_export_output(output, contents)
             return
     if relative_output != EXPORT_PATHS[export_format]:
         raise ContractError(f"{export_format.upper()} output path cannot overwrite a scan artifact")
@@ -2175,6 +2218,10 @@ def main() -> int:
     parser.add_argument("--export-format", choices=sorted(EXPORT_PATHS))
     parser.add_argument("--export-output", type=Path)
     args = parser.parse_args()
+    # Accept a symlinked spelling of the scan directory (macOS /tmp, $TMPDIR):
+    # resolve the CLI argument once, then apply every scan-local containment
+    # check to the resolved path.
+    args.scan_dir = Path(os.path.realpath(args.scan_dir))
     try:
         if args.sarif_only and args.export_format is not None:
             parser.error("--sarif-only cannot be combined with --export-format")
@@ -2199,7 +2246,11 @@ def main() -> int:
         else:
             finalize_scan(args.scan_dir, args.schema_dir, args.source_root)
     except ContractError as exc:
-        parser.error(str(exc))
+        print(f"finalize_scan_contract.py: error: {exc}", file=sys.stderr)
+        return 2
+    except OSError as exc:
+        print(f"finalize_scan_contract.py: error: {exc}", file=sys.stderr)
+        return 2
     return 0
 
 

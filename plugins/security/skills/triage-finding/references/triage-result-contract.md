@@ -24,6 +24,8 @@ If the user supplies a valid `security.findings` artifact, use it as an input so
 }
 ```
 
+`findings` accepts at most 250 entries per result. When an intake would exceed that, stop before fetching full content, report the count, and ask the user to narrow the selection; do not truncate the set or split it into multiple result payloads automatically.
+
 ## Per-Finding JSON
 
 Each entry in `findings` must use this shape:

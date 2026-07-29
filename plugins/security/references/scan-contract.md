@@ -10,7 +10,7 @@ A completed semantic bundle contains these files under `<scan_dir>`:
 - `findings.json`: semantic finding records for the completed scan
 - `coverage.json`: structured coverage summary with detailed receipt references
 
-Canonical UTF-8 document sizes are bounded consistently by the producer and SDK: `scan-manifest.json` is limited to 16 MiB, `findings.json` to 128 MiB, and `coverage.json` to 32 MiB. Finalization rejects oversized inputs or generated documents before sealing or changing scan outputs. Keep detailed evidence in scan-local artifacts and reference it from the canonical summaries.
+Canonical UTF-8 document sizes are bounded consistently by the authoring workflow and the plugin's finalizer and validator scripts: `scan-manifest.json` is limited to 16 MiB, `findings.json` to 128 MiB, and `coverage.json` to 32 MiB. Finalization rejects oversized inputs or generated documents before sealing or changing scan outputs. Keep detailed evidence in scan-local artifacts and reference it from the canonical summaries.
 
 Optional structured finding details used by rich consumers are documented in `finding-detail-fields.md`. They remain part of each semantic finding record, not a projection parsed from a readable report.
 
@@ -40,7 +40,7 @@ Choose the target kind based on the reviewed content, not the scan invocation:
 
 `targetId` identifies the stable repository or workspace. Prefer a digest of a sanitized canonical absolute remote URL when one exists. Otherwise use a digest of a stable local workspace identity. Never persist remote URL credentials, query parameters, fragments, or tokens.
 
-For dirty worktrees and diffs, calculate `snapshotDigest` from a deterministic representation of the reviewed content, including staged changes and reviewed untracked files where applicable. For directory snapshots, hash a sorted relative-path and file-hash inventory of the reviewed scope. Encode the result as `security-snapshot/v1:sha256:<64 lowercase hex characters>`.
+Produce `targetId` and `snapshotDigest` by running `${CLAUDE_PLUGIN_ROOT}/scripts/target_identity.py --target <target_dir>` (see the target-identity section of `${CLAUDE_PLUGIN_ROOT}/references/scan-artifacts.md`); do not hand-calculate them. For dirty worktrees and diffs, the helper derives `snapshotDigest` from a deterministic representation of the reviewed content, including staged changes and reviewed untracked files where applicable. For directory snapshots, it hashes a sorted relative-path and file-hash inventory of the reviewed scope. The result is encoded as `security-snapshot/v1:sha256:<64 lowercase hex characters>`.
 
 ## Finding Identity
 
@@ -155,10 +155,12 @@ These fields are optional for compatibility with existing v1 canonical artifacts
 
 ## Schemas
 
-- `schemas/scan-manifest.schema.json`
-- `schemas/findings.schema.json`
-- `schemas/coverage.schema.json`
+- `${CLAUDE_PLUGIN_ROOT}/schemas/scan-manifest.schema.json`
+- `${CLAUDE_PLUGIN_ROOT}/schemas/findings.schema.json`
+- `${CLAUDE_PLUGIN_ROOT}/schemas/coverage.schema.json`
 
 V1 consumers ignore unknown properties for forward compatibility. Producers must still validate documented fields and should not emit undocumented properties casually.
 
-Representative valid contract examples live under `examples/completed-scan/`.
+The findings schema's severity enum also accepts `informational` for compatibility with older bundles; the documented pipeline's attack-path severity vocabulary and report ordering stop at `low` and do not produce it.
+
+Representative valid contract examples live under `${CLAUDE_PLUGIN_ROOT}/examples/completed-scan/`.

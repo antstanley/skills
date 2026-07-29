@@ -14,7 +14,7 @@ This skill is for backlog burn-down. It starts from findings the user already ha
 
 ## Backlog Burn-Down Scope
 
-Treat multiple supplied findings as one backlog-reduction problem, not as a set of unrelated one-off triages. The goal is to turn noisy existing finding sources into a ranked, evidence-backed action queue while preserving one result per input for auditability and app rendering.
+Treat multiple supplied findings as one backlog-reduction problem, not as a set of unrelated one-off triages. The goal is to turn noisy existing finding sources into a ranked, evidence-backed action queue while preserving one result per input for auditability.
 
 For now, run the workflow inline in the current thread, but structure the work like a backlog pipeline:
 
@@ -187,7 +187,7 @@ If no policy applies, record that absence as a proof gap and continue with the n
 10. Assign exploitability stack ranks for `confirmed` and `needs_review` findings.
 11. For `confirmed` findings, add owner hints after verdicting when local ownership evidence is easy to derive.
 12. Build one valid `triage-finding/v0` result using the contract in `references/triage-result-contract.md`.
-13. Write the complete result to `triage-findings.json` in the working directory, then return a concise Markdown summary of the verdicts naming that path. Do not paste the full JSON block unless the user asks for the raw contract.
+13. Write the complete result to `<security_scans_dir>/triage/<UTC timestamp>/triage-findings.json`, resolving `security_scans_dir` from `../../references/scan-artifacts.md`, then return a concise Markdown summary of the verdicts naming that path. Never write the result into the repository or the user's working directory. Do not paste the full JSON block unless the user asks for the raw contract.
 
 ## Surface and Boundary Gate
 
@@ -270,9 +270,9 @@ Prefer CODEOWNERS or OWNERS evidence when available. If ownership is not clear,
 omit the owner hint rather than guessing. Owner hints are routing metadata only:
 do not use ownership to influence verdict, confidence, boundary assessment, or exploitability rank.
 
-The `triage-finding/v0` contract does not define a dedicated owner field. Do not add undocumented fields to the app-tool payload. Put owner-hint text in existing Markdown output, evidence, or recommended-next-step text when it is useful.
+The `triage-finding/v0` contract does not define a dedicated owner field. Do not add undocumented fields to the JSON result. Put owner-hint text in existing Markdown output, evidence, or recommended-next-step text when it is useful.
 
-## App Surface and Output Contract
+## Output Contract
 
 The Markdown result should include:
 
@@ -290,7 +290,7 @@ The Markdown result should include:
 - recommended next step
 - `security:fix-finding` handoff when verdict is `confirmed`
 
-The app-tool payload or fallback JSON block must include:
+The `triage-findings.json` result must include:
 
 - `schema_version: "triage-finding/v0"`
 - repository path and revision when available
@@ -302,7 +302,7 @@ The app-tool payload or fallback JSON block must include:
 Prefer a readable summary over dumping raw JSON. The intended default is:
 
 1. generate the valid `triage-finding/v0` result internally
-2. write it to `triage-findings.json`
+2. write it to the resolved `triage-findings.json` path outside the repository
 3. respond with a concise Markdown summary: one line per finding as `<verdict> — <title> — <path>:<line>`, highest exploitability rank first
 
 Use a fenced JSON block only when the user explicitly asks to see or copy the raw result contract.

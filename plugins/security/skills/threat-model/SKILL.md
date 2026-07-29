@@ -1,6 +1,6 @@
 ---
 name: threat-model
-description: Use when a security scan is already in the threat-modeling phase of a security scan, the user explicitly invokes security:threat-model, or the user explicitly asks to create, update, or persist a repository threat model. Do not use as the primary trigger for full PR, commit, branch, patch, or repository scans.
+description: Use when a security scan is already in its threat-modeling phase, the user explicitly invokes security:threat-model, or the user explicitly asks to create, update, or persist a repository threat model. Do not use as the primary trigger for full PR, commit, branch, patch, or repository scans.
 ---
 
 # Security Threat Model
@@ -26,6 +26,16 @@ If the user explicitly provides a different path for a required input or output,
 If a required input is still missing, stop and ask the user for it before continuing.
 Use the shared scan artifact path conventions in `../../references/scan-artifacts.md`.
 
+## Independent Pass Mode
+
+An invoking workflow may explicitly request an independent threat model with a caller-specified output path — `security:deep-security-scan` does this for every discovery pass. In that mode:
+
+- generate a fresh repository-scoped threat model; do not read the shared repository-scoped cache
+- write only to the caller-specified output path; do not write or update the shared repository-scoped path
+- skip the cache-reuse check in the workflow below; every other generation rule still applies
+
+Independent generation is the point of this mode: sharing or persisting the cached model would collapse the passes it exists to keep independent.
+
 ## Workflow
 
 1. Resolve `target_id`, the current version (revision for an immutable Git tree, snapshot digest otherwise), and the repository-scoped threat model path using `../../references/scan-artifacts.md`.
@@ -41,7 +51,7 @@ Use the shared scan artifact path conventions in `../../references/scan-artifact
    - the threat model is repository-scoped rather than being centered around any specific scan target
    - it describes repository-wide primary product or runtime surfaces and trust boundaries before covering any narrower examples
    - any vulnerability-class discussion is about repository-context classes, not findings about any current diff
-7. Append the exact `Repository` and `Version` lines from `../../references/scan-artifacts.md`, then write the threat model to the repository-scoped path.
+7. Append the exact `Repository` and `Version` lines from `../../references/scan-artifacts.md`, then write the threat model to the repository-scoped path — or, in independent pass mode, only to the caller-specified output path, never the shared repository-scoped path.
 
 ## Threat Model Generation Guidance
 
@@ -56,4 +66,4 @@ Generate and structure the threat model using `references/threat-model-guidance.
 - In large monorepos, avoid centering `personal/`, `test/`, `tests/`, `docs/`, `examples/`, or one-off developer tooling unless repository evidence shows those are real deployed or privileged workflow surfaces.
 - Call out trust boundaries and assumptions explicitly.
 - Keep references to vulnerability types at the level of repository-context classes, rather than any diff findings.
-- Persist the threat model output to the repository-scoped threat model path from `../../references/scan-artifacts.md`.
+- Persist the threat model output to the repository-scoped threat model path from `../../references/scan-artifacts.md`, except in independent pass mode, which persists only to the caller-specified path and never touches the shared cache.

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Concatenate the SECURITY.md files that apply to a scan path."""
+"""Concatenate the SECURITY.md files that apply to a scan path.
+
+Symlinked SECURITY.md policies that resolve outside the scan root are
+deterministically skipped by both --list and --scope resolution rather than
+failing the whole chain.
+"""
 
 from __future__ import annotations
 
@@ -60,9 +65,23 @@ def list_security_md(repo: Path) -> list[str]:
         if "SECURITY.md" not in filenames:
             continue
         policy = Path(directory) / "SECURITY.md"
-        if policy.is_file() or policy.is_symlink():
-            policies.append(policy.relative_to(root).as_posix())
+        if not (policy.is_file() or policy.is_symlink()):
+            continue
+        if policy.is_symlink() and not _resolves_inside(policy, root):
+            # Skip out-of-root or broken symlinked policies deterministically,
+            # matching --scope resolution.
+            continue
+        policies.append(policy.relative_to(root).as_posix())
     return sorted(policies)
+
+
+def _resolves_inside(policy: Path, root: Path) -> bool:
+    """Return whether a policy file resolves to a real file inside the root."""
+    try:
+        policy.resolve(strict=True).relative_to(root)
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return True
 
 
 def resolve_security_md(repo: Path, scope: Path) -> str:
@@ -91,8 +110,11 @@ def resolve_security_md(repo: Path, scope: Path) -> str:
         policy = directory / "SECURITY.md"
         if not policy.is_file():
             continue
+        if not _resolves_inside(policy, root):
+            # Skip out-of-root symlinked policies deterministically instead of
+            # failing the whole resolution chain, matching --list.
+            continue
         resolved_policy = policy.resolve(strict=True)
-        _inside(resolved_policy, root, "SECURITY.md")
         try:
             with resolved_policy.open("rb") as policy_file:
                 policy_bytes = policy_file.read(MAX_SECURITY_MD_BYTES + 1)

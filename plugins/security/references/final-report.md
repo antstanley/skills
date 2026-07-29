@@ -59,11 +59,11 @@ Set the finding category and CWE from the primary broken control. Do not add sec
 
 Examples that should normally become separate final findings include SQL API modes such as `execute`, `executemany`, and `executescript`; deserializer variants such as `pickle.load`, `pickle.loads`, `yaml.load`, and `yaml.load_all`; distinct path/file helper calls; SSRF modes with different destination controls; and missing-auth protected actions such as create, delete, reset, admin, and job-trigger endpoints.
 
-For a standard repository or scoped-path scan, assemble the canonical JSON from the enriched `<discovery_dir>/candidate_ledger.jsonl`. Map each nested `validation` record into the finding's validation fields, map its confidence and rationale into top-level `confidence.level` and `confidence.rationale`, and map each nested `attack_path` record into dataflow, reachability, severity, and change conditions.
+For a standard repository or scoped-path scan — including the deep-scan centralized tail, which runs the same compact mode — assemble the canonical JSON from the enriched `<discovery_dir>/candidate_ledger.jsonl`. Map each nested `validation` record into the finding's validation fields, map its confidence and rationale into top-level `confidence.level` and `confidence.rationale`, and map each nested `attack_path` record into dataflow, reachability, severity, and change conditions.
 
 Apply row outcomes in this order: validation disposition `reportable` plus attack-path decision `reportable` becomes a finding with its distinct instance and all relevant entrypoint, root-control, sink, and supporting locations; otherwise, a `deferred` result from either phase becomes `needs_follow_up` coverage and a `coverage.deferred` entry using the recorded uncertainty or proof gap; otherwise, validation disposition `not_applicable` becomes `not_applicable` coverage; otherwise, validation disposition `suppressed` or attack-path decision `ignore` becomes `rejected` coverage. A missing required phase record leaves the candidate unresolved and prevents complete coverage. Do not require phase receipts, per-candidate narratives, or another reconciliation pass.
 
-Diff, deep, and resumed legacy scans may still provide per-candidate ledgers, validation closure tables, and repository coverage ledgers. When those artifacts exist, retain their traceability: start from reportable/surviving rows, preserve exact affected locations, and map suppressed, not-applicable, or deferred rows to public-facing coverage outcomes. Do not silently drop a seeded row because a same-family neighbor survived.
+Diff and resumed legacy scans provide per-candidate ledgers, validation closure tables, and repository coverage ledgers; deep scans do not create per-candidate receipts. When those artifacts exist, retain their traceability: start from reportable/surviving rows, preserve exact affected locations, and map suppressed, not-applicable, or deferred rows to public-facing coverage outcomes. Do not silently drop a seeded row because a same-family neighbor survived.
 
 ## Report Structure
 
@@ -120,7 +120,7 @@ Then render these subsections under each finding:
 - `#### Summary`
   - Explain why the issue matters, what the vulnerable path is, and why the current controls are insufficient.
   - Wrap code identifiers, RPC names, functions, types, fields, parameters, configuration keys, and literal values in single backticks.
-- `#### Root Cause`
+- `#### Root Cause` — conditional: the projection emits it only when a root-cause summary or root-cause code evidence exists, and the validator does not require it
   - State the violated security invariant and explain exactly how the implementation breaks it.
   - Walk the vulnerable call stack from the code that accepts or decodes user-controlled input through each meaningful call or transformation to the missing control, dangerous operation, and security-relevant consumer. Do not begin at the sink when an earlier input boundary is known.
   - Give every displayed `codeEvidence` item a role and an explanation that names the carried value and the next callee or state transition. Order `rootCause.evidenceRefs` from input to outcome, with any `expected_control` comparison after the vulnerable stack.

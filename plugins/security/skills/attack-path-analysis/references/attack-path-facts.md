@@ -4,9 +4,13 @@ Use this guidance during attack-path analysis before severity calibration.
 
 ## Attack Path Facts
 
-The attack-path facts should be gathered in structured form during analysis, but the final report should render them as markdown under a section such as `### Attack Path Facts` or a similarly clear heading.
+Gather the attack-path facts in structured form during analysis, then feed them into the canonical outputs rather than a report section. The final `report.md` is a deterministic projection and never contains an `Attack Path Facts` section: the model does not author the report, and the projection folds these facts into each finding's Reachability and Severity prose. Record them in:
 
-That rendered facts section should explicitly cover:
+- the compact nested `attack_path` record (`dataflow`, `reachability`, `counterevidence`, `impact`, `likelihood`, `severity`, `severity_rationale`, `change_conditions`) in compact standard-scan mode
+- the canonical finding fields `attackPath.dataflow`, `attackPath.reachability`, `attackPath.summary`, `severity.rationale`, and `severity.changeConditions` when assembling `findings.json`
+- the phase report and attack-path receipt in per-candidate-receipt modes
+
+The gathered facts should explicitly cover:
 
 - Assumptions
 - Context:
@@ -55,7 +59,7 @@ That rendered facts section should explicitly cover:
 - Controls
 - Confidence
 
-Prefer turning those facts into readable bullets or short labeled paragraphs instead of exposing a raw schema dump. The final report should make the scoping and reportability facts easy to inspect, including:
+Prefer concise prose values over a raw schema dump when filling those fields. The recorded facts must make the scoping and reportability conclusions easy to inspect from the canonical JSON alone, including:
 
 - whether the finding is in scope according to the threat model
 - whether the surface is public, internal, admin-only, localhost-only, or unknown
@@ -67,10 +71,10 @@ Prefer turning those facts into readable bullets or short labeled paragraphs ins
 - what the strongest repository counterevidence is
 - what blindspots or residual uncertainty remain
 
-Also make sure the rendered report carries forward:
+Also make sure the recorded phase output carries forward:
 
-- the factual attack path as numbered attacker steps
+- the factual attack path as ordered attacker steps in the dataflow and reachability narratives
 - the reachability and scoping logic
-- the strongest conflicting repository evidence
+- the strongest conflicting repository evidence in the counterevidence field
 - the final policy decision after suppression
-- the reasoning behind impact and likelihood
+- the reasoning behind impact and likelihood in the severity rationale
