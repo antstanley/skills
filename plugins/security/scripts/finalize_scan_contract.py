@@ -1290,6 +1290,10 @@ def _require_safe_schema(schema: dict[str, Any], context: str) -> None:
             if keyword == "additionalProperties" and not isinstance(child, bool):
                 # The validator only implements the boolean form.
                 raise ContractError(f"{context}: unsupported JSON Schema keyword")
+            if keyword in {"if", "then", "items", "contains"} and isinstance(child, bool):
+                # The validator only implements the schema form; a boolean here
+                # would be accepted by the gate but validate vacuously.
+                raise ContractError(f"{context}: unsupported JSON Schema keyword")
             edges = 0
             if keyword == "allOf" and isinstance(child, list):
                 edges = len(child)

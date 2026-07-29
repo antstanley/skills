@@ -51,7 +51,7 @@ Independent generation is the point of this mode: sharing or persisting the cach
    - the threat model is repository-scoped rather than being centered around any specific scan target
    - it describes repository-wide primary product or runtime surfaces and trust boundaries before covering any narrower examples
    - any vulnerability-class discussion is about repository-context classes, not findings about any current diff
-7. Append the exact `Repository` and `Version` lines from `../../references/scan-artifacts.md`, then write the threat model to the repository-scoped path.
+7. Append the exact `Repository` and `Version` lines from `../../references/scan-artifacts.md`, then write the threat model to the repository-scoped path — or, in independent pass mode, only to the caller-specified output path, never the shared repository-scoped path.
 
 ## Threat Model Generation Guidance
 
