@@ -39,6 +39,13 @@
       "description": "Implement a spec-planner plan — one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gated through a semi-formal correctness review and a definition-of-done validation before each task merges and is marked Done; parallel by default (max 4 agents) or sequential. Self-contained.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
+    },
+    {
+      "name": "security",
+      "source": "./plugins/security",
+      "description": "Security workflows — repository and diff scans, deep multi-pass scans, threat modelling, validation, attack-path analysis, triage, remediation, and reporting against a sealed scan contract.",
+      "category": "development",
+      "homepage": "https://github.com/antstanley/skills"
     }
   ]
 }
