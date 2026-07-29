@@ -1,11 +1,80 @@
 # skills
 
-A collection of [Agent Skills](https://github.com/agentskills/agentskills) for
-**spec-driven development** by Ant Stanley — define a spec, plan its
-implementation, then build it task by task behind correctness and completeness
-gates. Packaged as a Claude Code plugin marketplace, and installable into any
-harness that supports the Agent Skills standard (Codex, Cursor, Pi, OpenCode,
-Zed, Kiro).
+A collection of [Agent Skills](https://github.com/agentskills/agentskills) by Ant
+Stanley, in two families:
+
+- **Spec-driven development** — define a spec, plan its implementation, then
+  build it task by task behind correctness and completeness gates.
+- **Security review** — repository, diff, and deep multi-pass scans that produce
+  a sealed, machine-readable scan contract plus a generated report and SARIF.
+  A fork of OpenAI's [codex-security](https://github.com/openai/codex-security),
+  ported from Codex to Claude Code.
+
+Packaged as a Claude Code plugin marketplace, and installable into any harness
+that supports the Agent Skills standard (Codex, Cursor, Pi, OpenCode, Zed, Kiro).
+
+## Install
+
+### Claude Code — plugin marketplace
+
+Register the marketplace once, then install whichever plugins you want. Plugins
+are self-contained, so any one works on its own.
+
+```
+/plugin marketplace add antstanley/skills
+```
+
+| Plugin | Skills | Provides |
+|---|---|---|
+| `/plugin install spec-creator@skills` | 3 | Write, review, and add guidelines to a canonical design spec. |
+| `/plugin install spec-planner@skills` | 2 | Decompose a spec into a dependency-ordered task plan with done certificates. |
+| `/plugin install spec-builder@skills` | 3 | Execute a plan, one sub-agent per task, behind two gates. |
+| `/plugin install reasoning-semiformally@skills` | 1 | The semi-formal certificate reasoning method both gates build on. |
+| `/plugin install jj-workspaces@skills` | 1 | Isolated jj workspaces for parallel and sub-agent work. |
+| `/plugin install security@skills` | 13 | Security scans, triage, remediation, and reporting. Forked from [codex-security](https://github.com/openai/codex-security). |
+
+For the full spec → plan → build flow install `spec-creator`, `spec-planner`, and
+`spec-builder`. For security review, `security` alone is enough.
+
+### Every other harness — `install.sh`
+
+The installer copies the generated flat [`skills/`](skills/) tree into a
+harness's discovery directory. All 23 skills are installed together; there is no
+per-plugin selection outside Claude Code.
+
+```
+./install.sh all                              # every harness except Claude Code, global
+./install.sh codex                            # one target
+./install.sh cursor --project ~/work/myrepo   # per-project instead of global
+./install.sh opencode --symlink               # link instead of copy (live updates)
+./install.sh all --dry-run                    # print what would happen, change nothing
+```
+
+| Target | Global (default) | `--project [DIR]` |
+|---|---|---|
+| `all` | `~/.agents/skills` + `~/.kiro/skills` | `.agents/skills` + `.kiro/skills` |
+| `agents`, `codex`, `zed` | `~/.agents/skills` | `.agents/skills` |
+| `cursor` | `~/.cursor/skills` | `.cursor/skills` |
+| `pi` | `~/.pi/agent/skills` | `.pi/skills` |
+| `opencode` | `~/.config/opencode/skills` | `.opencode/skills` |
+| `kiro` | `~/.kiro/skills` | `.kiro/skills` |
+| `claude` | `~/.claude/skills` | `.claude/skills` |
+
+`~/.agents/skills` is the neutral standard path read by Codex, Cursor, Pi,
+OpenCode, and Zed, so `all` — that path plus Kiro's own — covers every harness
+except Claude Code, which uses the marketplace above. The per-harness targets are
+there when you would rather install into a harness's native directory.
+
+Skills are **copied** by default; re-running refreshes them. `--symlink` links
+instead, which live-updates but leaves dangling links if the repo moves.
+`--force` replaces a destination entry that is not a managed skill.
+
+> **Pi:** `spec-builder` and `using-jj-workspaces` dispatch sub-agents, which Pi
+> only supports with a subagents extension (`pi install npm:@tintinweb/pi-subagents`).
+> Without it those two fall back to sequential single-agent mode; every other
+> skill works unchanged.
+
+If `skills/` is missing or stale, run `scripts/sync-skills.sh` first.
 
 ## The spec → plan → build workflow
 
@@ -43,6 +112,8 @@ patch verification, bug localization, and patch-equivalence checks.
 
 ## Skills
 
+### Spec-driven development
+
 | Skill | Plugin | Role |
 |---|---|---|
 | [spec-creator](plugins/spec-creator/) | spec-creator | Create / expand / change a canonical design spec — numbered, layered, cross-linked markdown. |
@@ -56,39 +127,40 @@ patch verification, bug localization, and patch-equivalence checks.
 | [reasoning-semiformally](plugins/reasoning-semiformally/) | reasoning-semiformally | The semi-formal certificate reasoning method — patch verification, fault localization, patch equivalence. |
 | [using-jj-workspaces](plugins/jj-workspaces/) | jj-workspaces | Isolated jj (jujutsu) workspaces for parallel / sub-agent work; intercepts git-worktree requests in jj repos. |
 
-## Install
+### Security
 
-### Claude Code — plugin marketplace
+All thirteen ship in the [`security`](plugins/security/) plugin — a fork of
+[codex-security](https://github.com/openai/codex-security), OpenAI's built-in
+security plugin for Codex, ported to Claude Code.
 
-Register the marketplace, then install whichever plugins you want:
+The port replaces the host integration rather than shimming it. The Codex desktop
+MCP server, its connector manifest, and the Codex `config.toml` capability
+preflight are gone; sub-agent fan-out, `AskUserQuestion`, the task list, and MCP
+servers take their place. Artifact identifiers were renamed to match, so scan
+bundles produced by upstream `codex-security` are not readable here.
 
-```
-/plugin marketplace add antstanley/skills
-/plugin install spec-creator@skills
-/plugin install spec-planner@skills
-/plugin install spec-builder@skills
-/plugin install reasoning-semiformally@skills
-/plugin install jj-workspaces@skills
-```
+Licensed Apache-2.0, retaining OpenAI's copyright notice. See
+[`plugins/security/LICENSE.md`](plugins/security/LICENSE.md) for the full
+statement of changes.
 
-For the full spec → plan → build flow, install `spec-creator`, `spec-planner`,
-and `spec-builder` (which bundles its two gate skills). Plugins are
-self-contained, so any one can be installed on its own.
+Every scan mode writes the same canonical JSON, which a deterministic finalizer
+seals and projects into `report.md` and SARIF.
 
-### Other harnesses — `install.sh`
-
-For Codex, Cursor, Pi, OpenCode, Zed, and Kiro, run the installer. It places the
-skills into each harness's discovery directory:
-
-```
-./install.sh all          # Codex, Cursor, Pi, OpenCode, Zed (~/.agents/skills) + Kiro (~/.kiro/skills)
-./install.sh codex        # a single harness: agents/codex/zed | cursor | pi | opencode | kiro | claude
-./install.sh cursor --project ~/work/myrepo   # per-project instead of global
-```
-
-Skills are **copied** by default (use `--symlink` for live updates). One path —
-`~/.agents/skills/` — serves Codex, Cursor, Pi, OpenCode, and Zed at once; Kiro
-uses `~/.kiro/skills/`.
+| Skill | Role |
+|---|---|
+| [security-scan](plugins/security/skills/security-scan/) | Standard single-pass audit of a repository or scoped path. |
+| [security-diff-scan](plugins/security/skills/security-diff-scan/) | Review a pull request, commit, branch diff, or working-tree patch. |
+| [deep-security-scan](plugins/security/skills/deep-security-scan/) | Exhaustive audit — repeats discovery across parallel sub-agents until it saturates. |
+| [threat-model](plugins/security/skills/threat-model/) | Phase 1 — build or reuse the repository threat model. |
+| [finding-discovery](plugins/security/skills/finding-discovery/) | Phase 2 — surface candidate findings across the in-scope files. |
+| [validation](plugins/security/skills/validation/) | Phase 3 — decide whether each candidate is real. |
+| [attack-path-analysis](plugins/security/skills/attack-path-analysis/) | Phase 4 — trace source to sink and calibrate severity. |
+| [triage-finding](plugins/security/skills/triage-finding/) | Static repo-impact triage of findings you already have (SARIF, CVEs, scanner tickets, Jira/Linear issues). |
+| [fix-finding](plugins/security/skills/fix-finding/) | Generate, apply, and verify a minimal remediation patch. |
+| [vulnerability-writeup](plugins/security/skills/vulnerability-writeup/) | Write the detailed per-finding report. |
+| [propose-security-hardening](plugins/security/skills/propose-security-hardening/) | Structural hardening options across the whole finding set. |
+| [track-findings](plugins/security/skills/track-findings/) | File findings as Linear, Jira, or GitHub issues, or draft GitHub security advisories. |
+| [define-security-policy](plugins/security/skills/define-security-policy/) | Author a repository's `SECURITY.md` policy. |
 
 ## Repo layout
 
@@ -120,12 +192,21 @@ omitted), produced from `plugins/` by `scripts/sync-skills.sh` — edit under
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── skills/using-jj-workspaces/
 │   │   └── README.md
-│   └── spec-builder/
+│   ├── spec-builder/
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── skills/spec-builder/                 # orchestrator
+│   │   │   └── references/                       # orchestration, workspaces (jj+git), subagent-brief, build-loop, portability
+│   │   ├── skills/semi-formal-review/           # gate 1 — correctness
+│   │   ├── skills/validate-done-certificate/    # gate 2 — completeness
+│   │   └── README.md
+│   └── security/
 │       ├── .claude-plugin/plugin.json
-│       ├── skills/spec-builder/                 # orchestrator
-│       │   └── references/                       # orchestration, workspaces (jj+git), subagent-brief, build-loop, portability
-│       ├── skills/semi-formal-review/           # gate 1 — correctness
-│       ├── skills/validate-done-certificate/    # gate 2 — completeness
+│       ├── skills/                              # 13 skills — scans, phases, triage, remediation
+│       ├── references/                          # scan contract, artifact paths, report + preflight specs
+│       ├── schemas/                             # JSON Schemas for the sealed scan contract
+│       ├── scripts/                             # finalizer, SARIF export, preflight, target identity
+│       ├── examples/completed-scan/             # worked canonical bundle
+│       ├── LICENSE.md                           # Apache-2.0 (forked from openai/codex-security)
 │       └── README.md
 └── .specs/                         # generated design specs & plans
 ```
