@@ -68,7 +68,8 @@ Put accessibility acceptance in `Design definition of done`, so existing planner
 builder handoffs inherit it for applicable UI tasks. Each item names the journey/state,
 adopted criterion or project policy, expected behavior, and evidence needed. Keep supporting
 evidence with the task/review artifacts and reference it instead of copying audit logs
-into the canonical policy page.
+into the canonical policy page. Use [the evidence record](evidence-template.md)
+when capturing these observations for a task or review.
 
 Combine available automated checks with manual keyboard, visual, and assistive-technology
 checks appropriate to the changed journeys. Name automated commands only after confirming

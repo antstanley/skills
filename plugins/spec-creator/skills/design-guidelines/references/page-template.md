@@ -98,6 +98,9 @@ conformance from a sampled journey, screenshots, or automated results alone.>
 - *<gap>.* <Known implementation/evidence gap and the question about resolving it.>
 ```
 
+For revision-specific acceptance results, use [evidence-template.md](evidence-template.md)
+and link the record from its task/review rather than expanding the canonical page into a test log.
+
 ## Examples of accurate claims
 
 - **Policy:** "Every interactive control has a visible keyboard-focus treatment."

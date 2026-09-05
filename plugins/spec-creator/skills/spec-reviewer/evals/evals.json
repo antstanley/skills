@@ -18,15 +18,15 @@
     {
       "id": 3,
       "name": "full-review-r2-then-r1",
-      "prompt": "Do a full review of the editor spec set in .specs/editor/specs/ — check it against the code, and also validate the pending change spec under .specs/changes/ before we merge it.",
-      "expected_output": "The skill states it will run both modes, R2 first (confirm the canonical base is accurate against the code) then R1 (check the pending change spec against that base), and explains the ordering — a change spec built on a stale canonical page is worth catching first. For each canonical page it runs R2's forward and reverse passes and lists any divergences; for the change spec it runs R1's reference-resolution, consistency trace, and schema check. Each mode ends with its own fixed verdict block. Where R2 finds the canonical base already diverges from code in a section the change spec also touches, the skill calls that out as affecting the R1 result. All suggestions are concrete (path/heading/file:line anchors); no canonical page or change spec is rewritten without the user accepting, and accepted edits are handed to spec-creator.",
+      "prompt": "Do a full review of the editor spec set in .specs/editor/specs/ \u2014 check it against the code, and also validate the pending change spec under .specs/changes/ before we merge it.",
+      "expected_output": "The skill states it will run both modes, R2 first (confirm the canonical base is accurate against the code) then R1 (check the pending change spec against that base), and explains the ordering \u2014 a change spec built on a stale canonical page is worth catching first. For each canonical page it runs R2's forward and reverse passes and lists any divergences; for the change spec it runs R1's reference-resolution, consistency trace, and schema check. Each mode ends with its own fixed verdict block. Where R2 finds the canonical base already diverges from code in a section the change spec also touches, the skill calls that out as affecting the R1 result. All suggestions are concrete (path/heading/file:line anchors); no canonical page or change spec is rewritten without the user accepting, and accepted edits are handed to spec-creator.",
       "files": []
     },
     {
       "id": 4,
       "name": "change-spec-partial-implementation",
       "prompt": "Has the change spec at .specs/changes/2026-05-21-add_tagging_to_entries.md been implemented yet? It adds a Tag entity, a tagIds field on Entry, a tags object store, and a tag picker in the editor toolbar. Check the code.",
-      "expected_output": "The skill confirms it is applying Template R3 (change spec vs code) and extracts the code-level expectations from the change spec's Type changes fragment and Implementation notes (Tag type, Entry.tagIds, tags store + version bump, toolbar tag picker), not from the Proposed-changes prose alone. It runs the implementation-resolution sequence on each expectation against the code: Tag type PRESENT (IMPLEMENTED), tags store PRESENT (IMPLEMENTED), Entry.tagIds ABSENT, toolbar tag picker ABSENT. Status determination tallies 2 of 4 and returns PARTIAL. The gap list names each ABSENT expectation with the specific code to add (tagIds on the Entry type/parser; tag picker wired into Toolbar.svelte) anchored to file:line, and cites where each came from in the change spec. Verdict block has IMPLEMENTATION STATUS: PARTIAL, COMPLETION: 2 of 4, and NEXT STEPS listing the code changes — plus a note that the change spec stays at Accepted until R3 returns IMPLEMENTED, at which point it can be flipped to Implemented and merged. The skill does not write the missing code or change the status.",
+      "expected_output": "The skill confirms it is applying Template R3 (change spec vs code) and extracts the code-level expectations from the change spec's Type changes fragment and Implementation notes (Tag type, Entry.tagIds, tags store + version bump, toolbar tag picker), not from the Proposed-changes prose alone. It runs the implementation-resolution sequence on each expectation against the code: Tag type PRESENT (IMPLEMENTED), tags store PRESENT (IMPLEMENTED), Entry.tagIds ABSENT, toolbar tag picker ABSENT. Status determination tallies 2 of 4 and returns PARTIAL. The gap list names each ABSENT expectation with the specific code to add (tagIds on the Entry type/parser; tag picker wired into Toolbar.svelte) anchored to file:line, and cites where each came from in the change spec. Verdict block has IMPLEMENTATION STATUS: PARTIAL, COMPLETION: 2 of 4, and NEXT STEPS listing the code changes \u2014 plus a note that the change spec stays at Accepted until R3 returns IMPLEMENTED, at which point it can be flipped to Implemented and merged. The skill does not write the missing code or change the status.",
       "files": []
     },
     {
@@ -41,6 +41,27 @@
       "name": "design-rendered-evidence-unavailable",
       "prompt": "Check whether our implemented responsive layout conforms to the design guidelines. Source and tokens are available, but the app cannot run and no current screenshots or interaction evidence exist.",
       "expected_output": "Verifies what source can prove and labels visual/reflow claims requiring rendered evidence UNVERIFIED. Returns CONCERNS when no mismatch is proven, naming the missing evidence. Does not infer CONFORMS from CSS alone or call missing screenshots proof of absent implementation.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "design-drift-inherited-delta",
+      "prompt": "Review design drift for admin only. Shared policy requires visible focus. Admin compact density and static motion are confirmed package differences. Current keyboard evidence shows focus is hidden; the owner deferred the fix.",
+      "expected_output": "Resolves global and package policy, accepts intentional density/motion delta, reports evidenced focus mismatch and DIVERGES despite deferral; retains policy, scopes report and evidence; no UI or policy rewrite.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "design-drift-evidence-gap",
+      "prompt": "Review whether this UI still matches its canonical typography and skip-navigation rules. Source tokens agree, but there is no current rendered or interaction evidence.",
+      "expected_output": "Performs R2 forward/reverse analysis, confirms policy separately; relevant visual/keyboard behavior remains UNVERIFIED with CONCERNS, not MISSING or CONFORMS. Names exact evidence needed, no broad compliance claim.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "design-drift-confirmed-documentation-change",
+      "prompt": "Review design drift: canonical typography says Inter. The owner approved Roboto in a recorded decision, and current source and rendered evidence use Roboto. Do not edit anything.",
+      "expected_output": "Reports canonical mismatch with DIVERGES and authoritative decision as basis for documentation-drift remedy. Does not silently change guidelines, prescribe a preferred font or treat code alone as authority.",
       "files": []
     }
   ]

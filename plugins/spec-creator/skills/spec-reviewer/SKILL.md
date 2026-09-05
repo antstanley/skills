@@ -1,6 +1,6 @@
 ---
 name: spec-reviewer
-description: Review a canonical or change spec for inconsistencies, divergence, and implementation status, using semi-formal certificate templates. Three modes — (1) a change spec vs the canonical spec it targets (broken references, stale targets, contradictions); (2) a canonical spec vs the code (missing or incorrect implementations, and shipped features the spec never captured); (3) a change spec vs the code (whether its delta has shipped — none/partial/implemented — and which gaps remain). Triggers on "review the spec", "does the implementation match the spec", "find spec divergences", or "has this change spec been implemented". For a single planned task's done-ness use validate-done-certificate instead.
+description: Review a canonical or change spec for inconsistencies, divergence, and implementation status, using semi-formal certificate templates. Three modes — (1) a change spec vs the canonical spec it targets (broken references, stale targets, contradictions); (2) a canonical spec vs the code (missing or incorrect implementations, and shipped features the spec never captured); (3) a change spec vs the code (whether its delta has shipped — none/partial/implemented — and which gaps remain). Triggers on "review the spec", "does the implementation match the spec", "find spec divergences", "review design drift", or "has this change spec been implemented". For a single planned task's done-ness use validate-done-certificate instead.
 ---
 
 # Spec Reviewer
@@ -61,6 +61,11 @@ adaptation when reviewing adopted policy or rendered/interaction behavior. Separ
 adoption from implementation compliance; source inspection alone cannot establish every
 visual or interaction claim.
 
+For design-drift requests, also read [references/design-drift.md](references/design-drift.md).
+It applies R2 to global/package design policy, current UI evidence and significant
+unspecified patterns, with a scoped report and evidence record. It does not add a new
+verdict system or authorize redesign.
+
 ### 2 — Apply the template
 
 Open the matching template — [`references/r1-change-vs-canonical.md`](references/r1-change-vs-canonical.md) (change spec vs canonical), [`references/r2-canonical-vs-code.md`](references/r2-canonical-vs-code.md) (canonical vs code), or [`references/r3-change-vs-code.md`](references/r3-change-vs-code.md) (change spec vs code) — and follow it step by step. Write out each step's result; do not summarize past a checkpoint. The resolution sequences (which page/heading/symbol/code-counterpart a reference points to) are mandatory — trace each one rather than assuming the obvious target.
@@ -94,3 +99,5 @@ spec-creator may delegate here at three points: after drafting a change spec (ru
 - [`references/r3-change-vs-code.md`](references/r3-change-vs-code.md) — **R3**, the change-spec-vs-code template: expectation extraction, implementation resolution, status determination (NONE / PARTIAL / IMPLEMENTED), gap list, worked example. Read before checking whether a change spec has shipped.
 - [`../spec-creator/references/change-specs.md`](../spec-creator/references/change-specs.md) — the change-spec document type and merge procedure. Read before R1 and R3; the merge plan is what R1 protects, and R3 gates the move to Implemented before that merge.
 - [`../spec-creator/references/checklist.md`](../spec-creator/references/checklist.md) — the pre-handoff checklist. Its Branch-reality and Cross-links sections are the structural rules R1 and R2 verify against.
+
+- [`references/design-drift.md`](references/design-drift.md) — design-specific R2 comparison, evidence freshness, inheritance and remediation routing; read for design-drift requests.

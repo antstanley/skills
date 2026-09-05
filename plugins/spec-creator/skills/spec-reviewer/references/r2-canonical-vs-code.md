@@ -34,6 +34,10 @@ The Step 6 rubric still applies: proven MISSING/MISMATCH takes precedence as DIV
 otherwise any UNVERIFIED compliance claim or unresolved policy conflict yields CONCERNS.
 An existing test or screenshot is not evidence of all states or accessibility compliance.
 
+For a scoped design-drift review, read [design-drift.md](design-drift.md) for
+evidence freshness, package inheritance and report placement; retain this procedure
+and verdict rubric.
+
 ## Procedure
 
 **Step 1: State premises.**

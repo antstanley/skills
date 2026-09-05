@@ -98,6 +98,20 @@
       "prompt": "Document accessibility acceptance for our text-only site: there is no audio/video media, and screen-reader testing is unavailable today. WCAG 2.2 AA is already adopted.",
       "expected_output": "Records relevant media criteria as not applicable with absence-of-media rationale, while unavailable screen-reader evidence remains not tested. Does not mark missing testing not applicable. Keeps all applicable A/AA obligations in scope and avoids general conformance claims from the limited sample.",
       "files": []
+    },
+    {
+      "id": 15,
+      "name": "evidence-only-bounded-observations",
+      "prompt": "Record design evidence for the adopted skip-navigation rule. A supplied screenshot shows visibility at first Tab on build abc123, Chrome desktop, 390px light theme. Activation and screen-reader behavior were not tested. Do not change policy or UI.",
+      "expected_output": "Creates a scoped evidence record with requirement link and supplied provenance; separates reported visual result from untested activation and assistive technology; missing metadata explicit. No discovery reset, independent-check claim, invented result, or canonical/UI edit.",
+      "files": []
+    },
+    {
+      "id": 16,
+      "name": "evidence-stale-revision",
+      "prompt": "Capture current design evidence. Last month the home date typography passed, but its component CSS changed yesterday and the old screenshots are unavailable. No browser is available today.",
+      "expected_output": "Preserves historical passed observation as attributed history, records current typography not tested because relevant code changed and artifacts are missing; names scoped recheck and current revision uncertainty. Does not pass based on old result or declare implementation failed without evidence.",
+      "files": []
     }
   ]
 }
