@@ -74,6 +74,10 @@ shape from this paragraph alone.>
   `.specs/development-guidelines.md` §Definition of done and §Limits and bounds.
   If derived from repo signals or agreed with the user, say so. This baseline is
   inherited by every task; task files add only task-specific acceptance on top.>
+- **Design baseline (UI scope only).** <Link design-guidelines.md §Design definition of done
+  and relevant package deltas, or the existing design contract used instead. Name the
+  tasks/surfaces that inherit it and the required rendered/interaction evidence. Omit for
+  non-UI work. Do not imply visual conformance has already been verified.>
 
 ---
 

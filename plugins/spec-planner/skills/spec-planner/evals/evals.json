@@ -21,6 +21,13 @@
       "prompt": "We have a PRD (not a spec-creator spec) for a small SaaS dashboard: users sign up and log in, then see a billing page, a team-settings page, and a usage-analytics page — all of which require being logged in. There's no development-guidelines page yet. Plan the build and write it to .specs/plans/, making sure the order produces reviewable work early.",
       "expected_output": "Because there is no development-guidelines page, the skill establishes the definition-of-done baseline from repo signals or by asking the user, and records that source in plan.md's baseline section. A plan folder at .specs/plans/YYYY-MM-DD-<snake_case>/ — plan.md (Layout: kanban) at the root with every task authored into backlog/ beside its certificate — with auth (signup + login) as task 01, carrying outgoing REVIEW edges to billing, team-settings, and usage-analytics (none can be reviewed end to end without login). plan.md's Mermaid graph and dependency table (keyed by task number) agree and form a DAG. Each gated page is its own task file ordered after auth, with no per-task Status field (the subfolder is the status). Milestones end at reviewable states (M1: a user can sign up and log in to an empty shell; later milestones add the gated pages). The external source is noted as having no canonical schema, with any type ambiguity captured in plan.md's Open questions. Standard header and closing block; .specs/README.md indexed, pointed at plan.md.",
       "files": []
+    },
+    {
+      "id": 4,
+      "name": "scoped-design-acceptance",
+      "prompt": "Plan a change adding a settings dialog and a backend persistence migration. The canonical design guidelines require keyboard focus restoration, compact operational layout, and reduced-motion behavior for UI transitions. Package deltas and the development guidelines already exist.",
+      "expected_output": "Records development and scoped design baselines. The dialog task references applicable design sections and includes observable keyboard, responsive/rendered, and motion acceptance with evidence requirements. The backend-only migration inherits development checks but not visual checks. Builder context and done-certificate obligations derive from the scoped task DoD; no missing visual evidence is assumed to pass.",
+      "files": []
     }
   ]
 }

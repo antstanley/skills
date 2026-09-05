@@ -25,8 +25,15 @@ From the plan folder, gather for task `NN`:
 | `NN-<task>.md` `Pointers` | code entry points (`file:line`) | where to touch the code |
 | `NN-<task>.md` `Definition of done` | the DoD checklist | the bar the work is judged against (and the gates) |
 | `plan.md` DoD baseline | the repo's development-guidelines source | the testing / lint / limits discipline every task inherits |
+| `plan.md` scoped design baseline, for applicable UI tasks | adopted design rules, package deltas, and visual/interaction acceptance | preserves design context in the isolated brief; omit for backend-only tasks |
 | The referenced spec sections | the actual prose from `Implements` | behavior detail — pull the sections, not the whole spec set |
 | the task's co-located `NN-<task>-certificate.md` | **summary only** — that a certificate exists | so the builder knows the completeness bar; do **not** hand over the certificate body |
+
+For UI tasks, carry the actual applicable design rules and expected surface/state behavior,
+not just an aesthetic label or a path. Include the task's required rendered and interaction
+review outcomes. Keep adopted policy distinct from claims that the current UI conforms.
+Unavailable visual evidence is a limitation for the gates to assess, never an automatic
+pass. Do not hand the implementer the validator's detailed evidence protocol.
 
 **Withhold the certificate's evidence/checks from the implementer.** The certificate is
 the validator's protocol. A builder who reads "run `lock.test.ts › rejects wrong

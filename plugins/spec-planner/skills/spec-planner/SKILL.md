@@ -28,6 +28,7 @@ The boundaries between the companions:
 
 - **spec-creator** writes the spec; **spec-planner** plans how to build it.
 - **development-guidelines** writes the rules of the road, including the `Definition of done` section that spec-planner *reads* to derive each task's DoD.
+- **design-guidelines** supplies `Design definition of done` and shared design rules for applicable UI tasks, together with any package deltas.
 - **spec-reviewer** checks specs against code. spec-planner may invoke it in Phase 1 (R2 / R3) to learn what is already built. It ships in the **spec-creator** plugin and is *optional* — when absent, the Phase 1 code read covers the same ground (a fallback, not a skipped step).
 - **done-certificates** authors the verification protocol for a task's DoD; a *separate* validating agent runs it. See [§Adding done certificates](#adding-done-certificates).
 - **spec-builder** (the `spec-builder` plugin) consumes the finished plan folder downstream — it builds each task, runs the correctness/completeness gates, and discharges the done certificates. The plan this skill writes is its input.
@@ -61,7 +62,15 @@ Five phases, sequential. The value of a plan comes from understanding the spec a
 ### Phase 1 — Read the spec and establish the rules of the road
 
 1. **Read the source specification end to end.** For a canonical spec set, read `.specs/README.md` then every page in scope and the schema sidecar. For a change spec, read it and the canonical pages it targets. For an external spec, read the whole document and note its structure.
-2. **Establish the definition-of-done baseline.** Find the repo's development guidelines — `.specs/development-guidelines.md` (the page the `development-guidelines` skill produces) is the first choice; its `Definition of done` and `Limits and bounds` sections set the per-task bar. If absent, fall back to repo signals (`CONTRIBUTING.md`, CI config, test setup) and, failing that, **ask the user** what "done" means for a task here. Record the source in the plan's header note.
+2. **Establish the definition-of-done baseline.** Find the repo's development guidelines — `.specs/development-guidelines.md` (the page the `development-guidelines` skill produces) is the first choice; its `Definition of done` and `Limits and bounds` sections set the per-task bar. If absent, fall back to repo signals (`CONTRIBUTING.md`, CI config, test setup) and, failing that, **ask the user** what "done" means for a task here. Record the source in the plan's header note. For UI work, also read
+   `.specs/design-guidelines.md` §Design definition of done and applicable package design
+   deltas. Record these as a scoped design baseline: name which tasks inherit it, reference
+   the relevant rules in their `Implements`, and translate them into observable acceptance
+   and evidence requirements. Separate adopted policy from already-implemented behavior.
+   Missing visual evidence must become a verification requirement, not an assumed pass.
+   Do not add visual checks to backend-only tasks or require this optional companion to
+   be installed: existing project design contracts can supply the baseline. If material
+   design choices are unresolved, surface them before planning dependent UI work.
 3. **Learn what already exists.** A plan must not re-plan finished work. Walk the code the spec describes; where the spec set has drifted from the code, invoke the **spec-reviewer** skill (via the Skill tool — R2 for a canonical spec, R3 for a change spec) to enumerate what is already implemented. spec-reviewer ships with the **spec-creator** plugin — when it is not installed, do the equivalent code read by hand (it is the same enumeration, not an optional step). Built work becomes a precondition in the plan, not a task.
 4. **Surface ambiguity early.** Anything the spec leaves undecided that blocks sequencing (an unspecified auth model when half the features are gated) is flagged to the user now and captured for the Open questions block.
 

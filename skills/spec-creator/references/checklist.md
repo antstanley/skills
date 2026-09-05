@@ -6,12 +6,21 @@ Run through this list before declaring a spec done. The checklist enforces the *
 
 ## Branch reality
 
-- [ ] Every body section describes code, configuration, or contracts that exist in the current branch.
+- [ ] Every body section describes code, configuration, or contracts that exist in the current branch. Adopted guidelines are current policy contracts; implementation and enforcement claims still require branch evidence.
 - [ ] No body section uses "MVP", "deferred", "for now", "at MVP", "for the moment", or "in the next iteration".
 - [ ] Aspirational content lives **only** in the closing `Assumptions / Decisions / Open questions` block.
 - [ ] If the spec describes a thing the code doesn't have, the gap is captured as an Open question and flagged to the user.
 
 ---
+
+## Design guidelines (when applicable)
+
+- [ ] Visual surfaces have applicable design guidelines or a recorded reason they are not needed; backend-only scope does not trigger visual policy creation.
+- [ ] First-use discovery distinguishes greenfield from existing design, confirms unresolved material decisions, and reuses answers already given.
+- [ ] Observations, adopted policy, implementation claims, and existing enforcement are distinguished; known gaps remain explicit.
+- [ ] Token authorities and relevant evidence are linked without creating duplicate inventories or overwriting existing DESIGN.md files.
+- [ ] Design acceptance names applicable surfaces/states and evidence types; missing rendered or interaction evidence is not reported as passing.
+- [ ] Package design pages inherit shared rules and document only scoped differences.
 
 ## File structure
 
@@ -81,7 +90,7 @@ Run through this list before declaring a spec done. The checklist enforces the *
 
 ## Length and rhythm
 
-- [ ] Each spec file is roughly 100–300 lines (architecture-principles and development-guidelines may exceed this).
+- [ ] Each spec file is roughly 100–300 lines (architecture-principles, development-guidelines, and design-guidelines may exceed this).
 - [ ] No paragraph longer than ~4 sentences (split or convert to a list).
 - [ ] Tables for any list with parallel structure (routes, fields, tokens).
 - [ ] ASCII diagrams for shapes (system, state machines, dependency graphs).

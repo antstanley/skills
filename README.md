@@ -26,7 +26,7 @@ are self-contained, so any one works on its own.
 
 | Plugin | Skills | Provides |
 |---|---|---|
-| `/plugin install spec-creator@skills` | 3 | Write, review, and add guidelines to a canonical design spec. |
+| `/plugin install spec-creator@skills` | 4 | Write and review canonical specs, with development and design guidelines. |
 | `/plugin install spec-planner@skills` | 2 | Decompose a spec into a dependency-ordered task plan with done certificates. |
 | `/plugin install spec-builder@skills` | 3 | Execute a plan, one sub-agent per task, behind two gates. |
 | `/plugin install reasoning-semiformally@skills` | 1 | The semi-formal certificate reasoning method both gates build on. |
@@ -39,7 +39,7 @@ For the full spec → plan → build flow install `spec-creator`, `spec-planner`
 ### Every other harness — `install.sh`
 
 The installer copies the generated flat [`skills/`](skills/) tree into a
-harness's discovery directory. All 23 skills are installed together; there is no
+harness's discovery directory. All 24 skills are installed together; there is no
 per-plugin selection outside Claude Code.
 
 ```
@@ -89,6 +89,7 @@ next, and the final stage refuses to mark work done unless it is proven correct
       │                       │                        │
  spec-reviewer          done-certificates      semi-formal-review  (gate 1: correct)
  development-guidelines  (per-task proof)       validate-done-certificate (gate 2: complete)
+ design-guidelines       (UI design rules)
                                                        │
                                                  using-jj-workspaces (isolation)
 
@@ -97,7 +98,8 @@ next, and the final stage refuses to mark work done unless it is proven correct
 
 1. **Define** — `spec-creator` writes the canonical spec (what exists in the
    current branch). `spec-reviewer` checks it against the code or a change spec;
-   `development-guidelines` adds the "rules of the road" page.
+   `development-guidelines` adds the coding discipline; `design-guidelines` captures visual
+   and interaction rules through greenfield discovery or existing-project adoption.
 2. **Plan** — `spec-planner` decomposes the spec into a dependency-ordered graph
    of task packages, each with a definition of done. `done-certificates` authors
    a per-task verification protocol for a validator to run later.
@@ -119,6 +121,7 @@ patch verification, bug localization, and patch-equivalence checks.
 | [spec-creator](plugins/spec-creator/) | spec-creator | Create / expand / change a canonical design spec — numbered, layered, cross-linked markdown. |
 | [spec-reviewer](plugins/spec-creator/) | spec-creator | Review a spec against the code, or a change spec against the canonical spec. |
 | [development-guidelines](plugins/spec-creator/) | spec-creator | Add a development-guidelines page (toolchain, style, testing, DoD) to a spec. |
+| [design-guidelines](plugins/spec-creator/skills/design-guidelines/) | spec-creator | Establish design policy through greenfield questions or existing-project adoption; record visual/interaction rules and design acceptance. |
 | [spec-planner](plugins/spec-planner/) | spec-planner | Decompose a spec into a dependency-ordered plan of task packages, each with a definition of done. |
 | [done-certificates](plugins/spec-planner/) | spec-planner | Author a per-task semi-formal done certificate for a validating agent to discharge. |
 | [spec-builder](plugins/spec-builder/) | spec-builder | Execute a plan — one sub-agent per task in an isolated workspace, gated and merged in dependency order. |
@@ -182,7 +185,7 @@ omitted), produced from `plugins/` by `scripts/sync-skills.sh` — edit under
 │   │   └── README.md
 │   ├── spec-creator/
 │   │   ├── .claude-plugin/plugin.json
-│   │   ├── skills/{spec-creator,spec-reviewer,development-guidelines}/
+│   │   ├── skills/{spec-creator,spec-reviewer,development-guidelines,design-guidelines}/
 │   │   └── README.md
 │   ├── spec-planner/
 │   │   ├── .claude-plugin/plugin.json

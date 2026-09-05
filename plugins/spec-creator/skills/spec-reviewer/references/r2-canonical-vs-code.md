@@ -4,6 +4,36 @@ This template tells you exactly what to do at each step. Follow it literally. Do
 
 Use when reviewing a canonical spec page against the code it claims to describe. You are verifying spec-creator's core rule in both directions: every body claim maps to code that exists (no missing or incorrect implementations), and every significant code feature is captured in the spec (no unspec'd features).
 
+## Guidelines and visual claims
+
+For development/design guidelines, classify claims before applying the procedure:
+
+- **Adopted policy:** resolve to the authoritative guideline and its scope/decision,
+  not to a same-named code symbol. Record `POLICY CONFIRMED` separately; this is not
+  evidence of implementation compliance. Conflicting or unconfirmed policy is a concern.
+- **Implementation:** use the normal source resolution, extended to token/theme files,
+  styles, component variants, assets, rendered states, and interaction evidence as needed.
+- **Enforcement:** inspect the named test, command, or CI configuration. A requirement
+  alone does not prove a check exists or passed.
+
+For a request to assess conformance to adopted design rules, derive a separate compliance
+claim for each applicable rule and implemented surface in scope. Verify those claims as
+implementation claims; a policy-only page must not receive a blanket UI-conformance pass.
+A greenfield policy can be confirmed as adopted while implementation remains not applicable
+because no UI exists; make that scope explicit in the verdict summary. When UI is expected
+but absent, that absence remains a divergence.
+
+Visual hierarchy, reflow, focus behavior, and motion may need rendered or interaction
+evidence in addition to source. In Step 2 use `UNVERIFIED` when required evidence is
+unavailable, rather than treating it as MISSING code or assuming CONFORMS. Name the
+target/state/theme and evidence inspected. In Step 3 include significant UI patterns in
+the scoped reverse pass, not only exported symbols. In Step 4 report known implementation
+gaps even when the guidelines already disclose them; do not remove the adopted rule.
+
+The Step 6 rubric still applies: proven MISSING/MISMATCH takes precedence as DIVERGES;
+otherwise any UNVERIFIED compliance claim or unresolved policy conflict yields CONCERNS.
+An existing test or screenshot is not evidence of all states or accessibility compliance.
+
 ## Procedure
 
 **Step 1: State premises.**

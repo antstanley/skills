@@ -15,11 +15,18 @@ If something the spec describes does not exist in the code, that's a **divergenc
 
 This rule shapes every section. A `Routes` section lists routes that exist. A `Plugins mounted` section lists plugins that the app actually mounts. A `Database shape` section describes the schema of the IndexedDB store as it is, not as it will be.
 
+Guidelines pages have a narrow **policy distinction**: an adopted development or design
+rule is itself a current contract, even before all code conforms. Label implementation
+and enforcement claims separately and verify them against the branch. Unconfirmed choices
+remain in Open questions; known conformance gaps are reported there without weakening the
+adopted rule. This permits greenfield policy, not invented UI or tooling.
+
 ## Relationship to companion skills
 
 spec-creator is the head of a spec pipeline and the hub its siblings build on:
 
 - **development-guidelines** (this plugin) writes the `development-guidelines.md` page of the spec set. Phase 3 invokes it rather than hand-writing that page.
+- **design-guidelines** (this plugin) writes `.specs/design-guidelines.md`, with greenfield discovery or evidence-first adoption of an existing interface. Phase 3 invokes it for applicable visual surfaces.
 - **spec-reviewer** (this plugin) reviews the specs this skill produces — a change spec against the canonical spec, a canonical spec against the code, or a change spec against the code. Invoke it after drafting a change spec, on suspected drift, or before a merge.
 - **spec-planner** (the `spec-planner` plugin) turns a finished spec into a buildable, dependency-ordered plan; **spec-builder** (the `spec-builder` plugin) then implements that plan. When the user asks "and how do we build this", point them downstream — spec-planner, then spec-builder.
 
@@ -27,9 +34,9 @@ The companions follow this skill's conventions and do not restate them.
 
 ## Model & effort
 
-This plugin's three skills run **inline**, so there is no dispatch to pin a model to — they
+This plugin's four skills run **inline**, so there is no dispatch to pin a model to — they
 run on **whatever model the session is on**. They differ in how much they ask of it: spec
-authoring and the `spec-reviewer` passes are reasoning-heavy and want a capable model;
+authoring, design discovery, and the `spec-reviewer` passes are reasoning-heavy and want a capable model;
 `development-guidelines`, being templated assembly, does not need the ceiling. Treat those as
 considerations when you pick what to run the session on, not fixed defaults; an explicit
 request overrides. See [`references/model-policy.md`](references/model-policy.md) for the
@@ -89,10 +96,12 @@ Always include:
 Always include if applicable:
 - An **architecture / package layout** page.
 - A **development guidelines** page.
+- A **design guidelines** page for human-facing visual surfaces; skip automatic creation for backend-only scope. Reuse an existing global page and add only genuine package deltas.
 
 For the global layer (`.specs/`), the typical set is:
 - `architecture-principles.md`
 - `development-guidelines.md`
+- `design-guidelines.md` (when visual surfaces are in scope)
 - `canonical-types.schema.json` (shared types only — `Id`, `Timestamp`, `Url`, common envelopes)
 
 ### Phase 3 — Write
@@ -102,6 +111,13 @@ For each file, follow the conventions in [§File conventions](#file-conventions)
 Write one file at a time. Cross-link as you go. Keep an internal map of "claims that need a Decision entry at the bottom" — every non-obvious choice ends up in the closing block.
 
 When the file set includes a `development-guidelines.md` page, **invoke the companion `development-guidelines` skill** (via the Skill tool) instead of writing it by hand. It resolves the repo's languages and coding style and assembles the page from per-language templates, then hands back here for Phase 4.
+
+When the file set includes design guidelines, **invoke the companion
+`design-guidelines` skill** (via the Skill tool, or read and follow its
+[SKILL.md](../design-guidelines/SKILL.md) when that tool is unavailable). Reuse discovery
+answers already established in the session. It asks focused greenfield questions or
+inspects and confirms an existing design, summarizes the direction, and returns the page
+for Phase 4. Do not silently impose a visual identity during spec authoring.
 
 If the spec layers on a global spec (e.g., per-package architecture builds on `.specs/architecture-principles.md`), open with a one-paragraph **Read first** pointer rather than restating the global rules. See [§Layered structure](#layered-structure).
 
@@ -151,7 +167,7 @@ Every spec file closes with `## Assumptions and open questions`, divided into th
 
 Aim for spec files between 100 and 300 lines of markdown. Above 300 lines, consider splitting (a spec that mixes routes + storage + design probably wants three files). Below 50 lines, consider merging (a sub-section, not its own page).
 
-The `architecture-principles` and `development-guidelines` pages are the common exceptions — they tend to be longer because they hold many cross-cutting decisions.
+The `architecture-principles`, `development-guidelines`, and `design-guidelines` pages are the common exceptions — they tend to be longer because they hold many cross-cutting decisions.
 
 ## Section conventions
 
@@ -162,6 +178,7 @@ Each page type has a characteristic section set. **Full skeletons live in [`refe
 - **Per-component pages (`02-…`, `03-…`)** — pattern: **Responsibilities · Contract/API/Routes · Flow/Lifecycle · Implementation layout · closing block.**
 - **`architecture-principles.md`** (global) — how the code is organised: layering, monorepo layout, dependency graph, language conventions, stack baseline. Long file (200–400 lines is normal).
 - **`development-guidelines.md`** (global) — toolchain, code style, defensive coding, version control, testing pyramid, repo hygiene, definition of done, AI-agent rules. Long file. **Produced by the companion `development-guidelines` skill** — it detects the repo's languages, applies a coding style (Tiger Style or Clean Code), and assembles this page from per-language templates. Invoke that skill (via the Skill tool) rather than writing this page from scratch; it returns to this skill's Phase 4 for the final cross-link pass.
+- **`design-guidelines.md`** (global) — adopted visual foundations, interaction conventions, adaptation, accessibility, motion, and design acceptance evidence. Produced by the companion `design-guidelines` skill; package-specific differences live in `NN-design.md` or an existing equivalent page.
 - **Per-package spec that shadows a global one** — open with a **Read first** pointer to the global page, then describe only the per-package deltas. Don't restate the global rules.
 - **`canonical-types.schema.json`** (sidecar) — JSON Schema Draft 2020-12, one `$def` per entity; per-package schemas `$ref` the global schema for shared types. The global schema holds only **truly shared** types (`Id`, `Timestamp`, `Url`, `Email`, `Bytes`, `Milliseconds`, `ErrorEnvelope`, `NonEmptyString`); a type goes global only when at least two apps reference it.
 
@@ -169,7 +186,7 @@ Each page type has a characteristic section set. **Full skeletons live in [`refe
 
 Two layers — **global** and **per-package** — with strict rules. The per-package layer has a default location and an optional co-located one:
 
-- **Global** (`.specs/`) — repo-wide, cross-cutting. Architecture principles, development guidelines, shared types schema.
+- **Global** (`.specs/`) — repo-wide, cross-cutting. Architecture principles, development guidelines, design guidelines when applicable, shared types schema.
 - **Per-package, default** (`.specs/<package>/specs/`) — package-specific. Numbered detail pages, package schema. `<package>` is the app/package/workspace name. This is the default home for per-package specs.
 - **Per-package, co-located (optional)** (`<package-location>/.specs/`) — the same per-package specs may instead live inside the package directory (e.g. `apps/web/.specs/`, `packages/core/.specs/`). Use this when a package is self-contained and you want its specs to travel with it; otherwise prefer the default `.specs/<package>/specs/`.
 
@@ -193,7 +210,7 @@ A change spec references the canonical pages it touches by path and heading, res
 
 When the change ships in code, the change spec is **merged** into the canonical spec: each proposed block is applied to its canonical page, the schema fragment folds into the canonical schema, and the change spec moves to `.specs/changes/merged/` with its `Status` flipped to `Merged`. It is preserved as dated history, not deleted.
 
-This is the one place the "describes-what-exists" rule is suspended — and only inside a change spec's body, never in a canonical page. Do not edit canonical pages to describe a change until that change has shipped; that is what the change spec is for.
+Change specs describe future implementation. Canonical guidelines may record adopted policy under the policy distinction above, but cannot claim that unshipped implementation or enforcement exists. Do not edit canonical implementation descriptions to claim a change has shipped before it has; that is what the change spec is for.
 
 The change-spec lifecycle is `Proposed` → `Accepted` → `Implemented` → `Merged`. Full template, document structure, and merge procedure are in [`references/change-specs.md`](references/change-specs.md). Read it before writing or merging a change spec.
 
@@ -219,4 +236,4 @@ Spec voice is declarative present tense describing what exists; past tense in De
 - [`references/checklist.md`](references/checklist.md) — Pre-handoff checklist (no MVP language, all cross-refs resolve, closing block on every page, schema sidecar matches body claims). Read after writing, before declaring done.
 - [`references/change-specs.md`](references/change-specs.md) — Change-spec document type: how a proposed-change document differs from a canonical spec, its single-document structure, the `Proposed → Accepted → Implemented → Merged` lifecycle, and the merge procedure. Read when the user wants to propose a change to an existing spec or merge a shipped change back in.
 - [`references/examples.md`](references/examples.md) — Two worked runs: promoting a per-package page to global, and adding a sibling app modelled on existing specs. Read when a request matches one of these shapes.
-- [`references/model-policy.md`](references/model-policy.md) — Why the plugin's three roles run on the session model (they are inline, nothing to pin), which are reasoning-heavy enough to want a capable model, and how to run spec-reviewer as an enforced `Workflow` sub-agent. Read if unsure what the session should run on.
+- [`references/model-policy.md`](references/model-policy.md) — Why the plugin's four roles run on the session model (they are inline, nothing to pin), which are reasoning-heavy enough to want a capable model, and how to run spec-reviewer as an enforced `Workflow` sub-agent. Read if unsure what the session should run on.

@@ -22,6 +22,16 @@ The certificate is written **blank** and discharged by someone else. When you ha
 
 ---
 
+## Design evidence for UI obligations
+
+When a task inherits design acceptance, name the applicable guideline and package delta,
+the surface/state to exercise, and the evidence needed: token/source inspection for exact
+values, current renders for reflow or hierarchy, and interaction checks for keyboard/focus
+or motion behavior. Use the project's actual tools or specify a manual check. Do not
+invent automation or treat a guideline's existence as evidence of UI conformance. Keep
+statuses blank for the validator; unavailable required evidence becomes UNVERIFIED under
+the existing rubric. Backend-only obligations do not acquire visual checks.
+
 ## Verdict rubric (carried in the certificate, applied by the validator)
 
 - **NOT_DONE** — any load-bearing obligation is `UNSATISFIED`, **or** the regression check found a `REGRESSION`.
