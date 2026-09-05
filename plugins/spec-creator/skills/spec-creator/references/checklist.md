@@ -21,6 +21,8 @@ Run through this list before declaring a spec done. The checklist enforces the *
 - [ ] Token authorities and relevant evidence are linked without creating duplicate inventories or overwriting existing DESIGN.md files.
 - [ ] Design acceptance names applicable surfaces/states and evidence types; missing rendered or interaction evidence is not reported as passing.
 - [ ] Package design pages inherit shared rules and document only scoped differences.
+- [ ] Accessibility target and scope are confirmed or explicitly unsettled; standard criteria and stronger project policies are distinguished.
+- [ ] Accessibility acceptance names applicable journeys and evidence; verified, failed, not tested, and reasoned not-applicable results do not imply wider conformance. Known barriers remain explicit, including approved deferrals.
 
 ## File structure
 

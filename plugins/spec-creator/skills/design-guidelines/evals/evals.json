@@ -56,6 +56,48 @@
       "prompt": "Write the first design guidelines for a small reading app with no UI yet. Readers use phones and laptops. Choose an appropriate restrained direction for me, including type, density, and motion. I delegate those choices to you.",
       "expected_output": "Uses the delegated authority to propose and state a coherent context-appropriate summary, then writes adopted policy without demanding additional approval. Clearly says UI/token implementation and automated enforcement do not yet exist. Keeps any genuinely undecided nonblocking details in Open questions and indexes the page.",
       "files": []
+    },
+    {
+      "id": 9,
+      "name": "accessibility-greenfield-target",
+      "prompt": "Write design guidelines for a new web booking app with no UI. Our brand and mobile/desktop scope are settled, but we have no accessibility target. Ask only about unresolved decisions.",
+      "expected_output": "Reuses confirmed decisions and recommends WCAG 2.2 Level AA with authoritative attribution, without treating the recommendation as already adopted. Asks a focused target/journey question or records a nonblocking unsettled target in Open questions. Includes applicable keyboard, semantics, form/error and authentication requirements and acceptance evidence; no invented UI, test commands, or passing results.",
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "accessibility-automated-pass-is-bounded",
+      "prompt": "Our web app adopts WCAG 2.2 AA. The automated audit reports zero violations, but no one has tested keyboard navigation or a screen reader. Add accessibility to the design guidelines; do not change code.",
+      "expected_output": "Preserves adopted AA policy and describes only the supplied automated audit result and its scope. Marks missing keyboard and screen-reader evidence not tested, defines concrete journey checks and environment records, and does not declare AA compliance or independent-review success. Does not install tools or implement UI changes.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "name": "accessibility-brand-barrier-and-deferral",
+      "prompt": "Preserve our confirmed brand. We target WCAG 2.2 AA, but a supplied measured audit shows body text contrast fails in dark mode. The owner approved deferring the fix. Document this in our design guidelines.",
+      "expected_output": "Preserves identity and target, records the evidenced contrast failure and affected dark-theme surface in Open questions, and treats the deferral as unresolved implementation work rather than conformance or not-applicable status. Names the criterion and evidence needed for resolution; no silent target reduction or redesign.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "accessibility-keyboard-journey",
+      "prompt": "Update only our skip-navigation acceptance. WCAG 2.2 AA and reduced-motion support are already confirmed. The skip link is visible on first Tab in a screenshot; activation and subsequent focus movement have not been checked.",
+      "expected_output": "Reuses settled policy without reopening discovery. Defines first-Tab visibility, link activation, navigation to main content and subsequent keyboard navigation, plus the confirmed reduced-motion behavior. Does not claim activation, focus movement, or screen-reader behavior from the screenshot. Leaves unavailable evidence not tested and limits edits to affected guidance.",
+      "files": []
+    },
+    {
+      "id": 13,
+      "name": "accessibility-platform-and-stronger-policy",
+      "prompt": "Add accessibility to a native iOS app and a web admin package. The web target is WCAG 2.2 AA; native platform requirements are unsettled. Shared policy also requires larger touch targets and disabling nonessential interaction animation.",
+      "expected_output": "Keeps the web target scoped to web, verifies official native guidance before naming requirements, and records unsettled native decisions. Distinguishes stronger project target-size and motion policies from AA minima rather than claiming every preference is AA. Preserves shared policy in package deltas and avoids claiming a web checklist proves native conformance.",
+      "files": []
+    },
+    {
+      "id": 14,
+      "name": "accessibility-not-applicable-vs-untested",
+      "prompt": "Document accessibility acceptance for our text-only site: there is no audio/video media, and screen-reader testing is unavailable today. WCAG 2.2 AA is already adopted.",
+      "expected_output": "Records relevant media criteria as not applicable with absence-of-media rationale, while unavailable screen-reader evidence remains not tested. Does not mark missing testing not applicable. Keeps all applicable A/AA obligations in scope and avoids general conformance claims from the limited sample.",
+      "files": []
     }
   ]
 }

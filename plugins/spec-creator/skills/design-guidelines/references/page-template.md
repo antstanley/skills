@@ -55,6 +55,12 @@ component/API contracts. State shared behavior; feature specs own specific flows
 expansion, localization, zoom, themes, and relevant content extremes. Cite a named
 external standard from its authoritative source if one has been adopted.>
 
+<Record the adopted target/version/level and applicable journeys. If the target is
+unsettled, say so and put the decision in Open questions. State stronger project policies
+separately. Use accessibility.md to select concrete keyboard/focus, semantics, contrast,
+forms/feedback, interaction, and media requirements. Link authoritative criteria without
+presenting the selected examples as the whole standard.>
+
 ## Motion
 
 <Purpose, permitted and excluded contexts, authoritative timing/easing sources where
@@ -69,6 +75,13 @@ they exist, and the reduced-motion alternative. Static interfaces are a valid ch
 | Requirement | Scope and expected result | Evidence | Existing enforcement |
 |---|---|---|---|
 | <adopted requirement> | <surface/state and observable result> | <render, interaction check, or source inspection> | <verified command or manual review; no invented automation> |
+
+<For applicable accessibility requirements, specify the automated/manual checks needed
+and the environments to record. Observed checks use verified / failed / not tested /
+not applicable (with rationale). Name revision, journey/state, browser/platform,
+assistive technology when used, and relevant viewport/zoom/theme/preferences. Missing
+evidence remains not tested; retain barriers in Open questions. Do not claim full
+conformance from a sampled journey, screenshots, or automated results alone.>
 
 ## Assumptions and open questions
 
