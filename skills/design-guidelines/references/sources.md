@@ -17,3 +17,15 @@ The adaptation writes canonical spec policy and evidence requirements. It does n
 upstream implementation commands, enforce their preferred libraries or aesthetics, install
 their tools, or generate a parallel DESIGN.md/token export. Follow the repository's own
 authority and the user's intent when they differ from upstream advice.
+
+## Accessibility authorities
+
+Reviewed on 2026-09-05. These are standards and evaluation references, not runtime
+tool dependencies or evidence that a project conforms.
+
+- [WCAG 2.2](https://www.w3.org/TR/WCAG22/) supplies the web target, criteria levels,
+  applicability, and full-page/complete-process conformance boundaries.
+- [Understanding WCAG 2.2](https://www.w3.org/WAI/WCAG22/Understanding/) supports
+  interpretation; the Recommendation remains normative.
+- [W3C accessibility evaluation guidance](https://www.w3.org/WAI/test-evaluate/)
+  informs combining automated checks with manual evaluation and reporting limits.

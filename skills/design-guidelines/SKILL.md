@@ -67,7 +67,9 @@ inherits applicable global decisions before resolving its own gaps.
 
 On first use, read [references/discovery.md](references/discovery.md). It supplies the
 greenfield and existing-project paths and example questions. Both paths end with a short,
-reviewable design summary before the canonical page is written.
+reviewable design summary before the canonical page is written. Also read
+[references/accessibility.md](references/accessibility.md) to establish the target,
+applicable journeys, and evidence needs without turning discovery into a full audit.
 
 - **Greenfield:** ask focused questions about the audience and primary tasks, brand and
   references, platforms and constraints, and unresolved visual/interaction direction.
@@ -106,8 +108,14 @@ Make decisions usable by someone building another screen:
   content extremes, and reduced-motion behavior. Brand expression can differ between
   marketing, operational, and reading surfaces without changing shared foundations.
 - Name the adopted accessibility target and relevant platform conventions when settled.
-  Verify any named external standard/version from its authoritative source. Do not
-  claim compliance from a screenshot, a library choice, or an automated scan alone.
+  For web projects with no settled target, recommend WCAG 2.2 Level AA and confirm it
+  through the existing discovery/delegation rules. Preserve an established target;
+  propose upgrades explicitly. Native surfaces need appropriate platform guidance.
+  Verify named standards and criteria from authoritative sources. Record applicable
+  keyboard/focus, semantics, visual adaptation, forms, interaction, and media requirements
+  using [accessibility.md](references/accessibility.md). Distinguish standard requirements
+  from stronger project policies. Never claim compliance from a screenshot, a library,
+  or an automated scan alone.
 - Keep UX voice and labels here; development-guidelines owns coding style and toolchain.
   Reference existing component/API specs rather than duplicating their contracts.
 
@@ -133,6 +141,14 @@ Select checks appropriate to the product and task, not an indiscriminate checkli
 Do not invent a test command or require visual snapshots on backend-only tasks. Missing
 rendered evidence remains an explicit verification limitation, not a passing result.
 Planned automation goes in Open questions; manual acceptance can be adopted now.
+
+For accessibility acceptance, name the affected journey/state, criterion or project rule,
+and the required automated and manual evidence. Record observed results as `verified`,
+`failed`, `not tested`, or `not applicable` with a rationale. Include revision, browser,
+assistive technology when used, and relevant viewport/theme/preferences. A missing tool
+leaves a required check `not tested`; a documented defect or exception is not a pass.
+These are evidence labels within design acceptance, not replacements for downstream
+review verdicts. Keep known barriers and remaining verification work in Open questions.
 
 ### 5 — Cross-link and hand off
 
@@ -160,5 +176,7 @@ interaction evidence as appropriate. The authoring skill itself does not run a r
   mixed contexts, and repeat-use behavior. Read before discovery.
 - [page-template.md](references/page-template.md): adaptable page structure and examples
   of policy versus implementation. Read before authoring.
+- [accessibility.md](references/accessibility.md): target discovery, applicable design
+  requirements, and evidence limits. Read during discovery and acceptance authoring.
 - [sources.md](references/sources.md): research provenance and the boundaries of the
   adaptation. Read when extending the skill's design guidance.

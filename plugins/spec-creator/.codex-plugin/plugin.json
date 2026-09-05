@@ -1,6 +1,6 @@
 {
   "name": "spec-creator",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Create or expand formal design specifications for an app, package, or codebase \u2014 numbered, layered, cross-linked markdown that defines what exists in the current branch. Includes development guidelines and design guidelines with greenfield discovery and existing-project adoption. Head of the spec-creator \u2192 spec-planner \u2192 spec-builder pipeline; its specs feed spec-planner.",
   "author": {
     "name": "antstanley"

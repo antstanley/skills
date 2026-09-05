@@ -17,6 +17,11 @@ of done, with thin per-package deltas where needed. Adopted policy is distinguis
 implemented behavior and existing enforcement. Triggers include "add design guidelines"
 and "document our design system in the spec"; spec-creator invokes it for visual surfaces.
 It documents design without implementing a redesign or requiring an external design tool.
+Accessibility guidance establishes a confirmed target (recommending WCAG 2.2 AA for
+web projects without one), applicable journey requirements, and automated/manual
+acceptance evidence. It separates standard criteria from stronger project policies
+and records barriers and untested behavior without implying conformance. See the
+[accessibility reference](skills/design-guidelines/references/accessibility.md).
 
 It also ships a companion **`spec-reviewer`** skill that reviews specs with semi-formal certificate templates. Three modes: review a **change spec against the canonical spec** for broken references, stale targets, and contradictions; review a **canonical spec against the implemented code** to find missing implementations, incorrect implementations, and shipped features the spec never captured; and review a **change spec against the code** to determine whether its proposed delta has shipped (none/partial/implemented) and, if partial, which gaps remain. Each review ends with a fixed verdict and concrete suggestions; the reviewer surfaces divergences and hands any authoring back to spec-creator. Triggers on "review this change spec", "does the implementation match the spec", "check the spec against the code", "find spec divergences", or "has this change spec been implemented".
 
