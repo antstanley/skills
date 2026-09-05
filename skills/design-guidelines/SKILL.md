@@ -1,6 +1,6 @@
 ---
 name: design-guidelines
-description: Create or update canonical design guidelines for a project's visual and interaction design. Use for "add design guidelines", "document our design system in the spec", or when spec-creator includes a design-guidelines page. Supports greenfield design discovery and adoption of an existing interface, producing .specs/design-guidelines.md or a thin per-package delta. Does not implement or redesign the UI.
+description: Create or update canonical design guidelines for a project's visual and interaction design. Use for "add design guidelines", "document our design system in the spec", or when spec-creator includes a design-guidelines page. Supports greenfield design discovery and adoption of an existing interface, producing .specs/design-guidelines.md or a thin per-package delta. Also records design acceptance evidence when asked. Does not implement or redesign the UI.
 ---
 
 # Design Guidelines
@@ -35,6 +35,15 @@ follow spec-creator's change-spec workflow; writing guidelines does not implemen
 Existing brand commitments and the user's intent take precedence over generic taste
 advice. Preserve the project's framework, token names, and design system. Avoid blanket
 font bans, mandatory animation libraries, or a default premium/experimental aesthetic.
+
+## Evidence-only requests
+
+For "record design evidence" or "capture design acceptance results", read
+[references/evidence-template.md](references/evidence-template.md) and produce a scoped
+record from the adopted requirements and available observations. Do not rerun first-use
+design discovery or rewrite canonical policy. Collect authorized checks when available;
+missing tools remain explicit verification gaps. If the request is to find design drift,
+use [spec-reviewer](../spec-reviewer/SKILL.md), which owns that comparison and its verdict.
 
 ## Workflow
 
@@ -141,6 +150,9 @@ Select checks appropriate to the product and task, not an indiscriminate checkli
 Do not invent a test command or require visual snapshots on backend-only tasks. Missing
 rendered evidence remains an explicit verification limitation, not a passing result.
 Planned automation goes in Open questions; manual acceptance can be adopted now.
+Use [the evidence record](references/evidence-template.md) for requested acceptance
+capture or downstream review handoffs. Canonical guidelines state reusable requirements;
+the record holds revision-specific observations, artifacts and outstanding checks.
 
 For accessibility acceptance, name the affected journey/state, criterion or project rule,
 and the required automated and manual evidence. Record observed results as `verified`,
@@ -180,3 +192,5 @@ interaction evidence as appropriate. The authoring skill itself does not run a r
   requirements, and evidence limits. Read during discovery and acceptance authoring.
 - [sources.md](references/sources.md): research provenance and the boundaries of the
   adaptation. Read when extending the skill's design guidance.
+
+- [evidence-template.md](references/evidence-template.md): reusable design acceptance record; read for evidence-only requests and task/review evidence handoffs.
