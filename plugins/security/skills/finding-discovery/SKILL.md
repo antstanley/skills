@@ -5,6 +5,14 @@ description: Use when a security scan is already in its finding-discovery phase 
 
 # Security Finding Discovery
 
+## Runtime portability
+
+Read [runtime guidance](../../references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Investigate the proposed code or code changes for technically plausible security vulnerabilities using the threat model as context.
@@ -24,8 +32,8 @@ Read `../../references/security-guidance.md` and resolve the applicable policy b
 If the scan target is for a targeted code-diff:
 
 - Read `../security-scan/references/scan-artifacts-and-ledger.md`.
-- Generate `rank_input.jsonl` deterministically from changed source-like files with `<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/generate_rank_input.py make-diff-rank-input --repo <repo_root> --base <base> --mode revisions --head <head> --out <discovery_dir>/rank_input.jsonl` for PR, commit, and branch diffs, or `<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/generate_rank_input.py make-diff-rank-input --repo <repo_root> --base <base> --mode local-patch --out <discovery_dir>/rank_input.jsonl` for a local patch.
-- Copy every diff row into `deep_review_input.jsonl` with `<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/generate_rank_input.py copy-deep-review-input --rank-input <discovery_dir>/rank_input.jsonl --out <discovery_dir>/deep_review_input.jsonl`. Diff scans do not rank or drop changed files before deep review.
+- Generate `rank_input.jsonl` deterministically from changed source-like files with `<python_command> <plugin_root>/scripts/generate_rank_input.py make-diff-rank-input --repo <repo_root> --base <base> --mode revisions --head <head> --out <discovery_dir>/rank_input.jsonl` for PR, commit, and branch diffs, or `<python_command> <plugin_root>/scripts/generate_rank_input.py make-diff-rank-input --repo <repo_root> --base <base> --mode local-patch --out <discovery_dir>/rank_input.jsonl` for a local patch.
+- Copy every diff row into `deep_review_input.jsonl` with `<python_command> <plugin_root>/scripts/generate_rank_input.py copy-deep-review-input --rank-input <discovery_dir>/rank_input.jsonl --out <discovery_dir>/deep_review_input.jsonl`. Diff scans do not rank or drop changed files before deep review.
 - Add directly supporting files required to understand the changed security behavior only when repository evidence shows they are needed. Do not use them to broaden into unrelated repository-wide enumeration.
 - Deep-review every file in `deep_review_input.jsonl` using the shared scoped file-review rules.
 - Stay anchored to the changed code and directly supporting files. Unchanged siblings are context or negative controls unless the diff newly reaches them, weakens their shared control, or changes a shared sink/helper they depend on.

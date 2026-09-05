@@ -4,7 +4,8 @@
 `scripts/sync-skills.sh`. The canonical source of every skill is its plugin under
 `plugins/<plugin>/skills/<name>/`; this directory is a flat, vendor-neutral copy
 of all skills in the layout the [Agent Skills standard](https://github.com/agentskills/agentskills)
-expects, for harnesses or people who want them all in one place. Internal
+expects, for harnesses or people who want them all in one place. The hidden `.security-plugin/` directory holds the shared security helpers and
+references copied by the installer. Internal
 `evals/` directories are omitted — they are test artifacts, not part of the skill.
 
 To change a skill, edit it under `plugins/`, then run `scripts/sync-skills.sh`.

@@ -5,6 +5,14 @@ description: "Use for a standard, single-pass security audit of an entire reposi
 
 # Security Scan
 
+## Runtime portability
+
+Read [runtime guidance](../../references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 Review every file in scope. Use one file list and one candidate ledger. Standard scans use the existing validation and attack-path reasoning in compact mode, without the repeated discovery passes used by deep scans or the per-candidate receipt directories and narrative phase reports used by diff scans.
 
 ## Setup And Preflight
@@ -29,7 +37,7 @@ Author `scan-manifest.json` as an unsealed draft without `scan.sealedAt` or `sca
 6. Complete the scan once by running the finalizer:
 
    ```text
-   <python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/finalize_scan_contract.py --scan-dir <scan_dir> --source-root <repo_root>
+   <python_command> <plugin_root>/scripts/finalize_scan_contract.py --scan-dir <scan_dir> --source-root <repo_root>
    ```
 
    The finalizer generates `report.md` and SARIF. Do not edit either by hand. Detailed write-ups and hardening plans are optional.

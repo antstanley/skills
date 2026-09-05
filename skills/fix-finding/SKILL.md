@@ -5,6 +5,14 @@ description: Use when the user explicitly asks to fix and verify a validated or 
 
 # Fix Finding
 
+## Runtime portability
+
+Read [runtime guidance](../.security-plugin/references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Turn a current security finding into a minimal, validated code change. If the code is already safe, prove that and report that no change was needed.
@@ -100,7 +108,7 @@ In the final response, include:
 - explicit statement of how legitimate behavior was shown to remain intact
 - remaining uncertainty or skipped validation, if any
 
-If using a scan artifact directory, resolve it using `../../references/scan-artifacts.md`, then write a visible report to the fix report path. If there is no existing scan directory, a final chat summary is sufficient unless the user asks for a file.
+If using a scan artifact directory, resolve it using `../.security-plugin/references/scan-artifacts.md`, then write a visible report to the fix report path. If there is no existing scan directory, a final chat summary is sufficient unless the user asks for a file.
 
 ## Hard Rules
 

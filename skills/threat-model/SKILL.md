@@ -5,9 +5,17 @@ description: Use when a security scan is already in its threat-modeling phase, t
 
 # Security Threat Model
 
+## Runtime portability
+
+Read [runtime guidance](../.security-plugin/references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
-Establish the repository-scoped threat model at the path defined in `../../references/scan-artifacts.md`. Reuse a cached model only when its final `Repository` and `Version` lines match the current target.
+Establish the repository-scoped threat model at the path defined in `../.security-plugin/references/scan-artifacts.md`. Reuse a cached model only when its final `Repository` and `Version` lines match the current target.
 
 `AGENTS.md` or resolved `SECURITY.md` guidance can be that authoritative source when it is sufficiently specific about the repository's product surfaces, trust boundaries, attacker-controlled inputs, assumptions, or security scan guidance to serve as the threat model.
 
@@ -24,7 +32,7 @@ If no threat model is provided, generate a repository-scoped threat model to be 
 The path references in this skill are the default locations for this phase.
 If the user explicitly provides a different path for a required input or output, use the user-provided path instead of the corresponding default path referenced in this skill.
 If a required input is still missing, stop and ask the user for it before continuing.
-Use the shared scan artifact path conventions in `../../references/scan-artifacts.md`.
+Use the shared scan artifact path conventions in `../.security-plugin/references/scan-artifacts.md`.
 
 ## Independent Pass Mode
 
@@ -38,9 +46,9 @@ Independent generation is the point of this mode: sharing or persisting the cach
 
 ## Workflow
 
-1. Resolve `target_id`, the current version (revision for an immutable Git tree, snapshot digest otherwise), and the repository-scoped threat model path using `../../references/scan-artifacts.md`.
+1. Resolve `target_id`, the current version (revision for an immutable Git tree, snapshot digest otherwise), and the repository-scoped threat model path using `../.security-plugin/references/scan-artifacts.md`.
 2. If the repository-scoped threat model exists, reuse it only when its final `Repository` and `Version` lines match those current values. Otherwise regenerate it.
-3. Before inspecting repository source or generating a threat model, read `../../references/security-guidance.md` and the policy resolved for the scan target. Resolve it first if the coordinator did not supply it.
+3. Before inspecting repository source or generating a threat model, read `../.security-plugin/references/security-guidance.md` and the policy resolved for the scan target. Resolve it first if the coordinator did not supply it.
 4. If a threat model or authoritative security scan guidance is provided or referenced:
    - preserve it unchanged as the threat model body
    - treat that body as the only threat model source of truth
@@ -51,7 +59,7 @@ Independent generation is the point of this mode: sharing or persisting the cach
    - the threat model is repository-scoped rather than being centered around any specific scan target
    - it describes repository-wide primary product or runtime surfaces and trust boundaries before covering any narrower examples
    - any vulnerability-class discussion is about repository-context classes, not findings about any current diff
-7. Append the exact `Repository` and `Version` lines from `../../references/scan-artifacts.md`, then write the threat model to the repository-scoped path — or, in independent pass mode, only to the caller-specified output path, never the shared repository-scoped path.
+7. Append the exact `Repository` and `Version` lines from `../.security-plugin/references/scan-artifacts.md`, then write the threat model to the repository-scoped path — or, in independent pass mode, only to the caller-specified output path, never the shared repository-scoped path.
 
 ## Threat Model Generation Guidance
 
@@ -66,4 +74,4 @@ Generate and structure the threat model using `references/threat-model-guidance.
 - In large monorepos, avoid centering `personal/`, `test/`, `tests/`, `docs/`, `examples/`, or one-off developer tooling unless repository evidence shows those are real deployed or privileged workflow surfaces.
 - Call out trust boundaries and assumptions explicitly.
 - Keep references to vulnerability types at the level of repository-context classes, rather than any diff findings.
-- Persist the threat model output to the repository-scoped threat model path from `../../references/scan-artifacts.md`, except in independent pass mode, which persists only to the caller-specified path and never touches the shared cache.
+- Persist the threat model output to the repository-scoped threat model path from `../.security-plugin/references/scan-artifacts.md`, except in independent pass mode, which persists only to the caller-specified path and never touches the shared cache.

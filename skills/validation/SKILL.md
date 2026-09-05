@@ -5,6 +5,14 @@ description: Use when a security scan is already in its validation phase or the 
 
 # Security Validation
 
+## Runtime portability
+
+Read [runtime guidance](../.security-plugin/references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Take candidate findings from discovery and produce the strongest evidence-backed validation assessment you can. Prefer targeted, non-interactive reproduction or falsification when it is feasible and proportionate, but use focused code tracing when dynamic execution is blocked by missing services, unavailable infrastructure, or excessive setup relative to the candidate and scan scope.
@@ -14,11 +22,11 @@ Take candidate findings from discovery and produce the strongest evidence-backed
 The path references in this skill are the default locations for this phase.
 If the user explicitly provides a different path for a required input or output, use the user-provided path instead of the corresponding default path referenced in this skill.
 If a required input is still missing, stop and ask the user for it before continuing.
-Use the shared scan artifact path conventions in `../../references/scan-artifacts.md`.
+Use the shared scan artifact path conventions in `../.security-plugin/references/scan-artifacts.md`.
 
 ### Compact Standard-Scan Mode
 
-When `security:security-scan`, or the centralized tail of `security:deep-security-scan`, explicitly invokes this skill in compact standard-scan mode, use `<discovery_dir>/candidate_ledger.jsonl` as both the candidate input and the phase-closure artifact. Apply the validation method and evidence rules in this skill to the full candidate set in one invocation. Add one nested `validation` record to every row, using the compact record shape in `../../references/scan-artifacts.md`, while preserving every discovery field and row order.
+When `security:security-scan`, or the centralized tail of `security:deep-security-scan`, explicitly invokes this skill in compact standard-scan mode, use `<discovery_dir>/candidate_ledger.jsonl` as both the candidate input and the phase-closure artifact. Apply the validation method and evidence rules in this skill to the full candidate set in one invocation. Add one nested `validation` record to every row, using the compact record shape in `../.security-plugin/references/scan-artifacts.md`, while preserving every discovery field and row order.
 
 In this mode, the nested record replaces the per-finding validation report, receipt, and closure table. Rewrite the ledger atomically. Do not feed the enriched ledger back through the discovery normalizer. Create `<discovery_dir>/validation_artifacts/<candidate_id>/` only when validation produces an actual PoC, crafted input, or log, and reference it from the nested record. All validation reasoning, instance-preservation, evidence, and confidence requirements still apply; only the artifact packaging changes.
 
@@ -34,15 +42,15 @@ In this mode, the nested record replaces the per-finding validation report, rece
    - debugger: if runtime execution is available but the chain is unclear, attempt a non-interactive debugger trace with gdb/lldb that shows the source-to-sink path.
    - unit or integration test: if the vulnerable path is covered by an existing test harness, add or adapt the smallest focused test that exercises the vulnerable code and asserts the vulnerable behavior.
    - realistic interface reproduction: if the code exposes a real user-reachable interface such as HTTP, CLI, file parser, RPC, message queue, plugin hook, or package API, attempt a minimal end-to-end reproduction through that interface using crafted input that reaches the suspected sink.
-   - code understanding: if dynamic reproduction is not feasible or proportionate after bounded attempts, follow the static finding assessment reference in `../../references/static-finding-assessment.md` to trace source, control, sink, reachability, boundary evidence, counterevidence, and proof gaps.
+   - code understanding: if dynamic reproduction is not feasible or proportionate after bounded attempts, follow the static finding assessment reference in `../.security-plugin/references/static-finding-assessment.md` to trace source, control, sink, reachability, boundary evidence, counterevidence, and proof gaps.
    - large internal repository mode: for repository-wide or scoped-path scans where runtime reproduction requires unavailable internal services, secrets, cloud accounts, service meshes, or local production data, use the static finding assessment reference plus existing tests and deploy/config evidence once the candidate has a complete source/control/sink/impact tuple. Missing internal runtime setup is not suppression evidence.
 4. For non-compiled stacks, attempt to generate PoCs or targeted commands that exercise the vulnerable path and trigger the vulnerability.
 5. For compiled stacks, prefer dynamic validation when it is feasible with bounded setup: build a debug variant or targeted test harness when available, reproduce the vulnerable behavior with a small PoC, then use valgrind, ASan, or a non-interactive debugger trace when those tools materially improve confidence.
-6. Save any PoC files, inputs, or logs under the validation artifacts path for the active mode from `../../references/scan-artifacts.md`.
+6. Save any PoC files, inputs, or logs under the validation artifacts path for the active mode from `../.security-plugin/references/scan-artifacts.md`.
 7. If validation is not feasible, document what was tried, what remains uncertain, and the exact proof gap.
 8. Return a clear validation assessment per finding grounded in the evidence, proof gaps, and remaining uncertainty.
 9. In compact standard-scan mode, add the nested `validation` record to every candidate row and atomically replace the ledger.
-10. Outside compact standard-scan mode, save that finding's visible validation report and append one validation receipt per candidate id at the default paths from `../../references/scan-artifacts.md`. The receipt must record the validation method, evidence or exact proof gap, disposition, and validation artifact/report reference for that candidate finding.
+10. Outside compact standard-scan mode, save that finding's visible validation report and append one validation receipt per candidate id at the default paths from `../.security-plugin/references/scan-artifacts.md`. The receipt must record the validation method, evidence or exact proof gap, disposition, and validation artifact/report reference for that candidate finding.
 
 ## Usage Guidance
 
@@ -54,11 +62,11 @@ In this mode, the nested record replaces the per-finding validation report, rece
 ## Validation Guidance
 
 Follow the instance-preserving validation rules, validation checklist, and confidence guidance in `references/validation-guidance.md`.
-When validation falls back to static code understanding, or when static evidence is proportionate for large internal repositories, use the shared source/control/sink, boundary, counterevidence, and proof-gap guidance in `../../references/static-finding-assessment.md`.
+When validation falls back to static code understanding, or when static evidence is proportionate for large internal repositories, use the shared source/control/sink, boundary, counterevidence, and proof-gap guidance in `../.security-plugin/references/static-finding-assessment.md`.
 
 ## Output Contract
 
-In compact standard-scan mode, use the nested record defined in `../../references/scan-artifacts.md`. Every input row must receive exactly one validation disposition. The record is the closure table for this mode; do not also create a narrative report or receipt.
+In compact standard-scan mode, use the nested record defined in `../.security-plugin/references/scan-artifacts.md`. Every input row must receive exactly one validation disposition. The record is the closure table for this mode; do not also create a narrative report or receipt.
 
 Outside compact standard-scan mode, use the following report contract.
 
@@ -94,13 +102,13 @@ For repository-wide and scoped-path scans, also include a validation closure tab
 ## Hard Rules
 
 - Do not imply validation happened when it did not.
-- Do not leave candidate coverage implicit. In compact standard-scan mode, every candidate must receive a nested `validation` record. In other modes, every candidate that enters validation must leave a validation receipt in its candidate-ledger path from `../../references/scan-artifacts.md`, even when the result is suppressed, uncertain, or deferred.
+- Do not leave candidate coverage implicit. In compact standard-scan mode, every candidate must receive a nested `validation` record. In other modes, every candidate that enters validation must leave a validation receipt in its candidate-ledger path from `../.security-plugin/references/scan-artifacts.md`, even when the result is suppressed, uncertain, or deferred.
 - Prefer realistic local reproduction paths over contrived setups.
 - If a finding depends on missing product assumptions, state the question clearly instead of fabricating the answer.
 - Keep commands short, bounded, and non-interactive.
 - Use stronger validation methods such as crashing PoCs, valgrind, ASan, debugger traces, focused tests, or realistic interface reproduction before falling back to code understanding when the stack and scan scope make that feasible.
 - Calibrate confidence from the validation method and evidence, not from how dangerous the bug class sounds.
-- Keep validation artifacts and phase output in the paths for the active mode from `../../references/scan-artifacts.md` so the full scan bundle lives together. Compact standard scans do not create per-finding validation reports.
+- Keep validation artifacts and phase output in the paths for the active mode from `../.security-plugin/references/scan-artifacts.md` so the full scan bundle lives together. Compact standard scans do not create per-finding validation reports.
 - Make a serious, bounded effort to get runtime validation working when it would materially change reportability, confidence, or severity. Consult repository guidance such as `AGENTS.md`, `README.md`, setup docs, test docs, build files, and package-manager metadata to identify the required dependencies, generated files, services, and setup steps.
 - For scans that should not modify the target tree, use a disposable copy or generated-artifact directory under the validation artifacts path for the active mode for builds, generated clients, patched test harnesses, and PoC files. A no-edit target rule does not forbid output-only build copies when they are needed to validate the original code.
 - For repository-wide and scoped-path scans outside compact standard-scan mode, update each affected finding's validation report and closure table as each reportable, suppressed, not_applicable, or deferred row is decided. In compact standard-scan mode, atomically update the shared ledger after deciding all rows. Do not leave validated rows only in transient notes, terminal logs, or validation artifacts; later phases must be able to reconstruct every disposition from the durable phase output.

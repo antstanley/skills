@@ -7,6 +7,15 @@ description: Build an implementation plan from a specification — decompose a s
 
 A skill for turning a specification into a buildable plan: a dependency-ordered graph of task packages, each an independently reviewable slice of work with a clear definition of done.
 
+## Host tools
+
+Use the host's available skill-invocation tool, or read and follow the companion's
+`SKILL.md` when no such tool exists. Claude-specific `Workflow` examples apply only
+where that tool is exposed. In Codex, use the available agent-spawn capability for
+required delegation and the actual host schema; inherit the session model unless
+an override is authorized. Use available user-input tools or ask directly when
+clarification is needed. Missing tools do not waive independent-review requirements.
+
 ## Core principle
 
 **A plan is a buildable, reviewable decomposition of a spec — not a restatement of it.** The spec says *what* the system should be; the plan says *what to build, in what order, and how each piece is judged done*. Its unit is the **task package**: a coherent slice of work that, when merged, leaves the system in a state a reviewer can evaluate on its own.

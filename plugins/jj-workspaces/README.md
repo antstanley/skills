@@ -11,6 +11,16 @@ Triggers when starting feature work that needs isolation, before executing imple
 /plugin install jj-workspaces@skills
 ```
 
+### Codex
+
+```sh
+codex plugin marketplace add antstanley/skills
+codex plugin add jj-workspaces@skills
+```
+
+Both platforms use the same skill content and plugin version. See
+[publishing guidance](../README.md) for validation and release details.
+
 ## Skill content
 
 The skill itself lives at [`skills/using-jj-workspaces/SKILL.md`](skills/using-jj-workspaces/SKILL.md).

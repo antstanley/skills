@@ -155,6 +155,26 @@ linked=0
 for dest in "${dests[@]}"; do
   [ ${#dests[@]} -gt 1 ] && printf '%s\n' "-> $dest"
   [ "$dry_run" -eq 1 ] || mkdir -p "$dest"
+  resource_source="$REPO_ROOT/skills/.security-plugin"
+  resource_target="$dest/.security-plugin"
+  [ -f "$resource_source/.managed-by-skills" ] || die "Missing security resources; run scripts/sync-skills.sh."
+  if [ "$dry_run" -eq 1 ]; then
+    printf '  would %s  security resources -> %s\n' "$mode" "$resource_target"
+  else
+    if [ -e "$resource_target" ] || [ -L "$resource_target" ]; then
+      if [ -f "$resource_target/.managed-by-skills" ] &&
+         [ "$(cat "$resource_target/.managed-by-skills")" = "antstanley/skills" ]; then
+        rm -rf "$resource_target"
+      else
+        die "Refusing to replace unmanaged security resources at $resource_target"
+      fi
+    fi
+    if [ "$mode" = "copy" ]; then
+      cp -R "$resource_source" "$resource_target"
+    else
+      ln -s "$resource_source" "$resource_target"
+    fi
+  fi
   for skill_md in "${sources[@]}"; do
     skill_dir="$(dirname "$skill_md")"
     name="$(basename "$skill_dir")"

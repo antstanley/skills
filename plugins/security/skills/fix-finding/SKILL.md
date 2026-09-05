@@ -5,6 +5,14 @@ description: Use when the user explicitly asks to fix and verify a validated or 
 
 # Fix Finding
 
+## Runtime portability
+
+Read [runtime guidance](../../references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Turn a current security finding into a minimal, validated code change. If the code is already safe, prove that and report that no change was needed.

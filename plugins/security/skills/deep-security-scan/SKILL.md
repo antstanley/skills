@@ -5,6 +5,14 @@ description: Use when the user asks for a deep, exhaustive, multi-pass, or varia
 
 # Deep Security Scan
 
+## Runtime portability
+
+Read [runtime guidance](../../references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 Deep Security Scan repeats finding discovery to reduce variance, then runs validation, attack-path analysis, and reporting once over the merged candidates. A single discovery pass is a sample, not a census: independent passes over the same code surface different bugs. Repeating discovery until it stops producing new candidates is the entire point of this workflow.
 
 This skill owns setup, preflight, the repeated-discovery loop, and every phase after discovery.
@@ -89,7 +97,7 @@ After each round:
 2. Regenerate the merged ledger from every completed pass so far. Pass all raw candidate files in one call, in pass order, so `candidate_id` assignment stays deterministic:
 
    ```text
-   <python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/normalize_candidates.py --input <deep_dir>/pass-001/raw_candidates.jsonl [<deep_dir>/pass-NNN/raw_candidates.jsonl ...] --out <discovery_dir>/candidate_ledger.jsonl --repo-root <repo_root> --in-scope-files <discovery_dir>/in_scope_files.txt
+   <python_command> <plugin_root>/scripts/normalize_candidates.py --input <deep_dir>/pass-001/raw_candidates.jsonl [<deep_dir>/pass-NNN/raw_candidates.jsonl ...] --out <discovery_dir>/candidate_ledger.jsonl --repo-root <repo_root> --in-scope-files <discovery_dir>/in_scope_files.txt
    ```
 
    The normalizer merges rows with the same CWE ids, locations, and optional instance and assigns deterministic `candidate_id` values, so a candidate rediscovered by a later pass merges into the existing row rather than duplicating it. Regenerate from the full input set every round rather than appending; the script accepts raw discovery rows only and must never be fed an enriched ledger.
@@ -104,7 +112,7 @@ Stop the loop when either condition holds:
 - **Saturated**: two consecutive rounds yield no new candidate ids. Record terminal reason `saturated`.
 - **Capped**: the pass budget is exhausted. Record terminal reason `capped`.
 
-Default the pass budget to 12 passes. Use `AskUserQuestion` to confirm the budget before the first round when the user has not named one, offering a smaller budget for a quicker scan and a larger one for an exhaustive audit. A larger budget costs proportionally more tokens and wall-clock; say so in the question. When `AskUserQuestion` is unavailable — headless or otherwise non-interactive sessions — do not stall: use the default 12-pass budget and state the assumed budget in the first visible scan update.
+Default the pass budget to 12 passes. Use the host’s user-input tool (or ask directly) to confirm the budget before the first round when the user has not named one, offering a smaller budget for a quicker scan and a larger one for an exhaustive audit. A larger budget costs proportionally more tokens and wall-clock; say so in the question. When `AskUserQuestion` is unavailable — headless or otherwise non-interactive sessions — do not stall: use the default 12-pass budget and state the assumed budget in the first visible scan update.
 
 Never stop because a single round found nothing new. One empty round is ordinary variance, which is exactly what this workflow exists to average out.
 
@@ -139,7 +147,7 @@ After accepting the terminal manifest, continue in the same turn. A discovery ma
 7. Verify on disk that `scan-manifest.json`, `findings.json`, and `coverage.json` exist at the scan path, then finalize once:
 
    ```text
-   <python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/finalize_scan_contract.py --scan-dir <scan_dir> --source-root <repo_root>
+   <python_command> <plugin_root>/scripts/finalize_scan_contract.py --scan-dir <scan_dir> --source-root <repo_root>
    ```
 
 If a required tail phase, canonical-artifact write, or on-disk existence check fails, stop immediately and surface the exact blocker. Do not finalize with missing artifacts or return a final report or no-findings result.
