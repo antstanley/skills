@@ -8,6 +8,16 @@ It also writes **change specs** — single documents under `.specs/changes/` tha
 
 The plugin ships a companion **`development-guidelines`** skill that writes the spec set's development-guidelines page — the "rules of the road" (toolchain, code style, defensive coding, limits, version control, testing, AI-agent rules, definition of done). It detects the repo's languages (TypeScript, JavaScript, Rust, Python), applies a coding style (Tiger Style or Clean Code), and assembles the page from per-language templates following the spec conventions above. Triggers on "add development guidelines", "generate coding guidelines", or "add coding standards to the spec"; spec-creator delegates to it when a spec set includes a development-guidelines page.
 
+The companion **`design-guidelines`** skill writes `.specs/design-guidelines.md` beside
+development guidelines. On first use it asks focused design questions for greenfield work,
+or inspects an existing interface and confirms intentional decisions and gaps. Both paths
+summarize the direction before authoring; repeat runs ask only about changed decisions.
+It records visual foundations, interaction, accessibility, motion, and a design definition
+of done, with thin per-package deltas where needed. Adopted policy is distinguished from
+implemented behavior and existing enforcement. Triggers include "add design guidelines"
+and "document our design system in the spec"; spec-creator invokes it for visual surfaces.
+It documents design without implementing a redesign or requiring an external design tool.
+
 It also ships a companion **`spec-reviewer`** skill that reviews specs with semi-formal certificate templates. Three modes: review a **change spec against the canonical spec** for broken references, stale targets, and contradictions; review a **canonical spec against the implemented code** to find missing implementations, incorrect implementations, and shipped features the spec never captured; and review a **change spec against the code** to determine whether its proposed delta has shipped (none/partial/implemented) and, if partial, which gaps remain. Each review ends with a fixed verdict and concrete suggestions; the reviewer surfaces divergences and hands any authoring back to spec-creator. Triggers on "review this change spec", "does the implementation match the spec", "check the spec against the code", "find spec divergences", or "has this change spec been implemented".
 
 ## The pipeline
@@ -26,5 +36,7 @@ spec-creator is the head of a three-plugin pipeline: **spec-creator** writes the
 The main skill lives at [`skills/spec-creator/SKILL.md`](skills/spec-creator/SKILL.md). Worked examples and templates are under [`skills/spec-creator/evals/`](skills/spec-creator/evals/) and [`skills/spec-creator/references/`](skills/spec-creator/references/).
 
 The companion guidelines skill lives at [`skills/development-guidelines/SKILL.md`](skills/development-guidelines/SKILL.md), with the language-agnostic Tiger Style core and per-language templates under [`skills/development-guidelines/references/`](skills/development-guidelines/references/).
+
+The design-guidelines skill lives at [`skills/design-guidelines/SKILL.md`](skills/design-guidelines/SKILL.md), with [discovery guidance](skills/design-guidelines/references/discovery.md), a [page template](skills/design-guidelines/references/page-template.md), and [eval fixtures](skills/design-guidelines/evals/evals.json).
 
 The companion review skill lives at [`skills/spec-reviewer/SKILL.md`](skills/spec-reviewer/SKILL.md), with one procedural review template per mode — [`skills/spec-reviewer/references/r1-change-vs-canonical.md`](skills/spec-reviewer/references/r1-change-vs-canonical.md) (change spec vs canonical), [`skills/spec-reviewer/references/r2-canonical-vs-code.md`](skills/spec-reviewer/references/r2-canonical-vs-code.md) (canonical vs code), and [`skills/spec-reviewer/references/r3-change-vs-code.md`](skills/spec-reviewer/references/r3-change-vs-code.md) (change spec vs code), each with a worked example.

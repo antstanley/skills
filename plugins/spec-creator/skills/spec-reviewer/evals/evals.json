@@ -28,6 +28,20 @@
       "prompt": "Has the change spec at .specs/changes/2026-05-21-add_tagging_to_entries.md been implemented yet? It adds a Tag entity, a tagIds field on Entry, a tags object store, and a tag picker in the editor toolbar. Check the code.",
       "expected_output": "The skill confirms it is applying Template R3 (change spec vs code) and extracts the code-level expectations from the change spec's Type changes fragment and Implementation notes (Tag type, Entry.tagIds, tags store + version bump, toolbar tag picker), not from the Proposed-changes prose alone. It runs the implementation-resolution sequence on each expectation against the code: Tag type PRESENT (IMPLEMENTED), tags store PRESENT (IMPLEMENTED), Entry.tagIds ABSENT, toolbar tag picker ABSENT. Status determination tallies 2 of 4 and returns PARTIAL. The gap list names each ABSENT expectation with the specific code to add (tagIds on the Entry type/parser; tag picker wired into Toolbar.svelte) anchored to file:line, and cites where each came from in the change spec. Verdict block has IMPLEMENTATION STATUS: PARTIAL, COMPLETION: 2 of 4, and NEXT STEPS listing the code changes — plus a note that the change spec stays at Accepted until R3 returns IMPLEMENTED, at which point it can be flipped to Implemented and merged. The skill does not write the missing code or change the status.",
       "files": []
+    },
+    {
+      "id": 5,
+      "name": "design-policy-versus-conformance",
+      "prompt": "Review the app against .specs/design-guidelines.md. Keyboard focus restoration is an adopted rule, and the closing block already records that legacy dialogs lack it. The implementation confirms this gap.",
+      "expected_output": "Uses R2 guidelines adaptation, confirms the policy separately and derives an implementation compliance claim for the existing dialogs. Reports DIVERGES for the proven missing behavior even though the gap was disclosed. Preserves the adopted rule; does not treat the guideline itself as a missing code symbol or report UI conformance from policy adoption.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "design-rendered-evidence-unavailable",
+      "prompt": "Check whether our implemented responsive layout conforms to the design guidelines. Source and tokens are available, but the app cannot run and no current screenshots or interaction evidence exist.",
+      "expected_output": "Verifies what source can prove and labels visual/reflow claims requiring rendered evidence UNVERIFIED. Returns CONCERNS when no mismatch is proven, naming the missing evidence. Does not infer CONFORMS from CSS alone or call missing screenshots proof of absent implementation.",
+      "files": []
     }
   ]
 }

@@ -34,6 +34,7 @@ Run through this before declaring a plan done. It enforces the core principle (r
 
 - [ ] Every task file has `Implements`, `Depends on`, `Produces`, and `Pointers`.
 - [ ] Every task file has a `## Steps` checklist and a `## Definition of done` checklist.
+- [ ] UI tasks inherit applicable design rules and package deltas through `Implements` and observable DoD items, with rendered/interaction evidence where required. Backend-only tasks do not inherit visual checks.
 - [ ] **Every task's DoD ends with a `Reviewable:` line** naming the concrete action a reviewer takes to sign off.
 - [ ] Every DoD references the repo baseline (tests, lint/format, named-constant limits) plus task-specific acceptance — not one or the other.
 - [ ] No task is so large its DoD exceeds ~6 items or so small it is a one-line change folded better into a neighbour.

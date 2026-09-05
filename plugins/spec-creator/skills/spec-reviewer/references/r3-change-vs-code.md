@@ -85,6 +85,17 @@ NEXT STEPS:
 
 When the status is IMPLEMENTED, the next step is the lifecycle move: the change spec is ready to have its `Status` flipped to `Implemented` and then merged (run R1 and the merge procedure in [`../../spec-creator/references/change-specs.md`](../../spec-creator/references/change-specs.md)). When PARTIAL or NONE, the next steps are the code changes that close the gaps — the change spec stays at `Accepted`.
 
+## Design-change evidence
+
+When an expectation concerns rendered appearance or interaction, resolve token/style and
+component sources and collect the relevant current render or interaction evidence. A new
+guidelines page proves policy was documented, not that the interface change shipped. Apply
+the distinction in [R2](r2-canonical-vs-code.md) when policy and implementation are mixed.
+If required visual evidence is unavailable, record the expectation as unverified with the
+exact evidence gap. Do not count it as implemented or return IMPLEMENTED; use PARTIAL
+when some work is established, or NONE when none is established, and explicitly state that
+missing evidence does not prove missing code. Do not merge on an unverified visual claim.
+
 ## Worked Example
 
 **Input:** The change spec `.specs/changes/2026-05-21-add_tagging_to_entries.md`. Its `Type changes` fragment adds a `Tag` entity (`id`, `name`, `createdAt`) and adds `tagIds` to `Entry`. Its `Implementation notes` read: (1) add the `tags` store in `src/db/schema.ts` (bump version, `onupgradeneeded`); (2) add the `Tag` type + parser in `src/domain/tag.ts`; (3) wire the tag picker into the editor toolbar at `src/ui/Toolbar.svelte:40`. The code has `src/domain/tag.ts` (Tag type with all three fields) and a `tags` store in `src/db/schema.ts` (version bumped), but `Entry` has no `tagIds` field and `Toolbar.svelte` has no tag picker.

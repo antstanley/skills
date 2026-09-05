@@ -35,6 +35,13 @@
       "prompt": "We shipped the tagging change. Merge the change spec at .specs/changes/2026-05-21-add_tagging_to_entries.md into the canonical editor spec.",
       "expected_output": "Each Proposed changes block applied to its canonical page under .specs/editor/specs/ (Tag entity added to the domain model, relationships updated, persistence store documented), with those pages' Date bumped to the merge date. The Tag $def folded into .specs/editor/specs/canonical-types.schema.json with tagIds added to Entry. The change spec moved to .specs/changes/merged/ with Status flipped to Merged and a Merged: date added to its header. .specs/README.md updated so the file is no longer listed as pending. All internal links still resolve.",
       "files": []
+    },
+    {
+      "id": 6,
+      "name": "route-design-guidelines-first-use",
+      "prompt": "Create canonical specs for an existing web app with a shared theme and several old inconsistent forms. Include design guidelines; I have not decided whether to preserve the old forms.",
+      "expected_output": "Invokes the companion design-guidelines workflow for .specs/design-guidelines.md, reuses existing investigation context, and inspects then asks focused follow-up questions about intentional differences. Does not hand-write a speculative visual identity. Returns to Phase 4 to index the page and verify links, with adopted policy distinct from implementation gaps.",
+      "files": []
     }
   ]
 }

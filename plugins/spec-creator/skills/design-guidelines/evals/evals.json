@@ -1,0 +1,61 @@
+{
+  "skill_name": "design-guidelines",
+  "evals": [
+    {
+      "id": 1,
+      "name": "greenfield-material-questions",
+      "prompt": "Add design guidelines to .specs/ for a new scheduling app. There is no UI or brand yet. It is for receptionists using desktops and tablets. I want it to feel calm, but have not decided what that means visually.",
+      "expected_output": "Uses greenfield discovery. Reuses the supplied audience, platforms, and calm direction; asks a small focused round about primary task priorities, brand/reference preferences, and material constraints rather than a long questionnaire. Offers concrete direction choices if needed. Presents a reviewable summary and waits for unresolved material decisions before declaring policy adopted. After answers, writes .specs/design-guidelines.md with canonical header/closing block and index link. Distinguishes adopted policy from absent UI, tokens, and automation.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "existing-interface-confirm-intent",
+      "prompt": "Adopt our existing app into canonical design guidelines. There is no DESIGN.md. The theme source defines compact controls, blue semantic colors, and one radius scale; shared buttons and inputs use it. A legacy settings form uses purple hard-coded colors and large round corners. We have supplied current desktop and mobile screenshots. Please ask follow-ups where needed.",
+      "expected_output": "Treats the project as existing, not greenfield. Inspects available evidence before asking. Summarizes consistent token/component choices and the settings inconsistency with sources; asks whether settings is intentional and whether to preserve, consolidate, or change where the brief has not settled it. Does not adopt every observed one-off or redesign the UI. Confirms material intent and writes settled rules; reports implementation gaps and evidence limitations.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "existing-design-preserve-already-authorized",
+      "prompt": "Document our existing brand as design guidelines. Preserve its Inter typography, grayscale palette, static operational screens, and existing component library. The brand guide and tokens agree, and screenshots are current. Those choices are confirmed; do not ask me to approve them again.",
+      "expected_output": "Inspects the supplied authorities, states a concise design summary, and proceeds without redundant confirmation. Preserves Inter, grayscale, static motion, and the library even if generic taste advice prefers alternatives. References actual token authority without duplicating its entire inventory or overwriting an existing DESIGN.md.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "mixed-surface-package-delta",
+      "prompt": "Our .specs/design-guidelines.md already defines shared brand and keyboard requirements. Add guidelines for the admin package: compact data entry and no ambient animation. The marketing package remains spacious and expressive. We have already agreed these differences.",
+      "expected_output": "Reuses the global policy and agreed direction. Writes or updates .specs/admin/specs/NN-design.md (or an existing equivalent) as a thin delta, with a resolving Read first link to ../../design-guidelines.md and standard header/closing block. Keeps shared keyboard rules inherited. Does not impose admin density on marketing or create a global dependency on a package page. Updates the relevant indexes.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "backend-only-no-visual-page",
+      "prompt": "Create canonical specs for this Python parsing library. It has no human-facing visual interface. Include whichever guidelines apply.",
+      "expected_output": "Spec-creator selects development guidelines where applicable and skips automatic design-guidelines creation. Does not ask branding questions, invent UI, or introduce visual acceptance requirements for the library.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "policy-gap-no-false-enforcement",
+      "prompt": "Write design guidelines for our existing app. Visible keyboard focus and reduced-motion support are adopted requirements. Current dialogs lack focus restoration, and we have no browser tests or running app available for this session. Do not change code.",
+      "expected_output": "Records the adopted rules while distinguishing observed gaps from policy. Does not claim focus restoration, rendered usability, or automated checks pass. Names actual source evidence, places known gaps and unresolved implementation work in Open questions, and defines honest manual/evidence requirements. Does not implement fixes, install tooling, invent commands, or drop the adopted keyboard rule.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "repeat-use-targeted-update",
+      "prompt": "Update our existing design guidelines to add the dark-theme decisions we just agreed: semantic roles stay the same and surfaces use the values already committed in theme.css. Leave all other design choices as they are.",
+      "expected_output": "Reads the existing page, decisions, and relevant theme source. Updates only affected guidance, date, and rationale; reuses the confirmed dark-theme choices and asks only if new material contradictions appear. Does not rerun first-use onboarding or change brand, density, component library, or other unrelated rules.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "greenfield-delegated-direction",
+      "prompt": "Write the first design guidelines for a small reading app with no UI yet. Readers use phones and laptops. Choose an appropriate restrained direction for me, including type, density, and motion. I delegate those choices to you.",
+      "expected_output": "Uses the delegated authority to propose and state a coherent context-appropriate summary, then writes adopted policy without demanding additional approval. Clearly says UI/token implementation and automated enforcement do not yet exist. Keeps any genuinely undecided nonblocking details in Open questions and indexes the page.",
+      "files": []
+    }
+  ]
+}

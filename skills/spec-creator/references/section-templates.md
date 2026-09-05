@@ -313,6 +313,15 @@ Rules:
 
 ---
 
+## Design guidelines (global)
+
+The `design-guidelines.md` page is authored by the companion
+[design-guidelines skill](../../design-guidelines/SKILL.md). It handles greenfield
+questions and adoption of existing design decisions, then produces the canonical page
+from its [page template](../../design-guidelines/references/page-template.md).
+Package differences use `NN-design.md` or an existing equivalent with a Read first link.
+Adopted policy, observed implementation, and existing enforcement remain distinct.
+
 ## Development guidelines (global)
 
 The `development-guidelines.md` page is **not templated here.** It is authored by the companion

@@ -15,7 +15,7 @@
     {
       "name": "spec-creator",
       "source": "./plugins/spec-creator",
-      "description": "Create or expand formal design specifications for an app, package, or codebase — numbered, layered, cross-linked markdown.",
+      "description": "Create and review canonical specs, with development guidelines and design guidelines for greenfield or existing projects — numbered, layered, cross-linked markdown.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
     },

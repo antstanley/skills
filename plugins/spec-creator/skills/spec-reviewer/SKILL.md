@@ -56,7 +56,10 @@ The certificate templates exist to catch cross-reference and cross-artifact erro
 - The spec change is trivial (a typo, a date bump, a formatting fix).
 - There are no references to resolve and no code to map (a single self-contained prose page with no entities, no cross-links).
 
-Otherwise apply the matching template literally.
+Otherwise apply the matching template literally, including R2's guidelines/visual-claims
+adaptation when reviewing adopted policy or rendered/interaction behavior. Separate policy
+adoption from implementation compliance; source inspection alone cannot establish every
+visual or interaction claim.
 
 ### 2 — Apply the template
 
@@ -73,7 +76,7 @@ Each template ends with a fixed verdict block (`VERDICT / CONFIDENCE / SUMMARY`)
 
 - **Stale or broken reference in a change spec** → fix the path/heading, or refresh the Modify block against the current canonical text.
 - **Contradiction between change spec and canonical** → resolve in the change spec (it is the document allowed to describe the future), never by silently editing the canonical body.
-- **Spec claim with no code (R2)** → flag as a divergence; offer to move it to an Open question or to draft a change spec. Do not edit the body to pretend the feature exists.
+- **Implementation claim with no code (R2)** → flag as a divergence; offer to move the unsupported implementation claim to an Open question or to draft a change spec. Do not edit the body to pretend the feature exists. Preserve adopted policy and report its conformance gaps separately under R2's guidelines adaptation.
 - **Code feature absent from the spec (R2)** → offer to add a body section (the code is the reality), following spec-creator's section conventions.
 - **Incorrect implementation (R2)** → name which side is the intended source of truth, and route accordingly: spec stale → update the page; code wrong → flag to the user, the fix is a code change, not a spec edit.
 - **Unimplemented or partial change spec (R3)** → report the status and the gap list; the next steps are code changes that close the gaps, and the change spec stays at `Accepted`. When R3 returns IMPLEMENTED, the next step is the lifecycle move — flip the change spec to `Implemented` and proceed to merge (R1 + the merge procedure). The reviewer does not write the missing code or flip the status unprompted.
