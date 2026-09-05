@@ -10,7 +10,7 @@ Stanley, in two families:
   A fork of OpenAI's [codex-security](https://github.com/openai/codex-security),
   ported from Codex to Claude Code.
 
-Packaged as a Claude Code plugin marketplace, and installable into any harness
+Packaged as Claude Code and Codex plugin marketplaces, and installable into any harness
 that supports the Agent Skills standard (Codex, Cursor, Pi, OpenCode, Zed, Kiro).
 
 ## Install
@@ -36,9 +36,26 @@ are self-contained, so any one works on its own.
 For the full spec → plan → build flow install `spec-creator`, `spec-planner`, and
 `spec-builder`. For security review, `security` alone is enough.
 
+### Codex — plugin marketplace
+
+Register the same repository, then install individual plugins:
+
+```sh
+codex plugin marketplace add antstanley/skills
+codex plugin add spec-creator@skills
+codex plugin add spec-planner@skills
+codex plugin add spec-builder@skills
+```
+
+Start a new thread to use newly installed skills. The Codex catalog lives at
+[`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json); each plugin
+has both Claude and Codex manifests pointing to shared skills. Choose plugin installation
+or the flat installer for a given skill set to avoid duplicate installations.
+See [plugin publishing](plugins/README.md) for versioning, validation, and releases.
+
 ### Every other harness — `install.sh`
 
-The installer copies the generated flat [`skills/`](skills/) tree into a
+The installer copies the generated flat [`skills/`](skills/) tree and shared security resources into a
 harness's discovery directory. All 24 skills are installed together; there is no
 per-plugin selection outside Claude Code.
 

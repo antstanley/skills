@@ -17,7 +17,7 @@ you are unsure whether the current harness can dispatch sub-agents.
 | **Claude Code** | `Task` (core) | yes — own context window | yes | The skill's native target. |
 | **OpenCode** | `Task` (core) | yes — child sessions | yes | Subagents defined in `~/.config/opencode/agents/` or `.opencode/agents/`; gated by `permission.task`. Maps almost 1:1 to Claude Code. |
 | **Cursor** | core subagents (since 2.4) | yes | yes | Native subagent support; gate on the dispatch tool as elsewhere. |
-| **Codex** | subagents via plugins | yes | yes | Sub-agent / plugin ecosystem; confirm a dispatch tool is present before relying on it. |
+| **Codex** | Host-provided agent spawn tool, when enabled | own agent context | subject to host limits | Use the Codex dispatch rules below; installing this plugin does not enable a missing tool. |
 | **Zed** | core subagents (since v0.227.1) | yes | yes | Agent Panel spawns subagents to parallelize; subagent model configurable, else inherits the parent thread's. |
 | **Pi** | `Agent` — **extension only** | yes — child sessions | yes | Not in Pi core. Provided by a subagents extension, e.g. `@tintinweb/pi-subagents` (registers `Agent`, `get_subagent_result`, `steer_subagent`). Competing forks exist and may name the tool differently. |
 
@@ -86,3 +86,26 @@ State plainly in the build summary which mode ran. The whole point of the skill 
 verification the builder does not self-report — is best honoured by real sub-agents; the
 fallback keeps the *workflow* working where the harness can't dispatch, and is
 transparent about the reduced isolation.
+
+## Codex dispatch
+
+Use the agent-spawn, message, and wait capabilities actually exposed by the host.
+Do not call Claude's `Workflow`, `Task`, or `Skill` APIs in Codex. A companion skill
+can be read and followed inline when no skill-invocation tool exists. Verification
+that requires a separate agent still requires a separate dispatch.
+
+Provision each task workspace before dispatch and pass its absolute path, task
+brief, and applicable guidelines to the implementer. Agent creation alone does
+not isolate the filesystem. After implementation finishes, dispatch a fresh
+verifier with the task, diff, and evidence; the implementer must not grade itself.
+Keep the scheduler, merges, and cleanup in the parent. Count implementers and
+verifiers against the host's available agent slots and the configured cap.
+
+Inherit the session model unless the user or governing instructions authorize
+a different choice. Use only model and effort fields supported by the actual
+dispatch schema; report unsupported overrides instead of inventing tool arguments.
+Use the host's no-history option for a fresh verifier when available, supplying
+its complete brief explicitly. Do not describe a same-agent review as independent.
+
+If no dispatch tool is available, use the documented Tool absent branch. Never
+install an agent extension or claim parallel verification as a packaging side effect.

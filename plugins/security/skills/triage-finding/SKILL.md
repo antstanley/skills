@@ -5,6 +5,14 @@ description: "Use when the user supplies or imports existing security findings, 
 
 # Triage Finding
 
+## Runtime portability
+
+Read [runtime guidance](../../references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Triage existing security findings against the current repository using static code evidence. Return one evidence-backed verdict per supplied finding:

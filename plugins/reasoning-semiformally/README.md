@@ -11,6 +11,16 @@ Use when reviewing patches, hunting bugs across scopes, comparing fixes, or when
 /plugin install reasoning-semiformally@skills
 ```
 
+### Codex
+
+```sh
+codex plugin marketplace add antstanley/skills
+codex plugin add reasoning-semiformally@skills
+```
+
+Both platforms use the same skill content and plugin version. See
+[publishing guidance](../README.md) for validation and release details.
+
 ## Skill content
 
 The skill itself lives at [`skills/reasoning-semiformally/SKILL.md`](skills/reasoning-semiformally/SKILL.md). Model-specific procedural detail is in [`haiku.md`](skills/reasoning-semiformally/haiku.md) (Haiku-class) and [`sonnet.md`](skills/reasoning-semiformally/sonnet.md) (Sonnet/Opus-class).

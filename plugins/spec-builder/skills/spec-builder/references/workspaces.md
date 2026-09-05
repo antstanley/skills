@@ -55,7 +55,7 @@ idiomatic; nesting confuses both tools. Resolve the location in this order:
    already exists, honour it. `jj workspace list` / `git worktree list` reveal an existing
    convention.
 2. **Project convention.** `grep -iE "workspace|worktree" CLAUDE.md` and the
-   `workspace_layout` setting in `.claude/spec-builder.local.md` (`sibling` | `grouped`).
+   `workspace_layout` setting in `.agents/spec-builder.local.md` (legacy fallback: `.claude/spec-builder.local.md`) (`sibling` | `grouped`).
 3. **Default.** Sibling paths: `../<repo>-task-NN`. Use `grouped`
    (`../<repo>-workspaces/task-NN/`) when several are in flight and you want them gathered.
 

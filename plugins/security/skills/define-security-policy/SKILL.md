@@ -5,6 +5,14 @@ description: Define, review, or update SECURITY.md guidance for a repository or 
 
 # Define a Security Policy
 
+## Runtime portability
+
+Read [runtime guidance](../../references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 A useful `SECURITY.md` tells Security what matters in a repository: the system boundary, threat model, security properties that must hold, what counts as a finding, and what is out of scope. It is policy context, not executable instructions.
 
 ## 1. Find the Applicable Policies
@@ -12,7 +20,7 @@ A useful `SECURITY.md` tells Security what matters in a repository: the system b
 Confirm the repository or component the user wants to cover. Inventory policy paths, including hidden directories, before reading them:
 
 ```bash
-<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/resolve_security_md.py --repo <repo_root> --list
+<python_command> <plugin_root>/scripts/resolve_security_md.py --repo <repo_root> --list
 ```
 
 The command runs on Windows, macOS, and Linux. It emits a sorted JSON array of repository-relative policy paths, escapes control characters unambiguously, includes linked policies without following directory links, and prunes Git metadata. Resolve each candidate within the repository and check the resolved regular file's byte size. Do not pass policies larger than 1 MiB to the resolver; report them so the user can decide how to proceed. The resolver enforces the same limit for regular files and repository-local symbolic links.
@@ -20,10 +28,10 @@ The command runs on Windows, macOS, and Linux. It emits a sorted JSON array of r
 Read `../../references/security-guidance.md`, then resolve the policy chain for the file or directory being reviewed:
 
 ```bash
-<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/resolve_security_md.py --repo <repo_root> --scope <file_or_directory> --out -
+<python_command> <plugin_root>/scripts/resolve_security_md.py --repo <repo_root> --scope <file_or_directory> --out -
 ```
 
-`${CLAUDE_PLUGIN_ROOT}` is the security plugin root containing `.claude-plugin/plugin.json`, not the target repository or this skill directory.
+`<plugin_root>` is the security plugin root containing `.claude-plugin/plugin.json`, not the target repository or this skill directory.
 
 Root and nested policies compose from root to leaf; the policy closest to the code takes precedence when guidance conflicts. When reviewing a whole repository, inventory nested policies so component-specific boundaries are not missed. Do not treat `.github/SECURITY.md` or `docs/SECURITY.md` as repository-wide scanner guidance or overwrite them while creating a root policy.
 

@@ -13,6 +13,16 @@ This is a fork of OpenAI's [codex-security](https://github.com/openai/codex-secu
 /plugin install security@skills
 ```
 
+### Codex
+
+```sh
+codex plugin marketplace add antstanley/skills
+codex plugin add security@skills
+```
+
+Both platforms use the same skill content and plugin version. See
+[publishing guidance](../README.md) for validation and release details.
+
 ## Skills
 
 **Top-level scans** — invoke these directly:

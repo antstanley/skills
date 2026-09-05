@@ -5,6 +5,14 @@ description: Develop evidence-backed structural and architectural security harde
 
 # Propose Security Hardening
 
+## Runtime portability
+
+Read [runtime guidance](../../references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Turn a collection of security evidence into a decision-ready portfolio of structural or architectural hardening opportunities. The evidence may be a Security scan that is still in final reporting or is already complete,

@@ -10,6 +10,12 @@ The repository is a Claude Code plugin marketplace; its only executable code tod
 
 ## Toolchain
 
+Plugin publishing uses the Python generator `scripts/sync-plugins.py` and shared
+metadata in `plugins/catalog.json`. It emits Claude and Codex manifests and catalogs;
+generated files are checked by the same gate as the flat skills tree. See
+[plugin publishing](../plugins/README.md) for the metadata contract, versioning, and
+release procedure. Both formats share each plugin's semver version and skill sources.
+
 The tools actually in use. Each is wired into the repo today; planned-but-unwired tooling is in Open questions.
 
 | Tool | Version / channel | Notes |

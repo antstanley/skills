@@ -31,6 +31,16 @@ spec-creator is the head of a three-plugin pipeline: **spec-creator** writes the
 /plugin install spec-creator@skills
 ```
 
+### Codex
+
+```sh
+codex plugin marketplace add antstanley/skills
+codex plugin add spec-creator@skills
+```
+
+Both platforms use the same skill content and plugin version. See
+[publishing guidance](../README.md) for validation and release details.
+
 ## Skill content
 
 The main skill lives at [`skills/spec-creator/SKILL.md`](skills/spec-creator/SKILL.md). Worked examples and templates are under [`skills/spec-creator/evals/`](skills/spec-creator/evals/) and [`skills/spec-creator/references/`](skills/spec-creator/references/).

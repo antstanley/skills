@@ -1,7 +1,7 @@
 ---
 name: spec-builder
 description: Implement a spec-planner plan by dispatching one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gating every task through a semi-formal correctness review and a definition-of-done validation before it is merged and marked Done. Self-contained — workspace isolation is vendored, no other plugin required. Walks the dependency graph in waves, parallel by default (max 4 agents) or sequential. Triggers on "build this plan", "implement the plan", "execute the plan in .specs/plans/...", or handing a spec-planner plan folder over for implementation.
-compatibility: Needs a harness that can dispatch sub-agents — Claude Code or OpenCode (core Task tool), or Pi with a subagents extension (e.g. @tintinweb/pi-subagents). Without one, runs a sequential single-agent fallback (references/portability.md).
+compatibility: Needs a harness that can dispatch sub-agents — Codex with agent dispatch enabled, Claude Code or OpenCode (core Task tool), or Pi with a subagents extension (e.g. @tintinweb/pi-subagents). Without one, runs a sequential single-agent fallback (references/portability.md).
 ---
 
 # Spec Builder
@@ -136,7 +136,7 @@ harness can do that — gate on the **capability**, not on which harness you are
    already built — say so rather than rebuilding. (spec-planner emits `Draft`; spec-builder
    owns the `Draft → Accepted` promotion at this handoff.)
 2. Resolve `execution_mode`, `max_parallel_agents`, and `gate_mode` (defaults: parallel, 4,
-   combined) from any `.claude/spec-builder.local.md` and the invocation; echo the resolved
+   combined) from any `.agents/spec-builder.local.md` (legacy fallback: `.claude/spec-builder.local.md`) and the invocation; echo the resolved
    settings back. Resolve the **per-role model and effort** the same way — but with no pinned
    defaults: by default the orchestrator chooses each role's model/effort by its own judgment
    ([`references/model-policy.md`](references/model-policy.md)), overridable per role/run; echo
@@ -163,7 +163,9 @@ current integration point, each via a context-sized brief
 independent agents concurrently, each at the model/effort the orchestrator resolved for it
 ([`references/model-policy.md`](references/model-policy.md)) — on Claude Code prefer a single
 `Workflow` call per batch (it carries model **and** effort); on the portable `Task`/`Agent`
-path set the model per dispatch and treat effort as advisory. Sequential mode is the same
+path set the model per dispatch and treat effort as advisory. On Codex, follow
+[Codex dispatch](references/portability.md#codex-dispatch), including model inheritance
+and host tool-schema constraints. Sequential mode is the same
 loop with the cap at 1.
 
 ### Phase 4 — Gate, merge, and move per task

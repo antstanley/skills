@@ -12,7 +12,7 @@ flight); the rule that orders everything is the plan's **dependency table**.
 Three knobs, with defaults, resolved in this order (later wins):
 
 1. **Defaults:** `execution_mode: parallel`, `max_parallel_agents: 4`, `gate_mode: combined`.
-2. **Project config file** (optional): `.claude/spec-builder.local.md`, YAML frontmatter:
+2. **Project config file** (optional): `.agents/spec-builder.local.md` (legacy fallback: `.claude/spec-builder.local.md`), YAML frontmatter:
    ```yaml
    ---
    execution_mode: parallel        # parallel | sequential
@@ -21,13 +21,15 @@ Three knobs, with defaults, resolved in this order (later wins):
    workspace_layout: sibling       # sibling | grouped (see workspaces.md)
    ---
    ```
-   Read it with the `plugin-settings` pattern if present; create it only if the user asks
+   Prefer the `.agents/` file when both exist; otherwise use the legacy file. Read
+   its frontmatter directly; create it only if the user asks
    to persist a preference.
 3. **The invocation** — an explicit request ("build sequentially", "max 2 agents at a
    time", "split the gates") overrides both for this run. Echo the resolved settings back
    before starting so the user can correct them.
 
 **Per-role model and effort** are resolved the same way — but there are no pinned defaults:
+on Codex inherit the session model unless an override is authorized; elsewhere
 by default the **orchestrator chooses** per role ([`model-policy.md`](model-policy.md)) — it
 inherits the session for itself, and picks the implementer's and the gates' model/effort by its
 own judgment unless the user overrides ("gates at xhigh", "implementer on opus", "everything on

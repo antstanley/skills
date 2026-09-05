@@ -22,7 +22,7 @@ Do not stop reviewing a file after finding one bug.
 Write raw candidates to one or more temporary JSONL files, then combine them:
 
 ```text
-<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/normalize_candidates.py --input <candidate-source> [<candidate-source> ...] --out <discovery_dir>/candidate_ledger.jsonl --repo-root <repo_root> --in-scope-files <discovery_dir>/in_scope_files.txt
+<python_command> <plugin_root>/scripts/normalize_candidates.py --input <candidate-source> [<candidate-source> ...] --out <discovery_dir>/candidate_ledger.jsonl --repo-root <repo_root> --in-scope-files <discovery_dir>/in_scope_files.txt
 ```
 
 Each raw candidate row uses only these fields:

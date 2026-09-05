@@ -1,8 +1,15 @@
 {
   "name": "spec-creator",
-  "version": "0.4.0",
-  "description": "Create or expand formal design specifications for an app, package, or codebase — numbered, layered, cross-linked markdown that defines what exists in the current branch. Includes development guidelines and design guidelines with greenfield discovery and existing-project adoption. Head of the spec-creator → spec-planner → spec-builder pipeline; its specs feed spec-planner.",
-  "author": { "name": "antstanley" },
+  "version": "0.5.0",
+  "description": "Create or expand formal design specifications for an app, package, or codebase \u2014 numbered, layered, cross-linked markdown that defines what exists in the current branch. Includes development guidelines and design guidelines with greenfield discovery and existing-project adoption. Head of the spec-creator \u2192 spec-planner \u2192 spec-builder pipeline; its specs feed spec-planner.",
+  "author": {
+    "name": "antstanley"
+  },
   "repository": "https://github.com/antstanley/skills",
-  "keywords": ["spec", "design", "documentation", "architecture"]
+  "keywords": [
+    "spec",
+    "design",
+    "documentation",
+    "architecture"
+  ]
 }

@@ -1,49 +1,51 @@
 {
   "name": "skills",
   "metadata": {
-    "description": "A collection of Claude Code plugins by Ant Stanley."
+    "description": "Agent skills for Claude Code, Codex, and other compatible harnesses."
   },
-  "owner": { "name": "antstanley" },
+  "owner": {
+    "name": "antstanley"
+  },
   "plugins": [
     {
       "name": "reasoning-semiformally",
       "source": "./plugins/reasoning-semiformally",
-      "description": "Apply semi-formal certificate reasoning to code analysis — patch verification, fault localization, patch equivalence.",
+      "description": "Apply semi-formal certificate reasoning to code analysis \u2014 patch verification, fault localization, patch equivalence. Use when reviewing patches, hunting bugs across scopes, comparing fixes, or when code reasoning requires tracing execution across files/modules.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
     },
     {
       "name": "spec-creator",
       "source": "./plugins/spec-creator",
-      "description": "Create and review canonical specs, with development guidelines and design guidelines for greenfield or existing projects — numbered, layered, cross-linked markdown.",
+      "description": "Create or expand formal design specifications for an app, package, or codebase \u2014 numbered, layered, cross-linked markdown that defines what exists in the current branch. Includes development guidelines and design guidelines with greenfield discovery and existing-project adoption. Head of the spec-creator \u2192 spec-planner \u2192 spec-builder pipeline; its specs feed spec-planner.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
     },
     {
       "name": "spec-planner",
       "source": "./plugins/spec-planner",
-      "description": "Plan the implementation of a specification — decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done — and author a semi-formal done certificate per task for a validating agent to run.",
+      "description": "Plan the implementation of a specification \u2014 decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done and a task-specific semi-formal done certificate. Consumes a spec-creator spec (or any spec); produces a kanban plan folder that spec-builder builds.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
     },
     {
       "name": "jj-workspaces",
       "source": "./plugins/jj-workspaces",
-      "description": "jj (jujutsu) workspaces skill for Claude Code — creates isolated workspaces for parallel work and sub-agent driven development, and intercepts git-worktree requests in jj-managed repos.",
+      "description": "jj (jujutsu) workspaces skill for Claude Code and Codex \u2014 creates isolated workspaces for parallel work and sub-agent driven development, and intercepts git-worktree requests in jj-managed repos.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
     },
     {
       "name": "spec-builder",
       "source": "./plugins/spec-builder",
-      "description": "Implement a spec-planner plan — one sub-agent per task in its own isolated workspace (jj or git, jj preferred), gated through a semi-formal correctness review and a definition-of-done validation before each task merges and is marked Done; parallel by default (max 4 agents) or sequential. Self-contained.",
+      "description": "Implement a spec-planner plan \u2014 build each task in an isolated jj/git workspace, gate it through a semi-formal correctness review and a definition-of-done validation, then merge. Self-contained (workspace isolation vendored); parallel by default (max 4 agents) or sequential. Consumes a spec-planner plan folder; produces merged, reviewed, validated code.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
     },
     {
       "name": "security",
       "source": "./plugins/security",
-      "description": "Security workflows — repository and diff scans, deep multi-pass scans, threat modelling, validation, attack-path analysis, triage, remediation, and reporting against a sealed scan contract.",
+      "description": "Security workflows for Claude Code and Codex \u2014 repository and diff scans, deep multi-pass scans, threat modelling, validation, attack-path analysis, triage, remediation, and reporting against a sealed scan contract.",
       "category": "development",
       "homepage": "https://github.com/antstanley/skills"
     }

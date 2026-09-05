@@ -5,6 +5,14 @@ description: Use when a security scan is already in its validation phase or the 
 
 # Security Validation
 
+## Runtime portability
+
+Read [runtime guidance](../../references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Take candidate findings from discovery and produce the strongest evidence-backed validation assessment you can. Prefer targeted, non-interactive reproduction or falsification when it is feasible and proportionate, but use focused code tracing when dynamic execution is blocked by missing services, unavailable infrastructure, or excessive setup relative to the candidate and scan scope.

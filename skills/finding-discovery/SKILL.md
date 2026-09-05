@@ -5,6 +5,14 @@ description: Use when a security scan is already in its finding-discovery phase 
 
 # Security Finding Discovery
 
+## Runtime portability
+
+Read [runtime guidance](../.security-plugin/references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Investigate the proposed code or code changes for technically plausible security vulnerabilities using the threat model as context.
@@ -14,18 +22,18 @@ Investigate the proposed code or code changes for technically plausible security
 The path references in this skill are the default locations for this phase.
 If the user explicitly provides a different path for a required input or output, use the user-provided path instead of the corresponding default path referenced in this skill.
 If a required input is still missing, stop and ask the user for it before continuing.
-Use the shared scan artifact path conventions in `../../references/scan-artifacts.md`.
+Use the shared scan artifact path conventions in `../.security-plugin/references/scan-artifacts.md`.
 
 ## SECURITY.md Guidance Gate
 
-Read `../../references/security-guidance.md` and resolve the applicable policy before inspecting each source file. A delegated file-review worker must do the same before reading its assigned source.
+Read `../.security-plugin/references/security-guidance.md` and resolve the applicable policy before inspecting each source file. A delegated file-review worker must do the same before reading its assigned source.
 
 ### Code Diff Workflow
 If the scan target is for a targeted code-diff:
 
 - Read `../security-scan/references/scan-artifacts-and-ledger.md`.
-- Generate `rank_input.jsonl` deterministically from changed source-like files with `<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/generate_rank_input.py make-diff-rank-input --repo <repo_root> --base <base> --mode revisions --head <head> --out <discovery_dir>/rank_input.jsonl` for PR, commit, and branch diffs, or `<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/generate_rank_input.py make-diff-rank-input --repo <repo_root> --base <base> --mode local-patch --out <discovery_dir>/rank_input.jsonl` for a local patch.
-- Copy every diff row into `deep_review_input.jsonl` with `<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/generate_rank_input.py copy-deep-review-input --rank-input <discovery_dir>/rank_input.jsonl --out <discovery_dir>/deep_review_input.jsonl`. Diff scans do not rank or drop changed files before deep review.
+- Generate `rank_input.jsonl` deterministically from changed source-like files with `<python_command> <plugin_root>/scripts/generate_rank_input.py make-diff-rank-input --repo <repo_root> --base <base> --mode revisions --head <head> --out <discovery_dir>/rank_input.jsonl` for PR, commit, and branch diffs, or `<python_command> <plugin_root>/scripts/generate_rank_input.py make-diff-rank-input --repo <repo_root> --base <base> --mode local-patch --out <discovery_dir>/rank_input.jsonl` for a local patch.
+- Copy every diff row into `deep_review_input.jsonl` with `<python_command> <plugin_root>/scripts/generate_rank_input.py copy-deep-review-input --rank-input <discovery_dir>/rank_input.jsonl --out <discovery_dir>/deep_review_input.jsonl`. Diff scans do not rank or drop changed files before deep review.
 - Add directly supporting files required to understand the changed security behavior only when repository evidence shows they are needed. Do not use them to broaden into unrelated repository-wide enumeration.
 - Deep-review every file in `deep_review_input.jsonl` using the shared scoped file-review rules.
 - Stay anchored to the changed code and directly supporting files. Unchanged siblings are context or negative controls unless the diff newly reaches them, weakens their shared control, or changes a shared sink/helper they depend on.
@@ -110,7 +118,7 @@ Otherwise, for each candidate include:
 - taxonomy with CWE IDs when known
 - enough evidence that a later reviewer can understand why the candidate is technically plausible before validation
 
-For diff-scoped discovery, when candidates are emitted, create the per-finding directory from `../../references/scan-artifacts.md` and append one discovery receipt to that finding's candidate ledger. The ledger row should identify the candidate, scan scope, discovery status, affected locations, and the discovery artifact or evidence that produced it.
+For diff-scoped discovery, when candidates are emitted, create the per-finding directory from `../.security-plugin/references/scan-artifacts.md` and append one discovery receipt to that finding's candidate ledger. The ledger row should identify the candidate, scan scope, discovery status, affected locations, and the discovery artifact or evidence that produced it.
 
 
 ## Hard Rules
@@ -119,8 +127,8 @@ For diff-scoped discovery, when candidates are emitted, create the per-finding d
 - Focus on the actual changes, not the commit message.
 - Stay anchored to the diff and the files it relies on for diff-scoped scans.
 - Candidate discovery is about plausibility, not final severity.
-- For diff-scoped discovery, do not emit an untracked candidate. Every candidate finding needs a stable candidate id and a discovery receipt in its candidate-ledger path from `../../references/scan-artifacts.md` so later validation and attack-path analysis can prove coverage for that exact finding.
+- For diff-scoped discovery, do not emit an untracked candidate. Every candidate finding needs a stable candidate id and a discovery receipt in its candidate-ledger path from `../.security-plugin/references/scan-artifacts.md` so later validation and attack-path analysis can prove coverage for that exact finding.
 - Do not add `relevant_lines` when no bug exists. For diff-scoped scans, add `relevant_lines` only when the bug overlaps the diff and those lines are relevant to the bug.
 - Do not turn discovery into full validation or full severity calibration.
 - Continue reviewing until no additional distinct plausible candidates remain.
-- For diff-scoped discovery, save a final visible report using the finding discovery report path from `../../references/scan-artifacts.md`.
+- For diff-scoped discovery, save a final visible report using the finding discovery report path from `../.security-plugin/references/scan-artifacts.md`.

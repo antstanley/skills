@@ -4,6 +4,10 @@ spec-builder is the one skill in the spec-* family that actually **fans out** �
 dispatches a sub-agent per task and, by default, one more to verify it (two under
 `gate_mode: split`). Each dispatch can carry its own model and reasoning effort.
 
+On Codex, the [Codex dispatch rules](portability.md#codex-dispatch) take precedence
+over the model-selection defaults below: inherit the session model unless an
+override is authorized, and use only fields the host actually exposes.
+
 **There are no pinned per-role defaults.** By default the **orchestrator chooses** the model
 and effort for each role, using its judgment about that role and the plan in front of it; the
 user can override any role. This file gives the orchestrator the reasoning to choose well and
@@ -41,7 +45,7 @@ when it echoes the resolved settings** — the choice is visible, not silent.
 
 An explicit user override wins, exactly like the other settings
 ([`orchestration.md`](orchestration.md) → *Configuration*) — set per role in
-`.claude/spec-builder.local.md` or in the invocation: "build with the implementer on opus",
+`.agents/spec-builder.local.md` (legacy fallback: `.claude/spec-builder.local.md`) or in the invocation: "build with the implementer on opus",
 "run the gates at xhigh", "everything on sonnet". Resolve overrides over the orchestrator's
 choices and echo the resolved model/effort per role back before dispatching.
 

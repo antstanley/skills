@@ -1,0 +1,152 @@
+{
+  "name": "skills",
+  "displayName": "Ant Stanley Skills",
+  "owner": {
+    "name": "antstanley"
+  },
+  "description": "Agent skills for Claude Code, Codex, and other compatible harnesses.",
+  "plugins": [
+    {
+      "manifest": {
+        "name": "reasoning-semiformally",
+        "version": "0.4.0",
+        "description": "Apply semi-formal certificate reasoning to code analysis \u2014 patch verification, fault localization, patch equivalence. Use when reviewing patches, hunting bugs across scopes, comparing fixes, or when code reasoning requires tracing execution across files/modules.",
+        "author": {
+          "name": "antstanley"
+        },
+        "repository": "https://github.com/antstanley/skills",
+        "keywords": [
+          "reasoning",
+          "code-review",
+          "debugging",
+          "patch-verification"
+        ]
+      },
+      "displayName": "Reasoning Semiformally",
+      "shortDescription": "Apply semi-formal certificate reasoning to code analysis",
+      "defaultPrompt": "Review this patch using semi-formal reasoning.",
+      "claudeCategory": "development"
+    },
+    {
+      "manifest": {
+        "name": "spec-creator",
+        "version": "0.5.0",
+        "description": "Create or expand formal design specifications for an app, package, or codebase \u2014 numbered, layered, cross-linked markdown that defines what exists in the current branch. Includes development guidelines and design guidelines with greenfield discovery and existing-project adoption. Head of the spec-creator \u2192 spec-planner \u2192 spec-builder pipeline; its specs feed spec-planner.",
+        "author": {
+          "name": "antstanley"
+        },
+        "repository": "https://github.com/antstanley/skills",
+        "keywords": [
+          "spec",
+          "design",
+          "documentation",
+          "architecture"
+        ]
+      },
+      "displayName": "Spec Creator",
+      "shortDescription": "Create and review canonical specs, with development guidelines and design guidelines for greenfield ",
+      "defaultPrompt": "Create a canonical spec for this project.",
+      "claudeCategory": "development"
+    },
+    {
+      "manifest": {
+        "name": "spec-planner",
+        "version": "0.5.0",
+        "description": "Plan the implementation of a specification \u2014 decompose a spec into a dependency-ordered graph of reviewable task packages, each with a definition of done and a task-specific semi-formal done certificate. Consumes a spec-creator spec (or any spec); produces a kanban plan folder that spec-builder builds.",
+        "author": {
+          "name": "antstanley"
+        },
+        "repository": "https://github.com/antstanley/skills",
+        "keywords": [
+          "spec",
+          "planning",
+          "implementation",
+          "task-graph",
+          "architecture",
+          "done-certificate",
+          "verification",
+          "definition-of-done"
+        ]
+      },
+      "displayName": "Spec Planner",
+      "shortDescription": "Plan the implementation of a specification",
+      "defaultPrompt": "Plan the implementation of this spec.",
+      "claudeCategory": "development"
+    },
+    {
+      "manifest": {
+        "name": "jj-workspaces",
+        "version": "0.2.0",
+        "description": "jj (jujutsu) workspaces skill for Claude Code and Codex \u2014 creates isolated workspaces for parallel work and sub-agent driven development, and intercepts git-worktree requests in jj-managed repos.",
+        "author": {
+          "name": "antstanley"
+        },
+        "repository": "https://github.com/antstanley/skills",
+        "keywords": [
+          "jj",
+          "jujutsu",
+          "worktree",
+          "workspace",
+          "vcs",
+          "sub-agents"
+        ]
+      },
+      "displayName": "Jj Workspaces",
+      "shortDescription": "jj (jujutsu) workspaces skill for Claude Code",
+      "defaultPrompt": "Create an isolated workspace for this task.",
+      "claudeCategory": "development"
+    },
+    {
+      "manifest": {
+        "name": "spec-builder",
+        "version": "0.5.0",
+        "description": "Implement a spec-planner plan \u2014 build each task in an isolated jj/git workspace, gate it through a semi-formal correctness review and a definition-of-done validation, then merge. Self-contained (workspace isolation vendored); parallel by default (max 4 agents) or sequential. Consumes a spec-planner plan folder; produces merged, reviewed, validated code.",
+        "author": {
+          "name": "antstanley"
+        },
+        "repository": "https://github.com/antstanley/skills",
+        "keywords": [
+          "spec",
+          "implementation",
+          "sub-agents",
+          "jj",
+          "git",
+          "worktree",
+          "workspace",
+          "parallel",
+          "done-certificate",
+          "semi-formal-review",
+          "validation",
+          "task-graph"
+        ]
+      },
+      "displayName": "Spec Builder",
+      "shortDescription": "Implement a spec-planner plan",
+      "defaultPrompt": "Build this implementation plan.",
+      "claudeCategory": "development"
+    },
+    {
+      "manifest": {
+        "name": "security",
+        "version": "0.3.0",
+        "description": "Security workflows for Claude Code and Codex \u2014 repository and diff scans, deep multi-pass scans, threat modelling, validation, attack-path analysis, triage, remediation, and reporting against a sealed scan contract.",
+        "author": {
+          "name": "antstanley"
+        },
+        "repository": "https://github.com/antstanley/skills",
+        "license": "Apache-2.0",
+        "keywords": [
+          "security",
+          "code-review",
+          "diff-review",
+          "appsec",
+          "threat-modeling"
+        ]
+      },
+      "displayName": "Security",
+      "shortDescription": "Security workflows",
+      "defaultPrompt": "Review this repository for security issues.",
+      "claudeCategory": "development"
+    }
+  ]
+}

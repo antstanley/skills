@@ -1,8 +1,23 @@
 {
   "name": "spec-builder",
-  "version": "0.4.1",
-  "description": "Implement a spec-planner plan — build each task in an isolated jj/git workspace, gate it through a semi-formal correctness review and a definition-of-done validation, then merge. Self-contained (workspace isolation vendored); parallel by default (max 4 agents) or sequential. Consumes a spec-planner plan folder; produces merged, reviewed, validated code.",
-  "author": { "name": "antstanley" },
+  "version": "0.5.0",
+  "description": "Implement a spec-planner plan \u2014 build each task in an isolated jj/git workspace, gate it through a semi-formal correctness review and a definition-of-done validation, then merge. Self-contained (workspace isolation vendored); parallel by default (max 4 agents) or sequential. Consumes a spec-planner plan folder; produces merged, reviewed, validated code.",
+  "author": {
+    "name": "antstanley"
+  },
   "repository": "https://github.com/antstanley/skills",
-  "keywords": ["spec", "implementation", "sub-agents", "jj", "git", "worktree", "workspace", "parallel", "done-certificate", "semi-formal-review", "validation", "task-graph"]
+  "keywords": [
+    "spec",
+    "implementation",
+    "sub-agents",
+    "jj",
+    "git",
+    "worktree",
+    "workspace",
+    "parallel",
+    "done-certificate",
+    "semi-formal-review",
+    "validation",
+    "task-graph"
+  ]
 }

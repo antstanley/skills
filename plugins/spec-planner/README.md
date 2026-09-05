@@ -21,6 +21,16 @@ The neighbouring plugins are optional and installed separately.
 
 This plugin ships two skills: **spec-planner** (build the plan) and **done-certificates** (prove each task done).
 
+### Codex
+
+```sh
+codex plugin marketplace add antstanley/skills
+codex plugin add spec-planner@skills
+```
+
+Both platforms use the same skill content and plugin version. See
+[publishing guidance](../README.md) for validation and release details.
+
 ## spec-planner
 
 The skill lives at [`skills/spec-planner/SKILL.md`](skills/spec-planner/SKILL.md). Worked examples are under [`skills/spec-planner/evals/`](skills/spec-planner/evals/); the method and templates are under [`skills/spec-planner/references/`](skills/spec-planner/references/):

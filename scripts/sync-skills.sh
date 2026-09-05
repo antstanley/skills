@@ -18,6 +18,7 @@
 #   scripts/sync-skills.sh --check   verify ./skills is in sync; exit 1 on drift
 #
 set -euo pipefail
+export PATH="$HOME/.local/bin:$PATH"
 
 cd "$(dirname "$0")/.."
 
@@ -45,6 +46,17 @@ build() {
   done
   shopt -u nullglob
 
+  # Security's helpers are shared by its skills. Keep one resource bundle in
+  # the flat distribution; the installer copies it beside the skill folders.
+  mkdir -p "$out/.security-plugin"
+  for resource in scripts references schemas; do
+    cp -R "plugins/security/$resource" "$out/.security-plugin/$resource"
+  done
+  cp plugins/security/LICENSE.md plugins/security/ruff.toml "$out/.security-plugin/"
+  printf 'antstanley/skills\n' > "$out/.security-plugin/.managed-by-skills"
+  find "$out/.security-plugin" -type d -name __pycache__ -prune -exec rm -rf {} +
+  uv run python scripts/relocate-security-references.py "$out"
+
   cat > "$out/README.md" <<'EOF'
 # skills/ — generated flat tree
 
@@ -52,7 +64,8 @@ build() {
 `scripts/sync-skills.sh`. The canonical source of every skill is its plugin under
 `plugins/<plugin>/skills/<name>/`; this directory is a flat, vendor-neutral copy
 of all skills in the layout the [Agent Skills standard](https://github.com/agentskills/agentskills)
-expects, for harnesses or people who want them all in one place. Internal
+expects, for harnesses or people who want them all in one place. The hidden `.security-plugin/` directory holds the shared security helpers and
+references copied by the installer. Internal
 `evals/` directories are omitted — they are test artifacts, not part of the skill.
 
 To change a skill, edit it under `plugins/`, then run `scripts/sync-skills.sh`.
@@ -67,14 +80,16 @@ if [ "$check" -eq 1 ]; then
     echo "sync-skills: skills/ is missing — run scripts/sync-skills.sh" >&2
     exit 1
   fi
-  if ! diff -rq "$tmp/skills" skills >/dev/null; then
+  # Running bundled Python helpers or Ruff may create local caches. They are
+  # not distribution content and must not make a second check fail.
+  if ! diff -rq -x __pycache__ -x .ruff_cache "$tmp/skills" skills >/dev/null; then
     echo "sync-skills: skills/ is out of sync with plugins/ — run scripts/sync-skills.sh" >&2
-    diff -rq "$tmp/skills" skills || true
+    diff -rq -x __pycache__ -x .ruff_cache "$tmp/skills" skills || true
     exit 1
   fi
   echo "skills/ is in sync with plugins/."
 else
   build skills
-  count="$(find skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+  count="$(find skills -mindepth 2 -maxdepth 2 -name SKILL.md -type f | wc -l | tr -d ' ')"
   echo "Regenerated skills/ — $count skill(s) copied from plugins/."
 fi

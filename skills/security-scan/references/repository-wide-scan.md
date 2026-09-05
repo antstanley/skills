@@ -22,7 +22,7 @@ Do not stop reviewing a file after finding one bug.
 Write raw candidates to one or more temporary JSONL files, then combine them:
 
 ```text
-<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/normalize_candidates.py --input <candidate-source> [<candidate-source> ...] --out <discovery_dir>/candidate_ledger.jsonl --repo-root <repo_root> --in-scope-files <discovery_dir>/in_scope_files.txt
+<python_command> <plugin_root>/scripts/normalize_candidates.py --input <candidate-source> [<candidate-source> ...] --out <discovery_dir>/candidate_ledger.jsonl --repo-root <repo_root> --in-scope-files <discovery_dir>/in_scope_files.txt
 ```
 
 Each raw candidate row uses only these fields:
@@ -43,4 +43,4 @@ Run `security:validation` once over the complete ledger in compact standard-scan
 
 Then run `security:attack-path-analysis` once in compact standard-scan mode over validation rows with disposition `reportable` or `deferred`. It must add an `attack_path` record to every row that enters the phase, preserve exact affected locations, and use the threat model to decide realistic reachability and severity. A neighboring finding does not close the current candidate.
 
-Build canonical findings and coverage from the file list and enriched candidate decisions using the ordered mapping in `../../../references/final-report.md`. Include all relevant code locations in each finding.
+Build canonical findings and coverage from the file list and enriched candidate decisions using the ordered mapping in `../../.security-plugin/references/final-report.md`. Include all relevant code locations in each finding.

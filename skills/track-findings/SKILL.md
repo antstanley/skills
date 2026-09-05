@@ -5,6 +5,14 @@ description: Track validated findings from a sealed Security scan directory in L
 
 # Track Findings
 
+## Runtime portability
+
+Read [runtime guidance](../.security-plugin/references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 ## Objective
 
 Track findings from one sealed Security scan as Linear issues, Jira issues, GitHub issues, or one draft GitHub security advisory. Do not change the scan bundle. Use one provider and one destination per run. Show the exact payload and get approval before writing.
@@ -17,7 +25,7 @@ Jira mode uses a configured Atlassian MCP server to create, reuse, or update one
 
 The tracking helper is at the plugin root:
 
-- `${CLAUDE_PLUGIN_ROOT}/scripts/validate_tracking_source.py`
+- `<plugin_root>/scripts/validate_tracking_source.py`
 
 Do not look for the helper inside this skill directory.
 
@@ -48,7 +56,7 @@ Before provider calls, memory, rendered reports, browser use, or destination dis
 Resolve `<python_command>` to the configured Python interpreter (`$PYTHON` when one is provided), otherwise use `python` on Windows and `python3` on Unix-like hosts. The command is written on one line so it works in PowerShell, Command Prompt, and POSIX shells:
 
 ```text
-<python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/validate_tracking_source.py <user-supplied-scan-dir> [--finding-id <id> | --fingerprint <fingerprint>]
+<python_command> <plugin_root>/scripts/validate_tracking_source.py <user-supplied-scan-dir> [--finding-id <id> | --fingerprint <fingerprint>]
 ```
 
 With a selector, the command prints the one canonical finding id. Without one, it prints every canonical finding id in the sealed scan. A nonzero exit stops the workflow.

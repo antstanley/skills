@@ -7,6 +7,15 @@ description: Create, expand, or change formal design specifications for an app, 
 
 A skill for writing canonical design specifications: numbered, layered, cross-linked markdown that defines what exists in the current branch.
 
+## Host tools
+
+Use the host's available skill-invocation tool, or read and follow the companion's
+`SKILL.md` when no such tool exists. Claude-specific `Workflow` examples apply only
+where that tool is exposed. In Codex, use the available agent-spawn capability for
+required delegation and the actual host schema; inherit the session model unless
+an override is authorized. Use available user-input tools or ask directly when
+clarification is needed. Missing tools do not waive independent-review requirements.
+
 ## Core principle
 
 **A spec is the canonical definition of what exists in the current branch.** Not a plan, not a wishlist, not an MVP cut. Body sections describe code that is checked in. Aspirational content — "to be tuned later", "deferred", "next iteration" — lives **only** in the closing `Assumptions / Decisions / Open questions` block of each page.

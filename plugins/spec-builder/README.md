@@ -15,6 +15,16 @@ Its load-bearing rule: **a task is only `Done` when proven done — correct and 
 
 This plugin ships three skills: **spec-builder** (orchestrate the build), **semi-formal-review** (correctness), and **validate-done-certificate** (completeness) — the latter two run as one combined verification gate by default, or separately under `gate_mode: split`.
 
+### Codex
+
+```sh
+codex plugin marketplace add antstanley/skills
+codex plugin add spec-builder@skills
+```
+
+Both platforms use the same skill content and plugin version. See
+[publishing guidance](../README.md) for validation and release details.
+
 ## The pipeline
 
 spec-builder is the execution end of a three-plugin pipeline:

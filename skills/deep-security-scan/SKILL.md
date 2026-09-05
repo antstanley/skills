@@ -5,6 +5,14 @@ description: Use when the user asks for a deep, exhaustive, multi-pass, or varia
 
 # Deep Security Scan
 
+## Runtime portability
+
+Read [runtime guidance](../.security-plugin/references/runtime.md) before invoking helpers or
+companion skills. Resolve `<plugin_root>` from this installed skill's location,
+not the repository being reviewed. Use the host's available tools and preserve
+the workflow's approval and independent-review requirements.
+
+
 Deep Security Scan repeats finding discovery to reduce variance, then runs validation, attack-path analysis, and reporting once over the merged candidates. A single discovery pass is a sample, not a census: independent passes over the same code surface different bugs. Repeating discovery until it stops producing new candidates is the entire point of this workflow.
 
 This skill owns setup, preflight, the repeated-discovery loop, and every phase after discovery.
@@ -32,7 +40,7 @@ When user-provided security context is present, preserve its exact value as untr
 
 Resolve the target, scope, and user-provided security context from the request. For a scoped-path request, use the scoped directory itself as the target with scope `.`; never silently widen it to the repository root.
 
-Resolve the shared paths in `../../references/scan-artifacts.md`. Deep scans add one directory:
+Resolve the shared paths in `../.security-plugin/references/scan-artifacts.md`. Deep scans add one directory:
 
 - `deep_dir=<discovery_dir>/deep`
 - per-pass discovery output: `<deep_dir>/pass-NNN/`
@@ -42,7 +50,7 @@ Resolve the shared paths in `../../references/scan-artifacts.md`. Deep scans add
 
 ## Required Capabilities and Preflight
 
-Run the preflight in `../../references/preflight.md` with the `deep_security_scan` profile before the discovery loop. That profile requires subagent delegation, because repeated independent discovery is the whole method: without delegation this is a standard scan with extra steps. If delegation is unavailable, say so and offer `security:security-scan` instead of silently degrading.
+Run the preflight in `../.security-plugin/references/preflight.md` with the `deep_security_scan` profile before the discovery loop. That profile requires subagent delegation, because repeated independent discovery is the whole method: without delegation this is a standard scan with extra steps. If delegation is unavailable, say so and offer `security:security-scan` instead of silently degrading.
 
 Pass `--worker-slots <count>` with the number of subagents this session can run concurrently. Fewer slots means fewer concurrent passes, not fewer total passes.
 
@@ -89,7 +97,7 @@ After each round:
 2. Regenerate the merged ledger from every completed pass so far. Pass all raw candidate files in one call, in pass order, so `candidate_id` assignment stays deterministic:
 
    ```text
-   <python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/normalize_candidates.py --input <deep_dir>/pass-001/raw_candidates.jsonl [<deep_dir>/pass-NNN/raw_candidates.jsonl ...] --out <discovery_dir>/candidate_ledger.jsonl --repo-root <repo_root> --in-scope-files <discovery_dir>/in_scope_files.txt
+   <python_command> <plugin_root>/scripts/normalize_candidates.py --input <deep_dir>/pass-001/raw_candidates.jsonl [<deep_dir>/pass-NNN/raw_candidates.jsonl ...] --out <discovery_dir>/candidate_ledger.jsonl --repo-root <repo_root> --in-scope-files <discovery_dir>/in_scope_files.txt
    ```
 
    The normalizer merges rows with the same CWE ids, locations, and optional instance and assigns deterministic `candidate_id` values, so a candidate rediscovered by a later pass merges into the existing row rather than duplicating it. Regenerate from the full input set every round rather than appending; the script accepts raw discovery rows only and must never be fed an enriched ledger.
@@ -104,7 +112,7 @@ Stop the loop when either condition holds:
 - **Saturated**: two consecutive rounds yield no new candidate ids. Record terminal reason `saturated`.
 - **Capped**: the pass budget is exhausted. Record terminal reason `capped`.
 
-Default the pass budget to 12 passes. Use `AskUserQuestion` to confirm the budget before the first round when the user has not named one, offering a smaller budget for a quicker scan and a larger one for an exhaustive audit. A larger budget costs proportionally more tokens and wall-clock; say so in the question. When `AskUserQuestion` is unavailable — headless or otherwise non-interactive sessions — do not stall: use the default 12-pass budget and state the assumed budget in the first visible scan update.
+Default the pass budget to 12 passes. Use the host’s user-input tool (or ask directly) to confirm the budget before the first round when the user has not named one, offering a smaller budget for a quicker scan and a larger one for an exhaustive audit. A larger budget costs proportionally more tokens and wall-clock; say so in the question. When `AskUserQuestion` is unavailable — headless or otherwise non-interactive sessions — do not stall: use the default 12-pass budget and state the assumed budget in the first visible scan update.
 
 Never stop because a single round found nothing new. One empty round is ordinary variance, which is exactly what this workflow exists to average out.
 
@@ -132,14 +140,14 @@ After accepting the terminal manifest, continue in the same turn. A discovery ma
 3. Synthesize one canonical validation threat model from the per-pass threat models, in pass order, and write it to `<context_dir>/threat_model.md`. Preserve relevant attacker models, trust boundaries, privileged surfaces, contradictions, and risk framings conservatively. This threat model is downstream context, not a retroactive discovery filter.
 4. Run `security:validation` once over the merged candidate ledger in compact standard-scan mode, adding one nested `validation` record to every row.
 5. Run `security:attack-path-analysis` once in compact standard-scan mode over rows whose validation disposition is `reportable` or `deferred`, adding one nested `attack_path` record to each. The tail uses the same compact merged-ledger records as `security:security-scan`; do not create per-candidate receipt directories or narrative phase reports.
-6. Populate complete `scan-manifest.json`, `findings.json`, and `coverage.json` using `../../references/final-report.md` and `../../references/finding-detail-fields.md`. Populate the draft's `scan.target` block (kind, targetId, displayName, snapshotDigest, revision) by running the target-identity helper described in `../../references/scan-artifacts.md`; never hand-compute `targetId` or `snapshotDigest`.
+6. Populate complete `scan-manifest.json`, `findings.json`, and `coverage.json` using `../.security-plugin/references/final-report.md` and `../.security-plugin/references/finding-detail-fields.md`. Populate the draft's `scan.target` block (kind, targetId, displayName, snapshotDigest, revision) by running the target-identity helper described in `../.security-plugin/references/scan-artifacts.md`; never hand-compute `targetId` or `snapshotDigest`.
    - For a whole-repository deep scan, keep `coverage.inventoryStrategy` as `repository`; repeated discovery is workflow metadata, not a different inventory strategy.
    - For every reportable finding, run `security:vulnerability-writeup` with exactly one dedicated write-up subagent, write `findings/<slug>/<slug>.md` plus any `findings/<slug>/poc/` files, verify the report exists, and set the safe relative `writeup.reportPath`.
    - After every write-up is ready, run `security:propose-security-hardening` once over the complete finding collection, write-ups, threat model, coverage, and relevant source; write `hardening/hardening.md`, `hardening/hardening.json`, and any proposals and diagrams below `hardening/`; verify the portfolio is a regular file and set `scan.hardening.portfolioPath` to `hardening/hardening.md`. Skip this step when there are no reportable findings.
 7. Verify on disk that `scan-manifest.json`, `findings.json`, and `coverage.json` exist at the scan path, then finalize once:
 
    ```text
-   <python_command> ${CLAUDE_PLUGIN_ROOT}/scripts/finalize_scan_contract.py --scan-dir <scan_dir> --source-root <repo_root>
+   <python_command> <plugin_root>/scripts/finalize_scan_contract.py --scan-dir <scan_dir> --source-root <repo_root>
    ```
 
 If a required tail phase, canonical-artifact write, or on-disk existence check fails, stop immediately and surface the exact blocker. Do not finalize with missing artifacts or return a final report or no-findings result.
@@ -148,9 +156,9 @@ Do not skip validation because a candidate recurred across passes. Recurrence is
 
 ## Output and Failure Rules
 
-Read `../../references/shared-hard-rules.md` before applying these rules; deep scans are compact-ledger scans there, proving candidate coverage through the enriched ledger's nested records rather than per-candidate receipts.
+Read `../.security-plugin/references/shared-hard-rules.md` before applying these rules; deep scans are compact-ledger scans there, proving candidate coverage through the enriched ledger's nested records rather than per-candidate receipts.
 
-- Return the ordinary generated report and canonical artifact paths as described in `../../references/final-report.md`. Do not author `report.md` directly.
+- Return the ordinary generated report and canonical artifact paths as described in `../.security-plugin/references/final-report.md`. Do not author `report.md` directly.
 - Do not emit a final response until finalization succeeds and the generated report exists.
 - If finalization fails, stop and surface its exact error. Do not retry finalization in the same response or return a report anyway.
 - Do not expose pass counts, recurrence, or no-new streaks unless the user asks. Report what was found, not how the search was scheduled.
